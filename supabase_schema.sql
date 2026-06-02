@@ -193,6 +193,23 @@ create table public.contacts (
 -- Enable RLS for contacts
 alter table public.contacts enable row level security;
 
+-- 11. STABLE SUPPLIES / SHOPPING LIST
+-- Tracks supplies needed by grooms (bedding, feed, tools, medical supplies)
+create table public.supplies_needed (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    item_name text not null,
+    quantity text, -- e.g. "5 bags", "2 bottles"
+    requested_by text, -- name of the groom (e.g. Kyara, Christina)
+    status text not null default 'pending' check (status in ('pending', 'purchased')),
+    notes text,
+    completed_at timestamptz,
+    completed_by uuid references public.profiles(id) on delete set null
+);
+
+-- Enable RLS for supplies_needed
+alter table public.supplies_needed enable row level security;
+
 
 -- ============================================================
 -- Row-Level Security (RLS) Basic Policies
@@ -210,6 +227,7 @@ create policy "Allow authenticated CRUD" on public.documents for all using (auth
 create policy "Allow authenticated CRUD" on public.mares_breeding for all using (auth.role() = 'authenticated');
 create policy "Allow authenticated CRUD" on public.embryos for all using (auth.role() = 'authenticated');
 create policy "Allow authenticated CRUD" on public.contacts for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.supplies_needed for all using (auth.role() = 'authenticated');
 
 
 -- ============================================================

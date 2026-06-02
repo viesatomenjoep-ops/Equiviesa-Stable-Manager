@@ -32,6 +32,8 @@ const I18N = {
     trial: "Proefperiode", daysLeft: "Nog 14 dagen", activate: "Activeer nu",
     bookDemo: "Een demo boeken", new: "Nieuw", comingSoon: "Wordt straks verder uitgebouwd",
     today: "Vandaag", overview: "Overzicht",
+    supplies: "Stalbenodigdheden", addSupply: "Artikel toevoegen", noSupplies: "Geen benodigdheden aangevraagd.",
+    supplyItem: "Artikel", requestedBy: "Aangevraagd door", qty: "Hoeveelheid", statusPending: "Nog nodig", statusPurchased: "Gekocht",
     // form
     add: "Toevoegen", save: "Opslaan", cancel: "Annuleren", required: "Verplicht", optional: "Optioneel",
     name: "Naam", studbook: "Stamboek", sex: "Geslacht", color: "Kleur",
@@ -100,6 +102,8 @@ const I18N = {
     trial: "Trial period", daysLeft: "14 days left", activate: "Activate now",
     bookDemo: "Book a demo", new: "New", comingSoon: "Built out further next",
     today: "Today", overview: "Overview",
+    supplies: "Stable Supplies", addSupply: "Add supply request", noSupplies: "No supplies requested yet.",
+    supplyItem: "Item", requestedBy: "Requested by", qty: "Quantity", statusPending: "Needed", statusPurchased: "Purchased",
     add: "Add", save: "Save", cancel: "Cancel", required: "Required", optional: "Optional",
     name: "Name", studbook: "Studbook", sex: "Sex", color: "Colour",
     birthdate: "Date of birth", ueln: "UELN", chip: "Chip", feiid: "FEI ID", location: "Location",
@@ -163,13 +167,15 @@ const I18N = {
     trial: "Periodo de prueba", daysLeft: "Quedan 14 días", activate: "Activar ahora",
     bookDemo: "Reservar demo", new: "Nuevo", comingSoon: "Se ampliará a continuación",
     today: "Hoy", overview: "Resumen",
+    supplies: "Suministros de establo", addSupply: "Añadir solicitud", noSupplies: "No hay suministros solicitados.",
+    supplyItem: "Artículo", requestedBy: "Solicitado por", qty: "Cantidad", statusPending: "Necesario", statusPurchased: "Comprado",
     add: "Añadir", save: "Guardar", cancel: "Cancelar", required: "Obligatorio", optional: "Opcional",
     name: "Nombre", studbook: "Libro genealógico", sex: "Sexo", color: "Color",
     birthdate: "Fecha de nacimiento", ueln: "UELN", chip: "Chip", feiid: "FEI ID", location: "Ubicación",
     select: "Seleccionar", photo: "Foto", active: "Activo", archived: "Archivado",
     profile: "Perfil", info: "Datos", delete: "Eliminar",
     nameRequired: "El nombre es obligatorio", noResults: "Sin resultados",
-    sexMare: "Yeguas", sexStallion: "Semental", sexGelding: "Castrado",
+    sexMare: "Yegua", sexStallion: "Semental", sexGelding: "Castrado",
     horseCount: (n) => `${n} ${n === 1 ? "caballo" : "caballos"}`,
     backTo: "Atrás", language: "Idioma",
     months: ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"],
@@ -187,7 +193,7 @@ const I18N = {
     catFarrier: "Herrador", catFeed: "Pienso", catOther: "Otro",
     noContact: "Sin contacto", allHorses: "General (sin caballo)", thisMonth: "Este mes",
     role: "Rol", roles: "Roles", permissions: "Permisos", addUser: "Añadir usuario",
-    noUsers: "Aún no hay usuarios", noUsersSub: "Invita a miembros del equipo y define qué kunnen ver y hacer.",
+    noUsers: "Aún no hay usuarios", noUsersSub: "Invita a miembros del equipo y define qué pueden ver y hacer.",
     roleAdmin: "Administrador", roleManager: "Gerente", roleStaff: "Personal", roleVet: "Veterinario", roleOwner: "Propietario",
     permContacts: "Contactos", permHorses: "Caballos", permCalendar: "Calendario", permTasks: "Tareas",
     permHealth: "Salud", permTeams: "Equipos", permFinance: "Finanzas", permFeeding: "Alimentación",
@@ -222,20 +228,20 @@ const C = {
 };
 
 const SECTIONS = {
-  general: ["horses", "calendar", "tasks", "health", "feeding", "locations", "contacts", "documents"],
+  general: ["horses", "calendar", "tasks", "health", "feeding", "supplies", "locations", "contacts", "documents"],
   finance: ["finance", "clients", "bookings", "invoices", "catalog"],
   breeding: ["mares", "embryos", "foals"],
 };
 const ICONS = {
   horses: Home, calendar: Calendar, tasks: CheckSquare, health: Heart,
-  feeding: Carrot, locations: MapPin, contacts: Contact, documents: FileText,
+  feeding: Carrot, supplies: ShoppingCart, locations: MapPin, contacts: Contact, documents: FileText,
   finance: Wallet, clients: Users, bookings: BookOpen, invoices: Receipt, catalog: Package,
   mares: Heart, embryos: Sparkles, foals: Baby, sales: ShoppingCart,
   users: Users, settings: Settings, help: HelpCircle,
 };
 const ACCENT = {
   horses: C.mint, calendar: C.sky, tasks: C.amber, health: C.coral,
-  feeding: C.amber, locations: C.mint, contacts: C.sky, documents: C.lilac,
+  feeding: C.amber, supplies: C.coral, locations: C.mint, contacts: C.sky, documents: C.lilac,
   finance: C.mint, clients: C.sky, bookings: C.sky, invoices: C.sky, catalog: C.sky,
   mares: C.pink, embryos: C.pink, foals: C.pink, sales: C.amber,
 };
@@ -280,9 +286,18 @@ function StoreProvider({ children }) {
     return { ...prev, [horseId]: { ...h, [slot]: h[slot].filter((i) => i.id !== itemId) } };
   });
 
+  const [supplies, setSupplies] = useState([
+    { id: 1, item_name: "Strobalen", quantity: "20 stuks", requested_by: "Kyara", status: "pending", notes: "Graag voor het weekend leveren" },
+    { id: 2, item_name: "Vliegenspray", quantity: "4 flessen", requested_by: "Christina", status: "pending", notes: "De vliegen zijn erg actief op de wei" }
+  ]);
+  const addSupply = (item) => setSupplies((prev) => [{ id: Date.now(), status: "pending", ...item }, ...prev]);
+  const toggleSupplyStatus = (id) => setSupplies((prev) => prev.map((s) => s.id === id ? { ...s, status: s.status === "pending" ? "purchased" : "pending" } : s));
+  const deleteSupply = (id) => setSupplies((prev) => prev.filter((s) => s.id !== id));
+
   return (
     <Store.Provider value={{ horses, addHorse, deleteHorse, txns, addTxn, deleteTxn,
-      users, addUser, deleteUser, feed, addFeedItem, deleteFeedItem }}>{children}</Store.Provider>
+      users, addUser, deleteUser, feed, addFeedItem, deleteFeedItem,
+      supplies, addSupply, toggleSupplyStatus, deleteSupply }}>{children}</Store.Provider>
   );
 }
 
@@ -353,8 +368,8 @@ function AppRoot() {
 }
 
 /* ---------- groom config: only the daily-essential modules ---------- */
-const GROOM_KEYS = ["feeding", "tasks", "health", "horses"];
-const GROOM_BOTTOM = ["feeding", "tasks", "health", "horses"];
+const GROOM_KEYS = ["feeding", "tasks", "health", "supplies", "horses"];
+const GROOM_BOTTOM = ["feeding", "tasks", "health", "supplies", "horses"];
 const MODE_PIN = { manager: "1111", groom: "2222" };
 
 /* ---------- Mode chooser (first screen) ---------- */
@@ -734,6 +749,7 @@ function Screen({ active, route, setRoute, t }) {
   if (active === "finance") return <div style={wrap}><FinanceScreen t={t} /></div>;
   if (active === "users") return <div style={wrap}><UsersScreen t={t} /></div>;
   if (active === "feeding") return <div style={wrap}><FeedingScreen t={t} /></div>;
+  if (active === "supplies") return <div style={wrap}><SuppliesScreen t={t} /></div>;
   return <div style={wrap}><PlaceholderScreen t={t} active={active} /></div>;
 }
 
@@ -1622,5 +1638,121 @@ function Pill({ children, active }) {
     <span style={{ fontSize: 14, fontWeight: 600, padding: "8px 16px", borderRadius: 12,
       border: `1px solid ${active ? C.mint : C.line}`, color: active ? C.mint : C.sub,
       background: active ? C.mintSoft : C.surface }}>{children}</span>
+  );
+}
+
+/* ---------- STABLE SUPPLIES ---------- */
+function SuppliesScreen({ t }) {
+  const { supplies, addSupply, toggleSupplyStatus, deleteSupply } = useStore();
+  const [tab, setTab] = useState(0); // 0 pending 1 purchased
+  const [modal, setModal] = useState(false);
+
+  const filtered = supplies.filter((s) => tab === 0 ? s.status === "pending" : s.status === "purchased");
+
+  return (
+    <div className="ev-card">
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+        <div style={{ display: "inline-flex", gap: 2, background: C.bg, borderRadius: 12, padding: 3 }}>
+          {[t.statusPending, t.statusPurchased].map((label, i) => (
+            <button key={i} onClick={() => setTab(i)} className="ev-tap" style={{
+              border: "none", cursor: "pointer", borderRadius: 9, padding: "8px 16px",
+              fontSize: 14, fontWeight: 600, fontFamily: "inherit",
+              background: tab === i ? C.surface : "transparent", color: tab === i ? C.ink : C.sub,
+              boxShadow: tab === i ? "0 1px 4px rgba(0,0,0,.08)" : "none",
+            }}>{label}</button>
+          ))}
+        </div>
+        <button onClick={() => setModal(true)} className="ev-tap" style={{
+          marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, border: "none", cursor: "pointer", fontFamily: "inherit",
+          background: C.mint, color: "#fff", fontSize: 15, fontWeight: 600, padding: "11px 18px", borderRadius: 13,
+          boxShadow: "0 6px 16px rgba(47,182,160,.4)" }}>
+          <Plus size={19} /> {t.addSupply}
+        </button>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div style={{ textAlign: "center", color: C.sub, padding: "50px 0", fontStyle: "italic" }}>
+          {t.noSupplies}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {filtered.map((s) => (
+            <div key={s.id} style={{
+              background: C.surface, border: `1px solid ${C.line}`, borderRadius: 18, padding: 18,
+              display: "flex", alignItems: "center", gap: 14, opacity: s.status === "purchased" ? 0.75 : 1
+            }}>
+              <button onClick={() => toggleSupplyStatus(s.id)} className="ev-tap" style={{
+                width: 28, height: 28, borderRadius: 9, border: `1.5px solid ${s.status === "purchased" ? C.mint : C.line}`,
+                background: s.status === "purchased" ? C.mintSoft : "transparent", cursor: "pointer",
+                display: "grid", placeItems: "center", color: C.mint, padding: 0
+              }}>
+                {s.status === "purchased" && <Check size={18} strokeWidth={3} />}
+              </button>
+              
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 17, fontWeight: 600, textDecoration: s.status === "purchased" ? "line-through" : "none", color: s.status === "purchased" ? C.sub : C.ink }}>
+                  {s.item_name}
+                </div>
+                <div style={{ fontSize: 13, color: C.sub, marginTop: 2, display: "flex", flexWrap: "wrap", gap: "6px 12px" }}>
+                  {s.quantity && <span><strong>{t.qty}:</strong> {s.quantity}</span>}
+                  {s.requested_by && <span><strong>{t.requestedBy}:</strong> {s.requested_by}</span>}
+                </div>
+                {s.notes && (
+                  <div style={{ fontSize: 13, background: C.field, padding: "8px 12px", borderRadius: 10, marginTop: 8, color: C.ink }}>
+                    {s.notes}
+                  </div>
+                )}
+              </div>
+
+              <button onClick={() => deleteSupply(s.id)} className="ev-tap" style={{
+                border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6
+              }}>
+                <Trash2 size={18} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {modal && (
+        <SupplyModal t={t} onClose={() => setModal(false)} onSave={(item) => { addSupply(item); setModal(false); }} />
+      )}
+    </div>
+  );
+}
+
+function SupplyModal({ t, onClose, onSave }) {
+  const [f, setF] = useState({ item_name: "", quantity: "", requested_by: "", notes: "" });
+  const [err, setErr] = useState(false);
+  const save = () => {
+    if (!f.item_name.trim()) { setErr(true); return; }
+    onSave(f);
+  };
+
+  return (
+    <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<ShoppingCart size={22} />} title={t.addSupply}>
+      <Field label={t.supplyItem} required>
+        <input value={f.item_name} onChange={(e) => { setF({ ...f, item_name: e.target.value }); setErr(false); }}
+          placeholder={t.supplyItem} autoFocus style={inputStyle(err)} />
+      </Field>
+      {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.supplyItem} is verplicht</div>}
+
+      <Field label={t.qty}>
+        <input value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })}
+          placeholder="bijv. 5 zakken, 2 stuks" style={inputStyle()} />
+      </Field>
+
+      <Field label={t.requestedBy}>
+        <input value={f.requested_by} onChange={(e) => setF({ ...f, requested_by: e.target.value })}
+          placeholder="bijv. Kyara, Christina" style={inputStyle()} />
+      </Field>
+
+      <Field label="Opmerkingen">
+        <textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })}
+          rows={2} style={{ ...inputStyle(), resize: "none" }} placeholder="Optionele details..." />
+      </Field>
+
+      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.add} saveIcon={<Plus size={20} />} />
+    </ModalShell>
   );
 }
