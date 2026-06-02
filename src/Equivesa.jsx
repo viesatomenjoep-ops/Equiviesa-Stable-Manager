@@ -1026,7 +1026,7 @@ function Screen({ active, route, setRoute, t }) {
   if (active === "users") return <div style={wrap}><UsersScreen t={t} /></div>;
   if (active === "feeding") return <div style={wrap}><FeedingScreen t={t} /></div>;
   if (active === "supplies") return <div style={wrap}><SuppliesScreen t={t} /></div>;
-  return <div style={wrap}><PlaceholderScreen t={t} active={active} /></div>;
+  return <div style={wrap}><GenericModuleScreen t={t} active={active} /></div>;
 }
 
 /* ---------- Horses: list (data-driven) ---------- */
