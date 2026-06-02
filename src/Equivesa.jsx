@@ -1772,11 +1772,11 @@ function HealthModal({ t, category, initialData, horses, onClose, onSave }) {
     <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<Heart size={22} />} title={initialData ? t.editRecord || "Edit Record" : t.addRecord}
       footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
       {/* Category pills */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+      <div style={{ display: "flex", overflowX: "auto", gap: 8, marginBottom: 16, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
         {HEALTH_CATS.map(([key, , color]) => (
           <button key={key} type="button" onClick={() => setCatSel(key)} className="ev-tap"
             style={{
-              padding: "12px 18px", borderRadius: 16, border: `1px solid ${catSel === key ? color : C.line}`,
+              flexShrink: 0, padding: "12px 18px", borderRadius: 16, border: `1px solid ${catSel === key ? color : C.line}`,
               background: catSel === key ? color : C.field,
               color: catSel === key ? "#fff" : C.sub,
               fontSize: 14.5, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
@@ -2174,12 +2174,12 @@ function UserModal({ t, onClose }) {
         <button onClick={toggleAll} className="ev-tap" style={{ border: "none", background: "transparent",
           cursor: "pointer", color: C.mint, fontWeight: 600, fontSize: 13, fontFamily: "inherit" }}>{t.selectAll}</button>
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
         {PERM_KEYS.map((p) => {
           const on = f.perms.includes(p);
           return (
             <button key={p} onClick={() => togglePerm(p)} className="ev-tap" style={{
-              border: `1.5px solid ${on ? C.sky : C.line}`, cursor: "pointer", fontFamily: "inherit",
+              flexShrink: 0, border: `1.5px solid ${on ? C.sky : C.line}`, cursor: "pointer", fontFamily: "inherit",
               background: on ? C.sky + "1f" : C.surface, color: on ? C.sky : C.sub,
               padding: "16px 24px", borderRadius: 16, fontSize: 16, fontWeight: 600,
               display: "flex", alignItems: "center", gap: 8 }}>
@@ -2541,10 +2541,10 @@ function GenericModuleScreen({ t, active }) {
           {conf.fields.map(field => (
             <Field key={field.n} label={t[field.n] || field.n} required={field.r}>
               {field.opts ? (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
                   {field.opts.map(opt => (
                     <button key={opt} type="button" onClick={() => setF({...f, [field.n]: opt})} className="ev-tap"
-                      style={{ padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f[field.n] === opt ? color : C.line}`,
+                      style={{ flexShrink: 0, padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f[field.n] === opt ? color : C.line}`,
                         background: f[field.n] === opt ? color : C.surface,
                         color: f[field.n] === opt ? "#fff" : C.sub,
                         fontSize: 16, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
