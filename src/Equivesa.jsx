@@ -84,6 +84,13 @@ const I18N = {
     managerPin: "Manager-pincode", pinHint: "Voer de pincode in om naar Manager te wisselen.",
     wrongPin: "Onjuiste pincode", groomMode: "Groom-weergave", managerMode: "Manager-weergave",
     today2: "Vandaag",
+    authLoginTitle: "Inloggen", authRegisterTitle: "Registreren",
+    authEmail: "E-mailadres", authPassword: "Wachtwoord",
+    authLoginBtn: "Log in", authRegisterBtn: "Account aanmaken",
+    authWait: "Even geduld...",
+    authNoAccount: "Nog geen account? Registreer",
+    authHasAccount: "Al een account? Log in",
+    authCheckEmail: "Check je e-mail voor de bevestigingslink!",
   },
   en: {
     code: "EN",
@@ -149,6 +156,13 @@ const I18N = {
     managerPin: "Manager PIN", pinHint: "Enter the PIN to switch to Manager.",
     wrongPin: "Wrong PIN", groomMode: "Groom view", managerMode: "Manager view",
     today2: "Today",
+    authLoginTitle: "Login", authRegisterTitle: "Register",
+    authEmail: "Email address", authPassword: "Password",
+    authLoginBtn: "Log in", authRegisterBtn: "Create account",
+    authWait: "Please wait...",
+    authNoAccount: "No account yet? Register",
+    authHasAccount: "Already have an account? Log in",
+    authCheckEmail: "Check your email for the confirmation link!",
   },
   es: {
     code: "ES",
@@ -214,6 +228,13 @@ const I18N = {
     managerPin: "PIN de gerente", pinHint: "Introduce el PIN para cambiar a Gerente.",
     wrongPin: "PIN incorrecto", groomMode: "Vista mozo", managerMode: "Vista gerente",
     today2: "Hoy",
+    authLoginTitle: "Iniciar sesión", authRegisterTitle: "Registrarse",
+    authEmail: "Correo electrónico", authPassword: "Contraseña",
+    authLoginBtn: "Iniciar sesión", authRegisterBtn: "Crear cuenta",
+    authWait: "Por favor espera...",
+    authNoAccount: "¿Aún no tienes cuenta? Regístrate",
+    authHasAccount: "¿Ya tienes cuenta? Inicia sesión",
+    authCheckEmail: "¡Revisa tu correo para el enlace de confirmación!",
   },
 };
 
@@ -234,7 +255,7 @@ const SECTIONS = {
   breeding: ["mares", "embryos", "foals"],
 };
 
-function AuthScreen() {
+function AuthScreen({ t, lang, setLang }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -249,29 +270,32 @@ function AuthScreen() {
     } else {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) alert(error.message);
-      else alert('Check je e-mail voor de bevestigingslink!');
+      else alert(t.authCheckEmail);
     }
     setLoading(false);
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: C.bg, fontFamily: "'Montserrat', sans-serif" }}>
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: C.bg, fontFamily: "'Montserrat', sans-serif", position: "relative" }}>
+      <div style={{ position: "absolute", top: 16, right: 16 }}>
+        <LangMenu lang={lang} setLang={setLang} t={t} />
+      </div>
       <form onSubmit={handleAuth} style={{ background: C.surface, padding: 32, borderRadius: 24, width: "100%", maxWidth: 360, boxShadow: "0 12px 34px rgba(31,45,58,.08)" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
           <img src="/logo.svg" alt="Logo" style={{ width: 48, height: 48 }} />
         </div>
-        <h2 style={{ margin: "0 0 24px", textAlign: "center", fontSize: 24, fontWeight: 700 }}>{isLogin ? "Inloggen" : "Registreren"}</h2>
-        <input type="email" placeholder="E-mailadres" value={email} onChange={e => setEmail(e.target.value)}
+        <h2 style={{ margin: "0 0 24px", textAlign: "center", fontSize: 24, fontWeight: 700 }}>{isLogin ? t.authLoginTitle : t.authRegisterTitle}</h2>
+        <input type="email" placeholder={t.authEmail} value={email} onChange={e => setEmail(e.target.value)}
           style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid #E8EEEA", marginBottom: 12, fontSize: 16, fontFamily: "inherit" }} required />
-        <input type="password" placeholder="Wachtwoord" value={password} onChange={e => setPassword(e.target.value)}
+        <input type="password" placeholder={t.authPassword} value={password} onChange={e => setPassword(e.target.value)}
           style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid #E8EEEA", marginBottom: 24, fontSize: 16, fontFamily: "inherit" }} required />
         <button type="submit" disabled={loading}
           style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: C.mint, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer" }}>
-          {loading ? "Even geduld..." : (isLogin ? "Log in" : "Account aanmaken")}
+          {loading ? t.authWait : (isLogin ? t.authLoginBtn : t.authRegisterBtn)}
         </button>
         <button type="button" onClick={() => setIsLogin(!isLogin)}
           style={{ width: "100%", padding: "14px", marginTop: 8, background: "transparent", border: "none", color: C.sub, cursor: "pointer", fontSize: 14 }}>
-          {isLogin ? "Nog geen account? Registreer" : "Al een account? Log in"}
+          {isLogin ? t.authNoAccount : t.authHasAccount}
         </button>
       </form>
     </div>
@@ -451,7 +475,7 @@ function AppRoot() {
   }, []);
 
   if (authLoading) return <div style={{ minHeight: "100vh", background: C.bg }} />;
-  if (!session) return <AuthScreen />;
+  if (!session) return <AuthScreen t={t} lang={lang} setLang={setLang} />;
 
   const go = (key) => {
     if (key === "menu") { setDrawer(true); return; }
