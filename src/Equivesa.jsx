@@ -93,6 +93,15 @@ const I18N = {
     authCheckEmail: "Check je e-mail voor de bevestigingslink!",
     qtyHint: "bijv. 5 zakken, 2 balen", reqByHint: "bijv. je eigen naam",
     notes: "Opmerkingen", notesHint: "Optionele details...",
+    addTask: "Taak toevoegen", taskTitle: "Titel", taskDesc: "Beschrijving", taskDue: "Deadline",
+    taskHorse: "Paard (optioneel)", noTasks: "Nog geen taken", noTasksSub: "Voeg taken toe om je werk te organiseren.",
+    done: "Voltooid", open: "Open", completedTasks: "Voltooid",
+    addRecord: "Afspraak toevoegen", recordDate: "Datum", recordNotes: "Notities",
+    performedBy: "Uitgevoerd door", cost: "Kosten (€)", noRecords: "Nog geen afspraken",
+    noRecordsSub: "Voeg een afspraak toe om de gezondheid bij te houden.",
+    prevMonth: "Vorige maand", nextMonth: "Volgende maand",
+    selectHorse: "Selecteer paard", allCats: "Alle categorieën",
+    taskCommon: ["Stal uitmesten", "Paddock", "Longeren", "Poetsen", "Hooi vullen", "Watercheck", "Weide maaien"],
   },
   en: {
     code: "EN",
@@ -167,6 +176,15 @@ const I18N = {
     authCheckEmail: "Check your email for the confirmation link!",
     qtyHint: "e.g. 5 bags, 2 bales", reqByHint: "e.g. your name",
     notes: "Notes", notesHint: "Optional details...",
+    addTask: "Add task", taskTitle: "Title", taskDesc: "Description", taskDue: "Due date",
+    taskHorse: "Horse (optional)", noTasks: "No tasks yet", noTasksSub: "Add tasks to organize your work.",
+    done: "Done", open: "Open", completedTasks: "Completed",
+    addRecord: "Add record", recordDate: "Date", recordNotes: "Notes",
+    performedBy: "Performed by", cost: "Cost (€)", noRecords: "No records yet",
+    noRecordsSub: "Add a record to track health.",
+    prevMonth: "Previous month", nextMonth: "Next month",
+    selectHorse: "Select horse", allCats: "All categories",
+    taskCommon: ["Muck out", "Paddock", "Lunging", "Grooming", "Fill hay", "Water check", "Mow pasture"],
   },
   es: {
     code: "ES",
@@ -241,6 +259,15 @@ const I18N = {
     authCheckEmail: "¡Revisa tu correo para el enlace de confirmación!",
     qtyHint: "ej. 5 sacos, 2 pacas", reqByHint: "ej. tu nombre",
     notes: "Notas", notesHint: "Detalles opcionales...",
+    addTask: "Añadir tarea", taskTitle: "Título", taskDesc: "Descripción", taskDue: "Fecha límite",
+    taskHorse: "Caballo (opcional)", noTasks: "Aún no hay tareas", noTasksSub: "Añade tareas para organizar tu trabajo.",
+    done: "Hecho", open: "Pendiente", completedTasks: "Completadas",
+    addRecord: "Añadir registro", recordDate: "Fecha", recordNotes: "Notas",
+    performedBy: "Realizado por", cost: "Coste (€)", noRecords: "Aún no hay registros",
+    noRecordsSub: "Añade un registro para seguir la salud.",
+    prevMonth: "Mes anterior", nextMonth: "Mes siguiente",
+    selectHorse: "Seleccionar caballo", allCats: "Todas las categorías",
+    taskCommon: ["Limpiar cuadra", "Paddock", "Cuerda", "Cepillar", "Llenar heno", "Revisar agua", "Cortar pasto"],
   },
 };
 
@@ -287,8 +314,9 @@ function AuthScreen({ t, lang, setLang }) {
         <LangMenu lang={lang} setLang={setLang} t={t} />
       </div>
       <form onSubmit={handleAuth} style={{ background: C.surface, padding: 32, borderRadius: 24, width: "100%", maxWidth: 360, boxShadow: "0 12px 34px rgba(31,45,58,.08)" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24, gap: 10 }}>
           <img src="/logo.svg" alt="Logo" style={{ width: 48, height: 48 }} />
+          <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 16, fontWeight: 700, color: C.ink, letterSpacing: "0.5px" }}>Equiviesa Stable Manager</span>
         </div>
         <h2 style={{ margin: "0 0 24px", textAlign: "center", fontSize: 24, fontWeight: 700 }}>{isLogin ? t.authLoginTitle : t.authRegisterTitle}</h2>
         <input type="email" placeholder={t.authEmail} value={email} onChange={e => setEmail(e.target.value)}
@@ -340,17 +368,17 @@ function StoreProvider({ children }) {
   const [users, setUsers] = useState([]);
   const [feed, setFeed] = useState({});
   const [supplies, setSupplies] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [healthRecords, setHealthRecords] = useState([]);
 
   React.useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        fetchHorses();
-        fetchTxns();
-        fetchSupplies();
-        fetchUsers();
-        fetchFeed();
+        fetchHorses(); fetchTxns(); fetchSupplies(); fetchUsers(); fetchFeed();
+        fetchTasks(); fetchHealthRecords();
       } else {
         setHorses([]); setTxns([]); setSupplies([]); setUsers([]); setFeed({});
+        setTasks([]); setHealthRecords([]);
       }
     });
     return () => subscription.unsubscribe();
@@ -443,10 +471,54 @@ function StoreProvider({ children }) {
     });
   };
 
+  /* --- Tasks CRUD --- */
+  const fetchTasks = async () => {
+    const { data } = await supabase.from('tasks').select('*').order('due_date', { ascending: true });
+    if (data) setTasks(data);
+  };
+  const addTask = async (task) => {
+    const { data } = await supabase.from('tasks').insert([task]).select();
+    if (data) setTasks(prev => [data[0], ...prev]);
+  };
+  const toggleTask = async (id) => {
+    const t = tasks.find(x => x.id === id);
+    if (!t) return;
+    const done = !t.is_completed;
+    await supabase.from('tasks').update({ is_completed: done }).eq('id', id);
+    setTasks(prev => prev.map(x => x.id === id ? { ...x, is_completed: done } : x));
+  };
+  const deleteTask = async (id) => {
+    await supabase.from('tasks').delete().eq('id', id);
+    setTasks(prev => prev.filter(x => x.id !== id));
+  };
+
+  /* --- Health Records CRUD --- */
+  const fetchHealthRecords = async () => {
+    const { data } = await supabase.from('health_records').select('*').order('scheduled_date', { ascending: false });
+    if (data) setHealthRecords(data);
+  };
+  const addHealthRecord = async (rec) => {
+    const { data } = await supabase.from('health_records').insert([rec]).select();
+    if (data) setHealthRecords(prev => [data[0], ...prev]);
+  };
+  const toggleHealthRecord = async (id) => {
+    const r = healthRecords.find(x => x.id === id);
+    if (!r) return;
+    const done = !r.completed;
+    await supabase.from('health_records').update({ completed: done }).eq('id', id);
+    setHealthRecords(prev => prev.map(x => x.id === id ? { ...x, completed: done } : x));
+  };
+  const deleteHealthRecord = async (id) => {
+    await supabase.from('health_records').delete().eq('id', id);
+    setHealthRecords(prev => prev.filter(x => x.id !== id));
+  };
+
   return (
     <Store.Provider value={{ horses, addHorse, deleteHorse, txns, addTxn, deleteTxn,
       users, addUser, deleteUser, feed, addFeedItem, deleteFeedItem,
-      supplies, addSupply, toggleSupplyStatus, deleteSupply }}>{children}</Store.Provider>
+      supplies, addSupply, toggleSupplyStatus, deleteSupply,
+      tasks, addTask, toggleTask, deleteTask,
+      healthRecords, addHealthRecord, toggleHealthRecord, deleteHealthRecord }}>{children}</Store.Provider>
   );
 }
 
@@ -1185,83 +1257,444 @@ function HorseDetail({ t, id, setRoute }) {
 
 /* ---------- Calendar ---------- */
 function CalendarScreen({ t }) {
-  const MAY = 4;
-  const days = [[0, 19, true], [1, 20], [2, 21], [3, 22], [4, 23], [5, 24], [6, 25], [1, 26]];
+  const { tasks, healthRecords, horses } = useStore();
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth());
+  const [selDay, setSelDay] = useState(null);
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Monday = 0
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  const pad = (n) => String(n).padStart(2, "0");
+  const dayStr = (d) => `${year}-${pad(month + 1)}-${pad(d)}`;
+
+  // Build events map: "YYYY-MM-DD" -> [{...}]
+  const events = useMemo(() => {
+    const map = {};
+    tasks.forEach(tk => {
+      if (!tk.due_date) return;
+      const key = tk.due_date.slice(0, 10);
+      if (!map[key]) map[key] = [];
+      map[key].push({ type: "task", title: tk.title, color: C.amber, done: tk.is_completed });
+    });
+    healthRecords.forEach(hr => {
+      if (!hr.scheduled_date) return;
+      const key = hr.scheduled_date.slice(0, 10);
+      if (!map[key]) map[key] = [];
+      const horse = horses.find(h => h.id === hr.horse_id);
+      map[key].push({ type: "health", title: `${t[hr.category] || hr.category}${horse ? " · " + horse.name : ""}`, color: C.coral, done: hr.completed });
+    });
+    return map;
+  }, [tasks, healthRecords, horses, t]);
+
+  const prev = () => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); setSelDay(null); };
+  const next = () => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); setSelDay(null); };
+
+  const cells = [];
+  for (let i = 0; i < firstDow; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  const selEvents = selDay ? (events[dayStr(selDay)] || []) : [];
+
   return (
     <div className="ev-card">
-      <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
-        <Pill active>{t.today} · 19</Pill><Pill>{cap(t.months[MAY])} 2026</Pill>
+      {/* Month Navigator */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+        <button onClick={prev} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
+          <ChevronLeft size={22} />
+        </button>
+        <h2 className="ev-display" style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>
+          {cap(t.months[month])} <span style={{ color: C.sub }}>{year}</span>
+        </h2>
+        <button onClick={next} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
+          <ChevronRight size={22} />
+        </button>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {days.map(([wd, n, today], i) => (
-          <div key={i} style={{ display: "flex", gap: 16, alignItems: "center", background: C.surface,
-            borderRadius: 16, padding: "16px 18px", border: `1px solid ${C.line}` }}>
-            <div style={{ textAlign: "center", width: 46 }}>
-              <div style={{ fontSize: 12, color: C.sub, textTransform: "uppercase", fontWeight: 600 }}>{t.weekdays[wd]}</div>
-              <div style={{ fontSize: 22, fontWeight: 700, width: 38, height: 38, lineHeight: "38px",
-                borderRadius: "50%", margin: "2px auto 0", background: today ? C.coral : "transparent",
-                color: today ? "#fff" : C.ink }}>{n}</div>
-            </div>
-            <div style={{ color: C.sub, fontSize: 15, fontStyle: "italic" }}>{t.nothingPlanned}</div>
-          </div>
+
+      {/* Weekday Headers */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2, textAlign: "center", marginBottom: 4 }}>
+        {t.weekdays.map(d => (
+          <div key={d} style={{ fontSize: 12, color: C.sub, fontWeight: 700, padding: "6px 0", textTransform: "uppercase" }}>{d}</div>
         ))}
       </div>
+
+      {/* Day Cells */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3 }}>
+        {cells.map((d, i) => {
+          if (d === null) return <div key={`e${i}`} />;
+          const ds = dayStr(d);
+          const isToday = ds === todayStr;
+          const isSel = selDay === d;
+          const evs = events[ds] || [];
+          return (
+            <button key={d} onClick={() => setSelDay(d === selDay ? null : d)} className="ev-tap" style={{
+              border: isSel ? `2px solid ${C.mint}` : "1px solid transparent", borderRadius: 14, padding: "8px 2px",
+              background: isToday ? C.mintSoft : isSel ? `${C.mint}0d` : "transparent",
+              cursor: "pointer", textAlign: "center", fontFamily: "inherit", minHeight: 52,
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+            }}>
+              <span style={{ fontSize: 15, fontWeight: isToday ? 800 : 500, color: isToday ? C.mint : C.ink,
+                width: 30, height: 30, lineHeight: "30px", borderRadius: "50%",
+                background: isToday ? C.mint : "transparent", color: isToday ? "#fff" : C.ink,
+                display: "inline-block" }}>{d}</span>
+              {evs.length > 0 && (
+                <div style={{ display: "flex", gap: 3, justifyContent: "center" }}>
+                  {evs.slice(0, 3).map((ev, j) => (
+                    <span key={j} style={{ width: 6, height: 6, borderRadius: "50%", background: ev.color }} />
+                  ))}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected Day Detail */}
+      {selDay && (
+        <div style={{ marginTop: 18, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 18, padding: 18 }}>
+          <h3 className="ev-display" style={{ fontSize: 17, fontWeight: 700, margin: "0 0 12px" }}>
+            {selDay} {cap(t.months[month])} {year}
+          </h3>
+          {selEvents.length === 0 ? (
+            <div style={{ color: C.sub, fontStyle: "italic", fontSize: 14 }}>{t.nothingPlanned}</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {selEvents.map((ev, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+                  background: `${ev.color}12`, borderRadius: 12, border: `1px solid ${ev.color}33` }}>
+                  <span style={{ width: 10, height: 10, borderRadius: "50%", background: ev.color, flexShrink: 0 }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: C.ink,
+                    textDecoration: ev.done ? "line-through" : "none", opacity: ev.done ? 0.6 : 1 }}>{ev.title}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 /* ---------- Tasks ---------- */
 function TasksScreen({ t }) {
-  const [tab, setTab] = useState(0);
+  const { tasks, addTask, toggleTask, deleteTask, horses } = useStore();
+  const [tab, setTab] = useState(0); // 0 = open, 1 = completed
+  const [modal, setModal] = useState(false);
+
+  const filtered = tasks.filter(tk => tab === 0 ? !tk.is_completed : tk.is_completed);
+
   return (
     <div className="ev-card">
-      <Tabs tabs={[t.horses, t.general]} active={tab} onChange={setTab} />
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 18 }}><Pill active>{t.fmtTodayDate(19, t.months[4])}</Pill></div>
-      <div style={{ height: 30 }} />
-      <EmptyHero accent={C.amber} icon={<CheckSquare size={46} strokeWidth={1.6} />} title={t.empty} sub="" cta={t.new} />
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+        <div style={{ display: "inline-flex", gap: 2, background: C.bg, borderRadius: 12, padding: 3 }}>
+          {[t.open, t.completedTasks].map((label, i) => (
+            <button key={i} onClick={() => setTab(i)} className="ev-tap" style={{
+              border: "none", cursor: "pointer", borderRadius: 9, padding: "8px 16px",
+              fontSize: 14, fontWeight: 600, fontFamily: "inherit",
+              background: tab === i ? C.surface : "transparent", color: tab === i ? C.ink : C.sub,
+              boxShadow: tab === i ? "0 1px 4px rgba(0,0,0,.08)" : "none",
+            }}>{label}</button>
+          ))}
+        </div>
+        <button onClick={() => setModal(true)} className="ev-tap" style={{
+          marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, border: "none", cursor: "pointer", fontFamily: "inherit",
+          background: C.amber, color: "#fff", fontSize: 15, fontWeight: 600, padding: "11px 18px", borderRadius: 13,
+          boxShadow: `0 6px 16px ${C.amber}66` }}>
+          <Plus size={19} /> {t.addTask}
+        </button>
+      </div>
+
+      {filtered.length === 0 ? (
+        <EmptyHero accent={C.amber} icon={<CheckSquare size={46} strokeWidth={1.6} />}
+          title={tab === 0 ? t.noTasks : t.completedTasks} sub={tab === 0 ? t.noTasksSub : ""}
+          cta={tab === 0 ? t.addTask : undefined} onClick={tab === 0 ? () => setModal(true) : undefined} />
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {filtered.map(tk => {
+            const horse = horses.find(h => h.id === tk.horse_id);
+            return (
+              <div key={tk.id} style={{
+                background: C.surface, border: `1px solid ${C.line}`, borderRadius: 18, padding: 16,
+                display: "flex", alignItems: "flex-start", gap: 14, opacity: tk.is_completed ? 0.7 : 1
+              }}>
+                <button onClick={() => toggleTask(tk.id)} className="ev-tap" style={{
+                  width: 28, height: 28, borderRadius: 9, border: `1.5px solid ${tk.is_completed ? C.mint : C.line}`,
+                  background: tk.is_completed ? C.mintSoft : "transparent", cursor: "pointer",
+                  display: "grid", placeItems: "center", color: C.mint, padding: 0, flexShrink: 0, marginTop: 2
+                }}>
+                  {tk.is_completed && <Check size={18} strokeWidth={3} />}
+                </button>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: tk.is_completed ? C.sub : C.ink,
+                    textDecoration: tk.is_completed ? "line-through" : "none" }}>{tk.title}</div>
+                  {tk.description && <div style={{ fontSize: 13, color: C.sub, marginTop: 4 }}>{tk.description}</div>}
+                  <div style={{ fontSize: 12, color: C.sub, marginTop: 6, display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+                    {tk.due_date && <span>📅 {tk.due_date.slice(0, 10)}</span>}
+                    {horse && <span>🐴 {horse.name}</span>}
+                    {tk.category && <span style={{ padding: "2px 8px", borderRadius: 8, background: tk.category === "horse" ? C.mintSoft : C.bg,
+                      fontSize: 11, fontWeight: 600 }}>{tk.category === "horse" ? t.horses : t.general}</span>}
+                  </div>
+                </div>
+                <button onClick={() => deleteTask(tk.id)} className="ev-tap" style={{
+                  border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
+                  <Trash2 size={17} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {modal && <TaskModal t={t} horses={horses} onClose={() => setModal(false)}
+        onSave={(task) => { addTask(task); setModal(false); }} />}
     </div>
+  );
+}
+
+function TaskModal({ t, horses, onClose, onSave }) {
+  const [f, setF] = useState({ title: "", description: "", due_date: "", category: "general", horse_id: null });
+  const [err, setErr] = useState(false);
+
+  const save = () => {
+    if (!f.title.trim()) { setErr(true); return; }
+    onSave(f);
+  };
+
+  return (
+    <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<CheckSquare size={22} />} title={t.addTask}>
+      <Field label={t.taskTitle} required>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+          {(t.taskCommon || []).map(s => (
+            <button key={s} type="button" onClick={() => { setF({...f, title: s}); setErr(false); }}
+              className="ev-tap"
+              style={{
+                padding: "8px 14px", borderRadius: 16, border: `1px solid ${f.title === s ? C.amber : C.line}`,
+                background: f.title === s ? C.amber : C.field,
+                color: f.title === s ? "#fff" : C.sub,
+                fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+              }}>
+              {s}
+            </button>
+          ))}
+        </div>
+        <input value={f.title} onChange={(e) => { setF({...f, title: e.target.value}); setErr(false); }}
+          placeholder={t.taskTitle} style={inputStyle(err)} />
+      </Field>
+      {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.taskTitle} {t.required}</div>}
+
+      <Field label={t.taskDesc}>
+        <textarea value={f.description} onChange={(e) => setF({...f, description: e.target.value})}
+          rows={2} style={{ ...inputStyle(), resize: "none" }} placeholder={t.notesHint} />
+      </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.taskDue}>
+          <input type="date" value={f.due_date} onChange={(e) => setF({...f, due_date: e.target.value})}
+            style={inputStyle()} />
+        </Field>
+        <Field label={t.taskHorse}>
+          <select value={f.horse_id || ""} onChange={(e) => setF({...f, horse_id: e.target.value || null, category: e.target.value ? "horse" : "general"})}
+            style={inputStyle()}>
+            <option value="">{t.general}</option>
+            {horses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+          </select>
+        </Field>
+      </div>
+
+      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.add} saveIcon={<Plus size={20} />} />
+    </ModalShell>
   );
 }
 
 /* ---------- Health ---------- */
 function HealthScreen({ t }) {
-  const [tab, setTab] = useState(0);
+  const { healthRecords, addHealthRecord, toggleHealthRecord, deleteHealthRecord, horses } = useStore();
+  const [activeCat, setActiveCat] = useState(null); // null = overview, string = category subpage
+  const [modal, setModal] = useState(null); // null or category string
+
+  // Count per category
+  const counts = useMemo(() => {
+    const c = {};
+    HEALTH_CATS.forEach(([key]) => { c[key] = 0; });
+    healthRecords.forEach(hr => { if (c[hr.category] !== undefined) c[hr.category]++; });
+    return c;
+  }, [healthRecords]);
+
+  // If a category is selected, show its subpage
+  if (activeCat) {
+    const catRecords = healthRecords.filter(hr => hr.category === activeCat);
+    const catMeta = HEALTH_CATS.find(c => c[0] === activeCat);
+    const CatIcon = catMeta ? catMeta[1] : Heart;
+    const catColor = catMeta ? catMeta[2] : C.coral;
+
+    return (
+      <div className="ev-card">
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+          <button onClick={() => setActiveCat(null)} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
+            <ChevronLeft size={22} />
+          </button>
+          <span style={{ width: 44, height: 44, borderRadius: 13, display: "grid", placeItems: "center",
+            background: `${catColor}1f`, color: catColor }}><CatIcon size={22} strokeWidth={2.1} /></span>
+          <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 22, fontWeight: 700 }}>{t[activeCat]}</h2>
+          <button onClick={() => setModal(activeCat)} className="ev-tap" style={{
+            display: "flex", alignItems: "center", gap: 8, border: "none", cursor: "pointer", fontFamily: "inherit",
+            background: catColor, color: "#fff", fontSize: 14, fontWeight: 600, padding: "10px 16px", borderRadius: 13,
+            boxShadow: `0 6px 16px ${catColor}55` }}>
+            <Plus size={18} /> {t.addRecord}
+          </button>
+        </div>
+
+        {catRecords.length === 0 ? (
+          <EmptyHero accent={catColor} icon={<CatIcon size={46} strokeWidth={1.6} />}
+            title={t.noRecords} sub={t.noRecordsSub} cta={t.addRecord} onClick={() => setModal(activeCat)} />
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {catRecords.map(hr => {
+              const horse = horses.find(h => h.id === hr.horse_id);
+              return (
+                <div key={hr.id} style={{
+                  background: C.surface, border: `1px solid ${C.line}`, borderRadius: 18, padding: 16,
+                  display: "flex", alignItems: "flex-start", gap: 14, opacity: hr.completed ? 0.7 : 1
+                }}>
+                  <button onClick={() => toggleHealthRecord(hr.id)} className="ev-tap" style={{
+                    width: 28, height: 28, borderRadius: 9, border: `1.5px solid ${hr.completed ? C.mint : C.line}`,
+                    background: hr.completed ? C.mintSoft : "transparent", cursor: "pointer",
+                    display: "grid", placeItems: "center", color: C.mint, padding: 0, flexShrink: 0, marginTop: 2
+                  }}>
+                    {hr.completed && <Check size={18} strokeWidth={3} />}
+                  </button>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: hr.completed ? C.sub : C.ink,
+                      textDecoration: hr.completed ? "line-through" : "none" }}>
+                      {horse ? horse.name : t[activeCat]}
+                    </div>
+                    <div style={{ fontSize: 12, color: C.sub, marginTop: 4, display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+                      <span>📅 {hr.scheduled_date?.slice(0, 10)}</span>
+                      {hr.performed_by && <span>👤 {hr.performed_by}</span>}
+                      {hr.cost && <span>💰 €{Number(hr.cost).toFixed(2)}</span>}
+                    </div>
+                    {hr.notes && (
+                      <div style={{ fontSize: 13, background: C.field, padding: "8px 12px", borderRadius: 10, marginTop: 8, color: C.ink }}>
+                        {hr.notes}
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={() => deleteHealthRecord(hr.id)} className="ev-tap" style={{
+                    border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
+                    <Trash2 size={17} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {modal && <HealthModal t={t} category={modal} horses={horses}
+          onClose={() => setModal(null)}
+          onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />}
+      </div>
+    );
+  }
+
+  // Overview with clickable category cards
   return (
     <div className="ev-card">
-      <Tabs tabs={[t.planned, t.history]} active={tab} onChange={setTab} />
-      <div style={{ background: C.surface, borderRadius: 18, border: `1px solid ${C.line}`, padding: 18, marginBottom: 16 }}>
-        <div className="ev-display" style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>
-          {cap(t.months[4])} <span style={{ color: C.sub }}>2026</span>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 4, textAlign: "center" }}>
-          {t.weekdays.map((d) => (
-            <div key={d} style={{ fontSize: 12, color: C.sub, fontWeight: 600, padding: "4px 0" }}>{d}</div>
-          ))}
-          {[18,19,20,21,22,23,24].map((n) => (
-            <div key={n} style={{ padding: "8px 0", fontSize: 15, fontWeight: 600, color: n === 19 ? "#fff" : C.ink }}>
-              <span style={{ display: "inline-grid", placeItems: "center", width: 34, height: 34, borderRadius: "50%",
-                background: n === 19 ? C.mint : "transparent" }}>{n}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ color: C.sub, fontStyle: "italic", marginTop: 12, fontSize: 14 }}>{t.nothingPlanned}</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+        <h2 className="ev-display" style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>{t.careOverview}</h2>
+        <button onClick={() => setModal("appointments")} className="ev-tap" style={{
+          display: "flex", alignItems: "center", gap: 8, border: "none", cursor: "pointer", fontFamily: "inherit",
+          background: C.coral, color: "#fff", fontSize: 14, fontWeight: 600, padding: "10px 16px", borderRadius: 13,
+          boxShadow: `0 6px 16px ${C.coral}55` }}>
+          <Plus size={18} /> {t.addRecord}
+        </button>
       </div>
-      <h3 className="ev-display" style={{ fontSize: 19, fontWeight: 700, margin: "20px 4px 12px" }}>{t.careOverview}</h3>
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 12 }}>
         {HEALTH_CATS.map(([key, Icon, color]) => (
-          <button key={key} className="ev-tap" style={{
+          <button key={key} onClick={() => setActiveCat(key)} className="ev-tap" style={{
             display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-start",
             background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: 16,
             cursor: "pointer", textAlign: "left", fontFamily: "inherit",
+            transition: "border-color .15s, box-shadow .15s",
           }}>
             <span style={{ width: 44, height: 44, borderRadius: 13, display: "grid", placeItems: "center",
               background: `${color}1f`, color }}><Icon size={22} strokeWidth={2.1} /></span>
             <span style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{t[key]}</span>
-            <span style={{ fontSize: 13, color: C.sub }}>0</span>
+            <span style={{ fontSize: 22, fontWeight: 700, color: counts[key] > 0 ? color : C.sub }}>{counts[key]}</span>
           </button>
         ))}
       </div>
+
+      {modal && <HealthModal t={t} category={modal} horses={horses}
+        onClose={() => setModal(null)}
+        onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />}
     </div>
+  );
+}
+
+function HealthModal({ t, category, horses, onClose, onSave }) {
+  const [f, setF] = useState({ horse_id: "", scheduled_date: "", notes: "", performed_by: "", cost: "", category });
+  const [err, setErr] = useState(false);
+  const [catSel, setCatSel] = useState(category);
+
+  const save = () => {
+    if (!f.horse_id || !f.scheduled_date) { setErr(true); return; }
+    onSave({ ...f, category: catSel, cost: f.cost ? parseFloat(f.cost) : null });
+  };
+
+  return (
+    <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<Heart size={22} />} title={t.addRecord}>
+      {/* Category pills */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+        {HEALTH_CATS.map(([key, , color]) => (
+          <button key={key} type="button" onClick={() => setCatSel(key)} className="ev-tap"
+            style={{
+              padding: "8px 14px", borderRadius: 16, border: `1px solid ${catSel === key ? color : C.line}`,
+              background: catSel === key ? color : C.field,
+              color: catSel === key ? "#fff" : C.sub,
+              fontSize: 12, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+            }}>
+            {t[key]}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.selectHorse} required>
+          <select value={f.horse_id} onChange={(e) => { setF({...f, horse_id: e.target.value}); setErr(false); }}
+            style={inputStyle(err && !f.horse_id)}>
+            <option value="">{t.selectHorse}...</option>
+            {horses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+          </select>
+        </Field>
+        <Field label={t.recordDate} required>
+          <input type="date" value={f.scheduled_date} onChange={(e) => { setF({...f, scheduled_date: e.target.value}); setErr(false); }}
+            style={inputStyle(err && !f.scheduled_date)} />
+        </Field>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.performedBy}>
+          <input value={f.performed_by} onChange={(e) => setF({...f, performed_by: e.target.value})}
+            placeholder={t.performedBy} style={inputStyle()} />
+        </Field>
+        <Field label={t.cost}>
+          <input type="number" step="0.01" value={f.cost} onChange={(e) => setF({...f, cost: e.target.value})}
+            placeholder="0.00" style={inputStyle()} />
+        </Field>
+      </div>
+
+      <Field label={t.recordNotes}>
+        <textarea value={f.notes} onChange={(e) => setF({...f, notes: e.target.value})}
+          rows={2} style={{ ...inputStyle(), resize: "none" }} placeholder={t.notesHint} />
+      </Field>
+
+      {err && <div style={{ color: C.coral, fontSize: 13, marginBottom: 10 }}>{t.selectHorse} & {t.recordDate} {t.required}</div>}
+
+      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.add} saveIcon={<Plus size={20} />} />
+    </ModalShell>
   );
 }
 
