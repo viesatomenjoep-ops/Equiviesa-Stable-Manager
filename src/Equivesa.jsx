@@ -57,7 +57,7 @@ const I18N = {
     fWhen: "Wanneer", fCategory: "Categorie", fWho: "Wie", fReference: "Referentie",
     fDescription: "Omschrijving", fAttachments: "Bijlagen", fHorse: "Paard", upload: "Uploaden",
     fAmountLabel: "Bedrag (€)", chooseType: "Wat wil je toevoegen?",
-    chooseFile: "Bestand kiezen", noFileChosen: "Geen bestand gekozen",
+    chooseFile: "Bestand kiezen", noFileChosen: "Geen bestand gekozen", viewFile: "Bekijken", downloadFile: "Downloaden",
     catConcours: "Concours", catSold: "Verkocht", catBoard: "Pension", catVet: "Dierenarts",
     catFarrier: "Hoefsmid", catFeed: "Voer", catOther: "Overig",
     noContact: "Geen contact", allHorses: "Algemeen (geen paard)", thisMonth: "Deze maand",
@@ -145,7 +145,7 @@ const I18N = {
     fWhen: "When", fCategory: "Category", fWho: "Who", fReference: "Reference",
     fDescription: "Description", fAttachments: "Attachments", fHorse: "Horse", upload: "Upload",
     fAmountLabel: "Amount (€)", chooseType: "What do you want to add?",
-    chooseFile: "Choose file", noFileChosen: "No file chosen",
+    chooseFile: "Choose file", noFileChosen: "No file chosen", viewFile: "View", downloadFile: "Download",
     catConcours: "Competition", catSold: "Sold", catBoard: "Boarding", catVet: "Vet",
     catFarrier: "Farrier", catFeed: "Feed", catOther: "Other",
     noContact: "No contact", allHorses: "General (no horse)", thisMonth: "This month",
@@ -230,7 +230,7 @@ const I18N = {
     fWhen: "Cuándo", fCategory: "Categoría", fWho: "Quién", fReference: "Referencia",
     fDescription: "Descripción", fAttachments: "Adjuntos", fHorse: "Caballo", upload: "Subir",
     fAmountLabel: "Importe (€)", chooseType: "¿Qué quieres añadir?",
-    chooseFile: "Elegir archivo", noFileChosen: "Ningún archivo elegido",
+    chooseFile: "Elegir archivo", noFileChosen: "Ningún archivo elegido", viewFile: "Ver", downloadFile: "Descargar",
     catConcours: "Concurso", catSold: "Vendido", catBoard: "Pensión", catVet: "Veterinario",
     catFarrier: "Herrador", catFeed: "Pienso", catOther: "Otro",
     noContact: "Sin contacto", allHorses: "General (sin caballo)", thisMonth: "Este mes",
@@ -559,6 +559,14 @@ function StoreProvider({ children }) {
 }
 
 /* ============================================================ */
+function getDownloadUrl(url) {
+  if (!url) return "";
+  if (url.includes("/upload/")) {
+    return url.replace("/upload/", "/upload/fl_attachment/");
+  }
+  return url;
+}
+
 export default function Equivesa() {
   return (
     <StoreProvider>
@@ -1903,7 +1911,34 @@ function TxnModal({ type, t, onClose }) {
   const accent = inc ? C.mint : C.coral;
   const [step, setStep] = useState(1);
   const today = "06/02/2026";
-  const [f, setF] = useState({ when: today, category: "", who: "", reference: "", description: "", amount: "", horseId: "" });
+  const [f, setF] = useState({ when: today, category: "", who: "", reference: "", description: "", amount: "", horseId: "", attachment_url: "" });
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "equivesa_uploads");
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "daj1lyfgk";
+
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        setF(prev => ({ ...prev, attachment_url: data.secure_url }));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  };
   const [err, setErr] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
@@ -1989,11 +2024,24 @@ function TxnModal({ type, t, onClose }) {
               <div style={{ textAlign: "right", fontSize: 12, color: C.sub, marginTop: 4 }}>{f.description.length} / 255</div>
             </Field>
             <Field label={t.fAttachments}>
-              <button className="ev-tap" style={{ display: "flex", alignItems: "center", gap: 8, border: `1px dashed ${C.line}`,
-                background: C.field, borderRadius: 12, padding: "12px 16px", cursor: "pointer", color: C.sky,
-                fontFamily: "inherit", fontSize: 15, fontWeight: 600, width: "100%" }}>
-                <Paperclip size={18} /> {t.upload}
-              </button>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <label className="ev-tap" style={{ display: "flex", alignItems: "center", gap: 8, border: `1px dashed ${C.line}`,
+                  background: C.field, borderRadius: 12, padding: "12px 16px", cursor: "pointer", color: C.sky,
+                  fontFamily: "inherit", fontSize: 15, fontWeight: 600, width: "100%" }}>
+                  <Paperclip size={18} />
+                  <span style={{ color: f.attachment_url ? C.ink : C.sky, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {f.attachment_url ? (f.attachment_url.split('/').pop().substring(0, 20) + "...") : t.upload}
+                  </span>
+                  <input type="file" onChange={handleUpload} accept="*/*" style={{ display: "none" }} />
+                </label>
+                {uploading && <span style={{ fontSize: 14, color: C.sub, fontWeight: 600 }}>Uploading...</span>}
+                {f.attachment_url && !uploading && (
+                  <div style={{ display: "flex", gap: 16 }}>
+                    <a href={f.attachment_url} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: accent, fontWeight: 700, textDecoration: "none" }}>{t.viewFile}</a>
+                    <a href={getDownloadUrl(f.attachment_url)} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: C.sub, fontWeight: 700, textDecoration: "none" }}>{t.downloadFile}</a>
+                  </div>
+                )}
+              </div>
             </Field>
           </div>
         ) : (
@@ -2507,7 +2555,12 @@ function GenericModuleScreen({ t, active }) {
                     <input type="file" onChange={(e) => handleUpload(e, field.n)} accept="*/*" style={{ display: "none" }} />
                   </label>
                   {uploadingField === field.n && <span style={{ fontSize: 14, color: C.sub, fontWeight: 600 }}>Uploading...</span>}
-                  {f[field.n] && !uploadingField && <a href={f[field.n]} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: color, fontWeight: 700 }}>View Uploaded File</a>}
+                  {f[field.n] && !uploadingField && (
+                    <div style={{ display: "flex", gap: 16 }}>
+                      <a href={f[field.n]} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: color, fontWeight: 700, textDecoration: "none" }}>{t.viewFile}</a>
+                      <a href={getDownloadUrl(f[field.n])} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: C.sub, fontWeight: 700, textDecoration: "none" }}>{t.downloadFile}</a>
+                    </div>
+                  )}
                 </div>
               ) : field.t === "textarea" || field.n === "notes" || field.n === "description" ? (
                 <textarea value={f[field.n] || ""} onChange={(e) => setF({...f, [field.n]: e.target.value})} style={{ ...inputStyle(err && field.r && !f[field.n]), minHeight: 120, resize: "vertical" }} />
