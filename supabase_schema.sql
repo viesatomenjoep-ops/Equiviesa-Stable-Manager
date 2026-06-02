@@ -1,15 +1,13 @@
 -- ==========================================
 -- EQUIVESA - Supabase Database Schema
--- SAFE MIGRATION: uses IF NOT EXISTS everywhere
--- Run this on an existing or fresh database
 -- ==========================================
 
+-- Enable UUID extension
 create extension if not exists "uuid-ossp";
 
--- ============================================================
--- 1. PROFILES
--- ============================================================
-create table if not exists public.profiles (
+-- 1. PROFILES / USERS
+-- Links to Supabase Auth metadata for users, handles authorization roles and permissions
+create table public.profiles (
     id uuid references auth.users on delete cascade primary key,
     created_at timestamptz default now() not null,
     name text not null,
@@ -18,448 +16,227 @@ create table if not exists public.profiles (
     perms text[] default '{}'::text[] not null,
     avatar_url text
 );
+
+-- Enable RLS for profiles
 alter table public.profiles enable row level security;
 
--- ============================================================
 -- 2. HORSES
--- ============================================================
-create table if not exists public.horses (
+-- Core table representing horses. Includes lineage (sire/dam) and Cloudinary photo links
+create table public.horses (
     id uuid default gen_random_uuid() primary key,
     created_at timestamptz default now() not null,
     name text not null,
     studbook text,
-    sex text,
+    sex text check (sex in ('sexMare', 'sexStallion', 'sexGelding')),
     color text,
     birthdate date,
-    ueln text,
-    chip text,
-    feiid text,
-    location text,
+    ueln text unique,
+    chip text unique,
+    feiid text unique,
+    location text, -- Linked to location string or optional reference
     tint text not null default '#2FB6A0',
     archived boolean not null default false,
-    photo_url text,
+    photo_url text, -- Store Cloudinary URL here
+    
+    -- Breeding lineage reference (Self-referential relations)
     sire_id uuid references public.horses(id) on delete set null,
     dam_id uuid references public.horses(id) on delete set null,
-    sire_name text,
-    dam_name text
+    sire_name text, -- fallback text if father is not in database
+    dam_name text   -- fallback text if mother is not in database
 );
--- Add new columns if they don't exist yet (migration-safe)
-alter table public.horses add column if not exists breed text;
-alter table public.horses add column if not exists discipline text;
-alter table public.horses add column if not exists horse_type text;
 
-create index if not exists horses_name_idx on public.horses (name);
-create index if not exists horses_archived_idx on public.horses (archived);
+-- Create indexes for performance on lookups
+create index horses_name_idx on public.horses (name);
+create index horses_archived_idx on public.horses (archived);
+
+-- Enable RLS for horses
 alter table public.horses enable row level security;
 
--- ============================================================
--- 3. FEED SCHEDULES
--- ============================================================
-create table if not exists public.feed_schedules (
+-- 3. FEEDING SCHEDULES (feed)
+-- Stores feeding instructions per day slot (morning, noon, evening, night)
+create table public.feed_schedules (
     id uuid default gen_random_uuid() primary key,
     created_at timestamptz default now() not null,
     horse_id uuid references public.horses(id) on delete cascade not null,
-    slot text not null,
+    slot text not null check (slot in ('morning', 'noon', 'evening', 'night')),
     product text not null,
-    qty text
+    qty text -- e.g. '2 kg', '1 scoop'
 );
-create index if not exists feed_schedules_horse_idx on public.feed_schedules (horse_id);
+
+create index feed_schedules_horse_idx on public.feed_schedules (horse_id);
+
+-- Enable RLS for feed_schedules
 alter table public.feed_schedules enable row level security;
 
--- ============================================================
--- 4. TRANSACTIONS
--- ============================================================
-create table if not exists public.transactions (
+-- 4. TRANSACTIONS (txns / finance)
+-- Income & expenses with optional links to horses and files hosted in Cloudinary
+create table public.transactions (
     id uuid default gen_random_uuid() primary key,
     created_at timestamptz default now() not null,
-    type text not null,
+    type text not null check (type in ('income', 'expense')),
     "when" date not null default current_date,
-    category text not null,
-    who text,
-    reference text,
-    description text,
-    amount numeric(12, 2) not null default 0,
+    category text not null check (category in ('catConcours', 'catSold', 'catBoard', 'catVet', 'catFarrier', 'catFeed', 'catOther')),
+    who text, -- reference to contact name
+    reference text check (char_length(reference) <= 60),
+    description text check (char_length(description) <= 255),
+    amount numeric(12, 2) not null check (amount >= 0),
     horse_id uuid references public.horses(id) on delete set null,
-    attachment_url text,
+    attachment_url text, -- Cloudinary PDF/Image invoice link
     created_by uuid references public.profiles(id) on delete set null
 );
-create index if not exists transactions_horse_idx on public.transactions (horse_id);
-create index if not exists transactions_when_idx on public.transactions ("when");
+
+create index transactions_horse_idx on public.transactions (horse_id);
+create index transactions_when_idx on public.transactions ("when");
+
+-- Enable RLS for transactions
 alter table public.transactions enable row level security;
 
--- ============================================================
 -- 5. TASKS
--- ============================================================
-create table if not exists public.tasks (
+-- General tasks or horse-specific tasks (linked to groom or manager views)
+create table public.tasks (
     id uuid default gen_random_uuid() primary key,
     created_at timestamptz default now() not null,
     title text not null,
     description text,
     due_date date,
+    start_time time, -- e.g. 08:00
+    end_time time,   -- e.g. 10:00
     is_completed boolean not null default false,
-    category text not null default 'general',
+    category text not null check (category in ('horse', 'general')),
     horse_id uuid references public.horses(id) on delete cascade,
     assigned_to uuid references public.profiles(id) on delete set null
 );
-alter table public.tasks add column if not exists start_time time;
-alter table public.tasks add column if not exists end_time time;
 
-create index if not exists tasks_due_date_idx on public.tasks (due_date);
-create index if not exists tasks_is_completed_idx on public.tasks (is_completed);
+create index tasks_due_date_idx on public.tasks (due_date);
+create index tasks_is_completed_idx on public.tasks (is_completed);
+
+-- Enable RLS for tasks
 alter table public.tasks enable row level security;
 
--- ============================================================
--- 6. HEALTH RECORDS
--- ============================================================
-create table if not exists public.health_records (
+-- 6. HEALTH / CARE RECORDS
+-- Tracks veterinary, farrier, vaccinations, dewormings and medications
+create table public.health_records (
     id uuid default gen_random_uuid() primary key,
     created_at timestamptz default now() not null,
     horse_id uuid references public.horses(id) on delete cascade not null,
-    category text not null,
+    category text not null check (category in ('appointments', 'farrier', 'deworming', 'vaccinations', 'generalCare', 'treatments', 'dental', 'medication')),
     scheduled_date date not null,
     completed boolean not null default false,
     notes text,
-    performed_by text,
-    cost numeric(12, 2),
-    transaction_id uuid references public.transactions(id) on delete set null
+    performed_by text, -- name of vet/farrier/groom
+    cost numeric(12, 2), -- optional reference cost
+    transaction_id uuid references public.transactions(id) on delete set null -- links to finance txn if paid
 );
-create index if not exists health_records_horse_category_idx on public.health_records (horse_id, category);
+
+create index health_records_horse_category_idx on public.health_records (horse_id, category);
+
+-- Enable RLS for health_records
 alter table public.health_records enable row level security;
 
--- ============================================================
 -- 7. DOCUMENTS
--- ============================================================
-create table if not exists public.documents (
+-- General documents library (Horse passports, certificates, contracts, vet papers)
+create table public.documents (
     id uuid default gen_random_uuid() primary key,
     created_at timestamptz default now() not null,
     name text not null,
-    url text not null,
-    file_type text,
+    url text not null, -- Cloudinary Document Link
+    file_type text, -- pdf, docx, jpeg
     horse_id uuid references public.horses(id) on delete cascade,
     uploaded_by uuid references public.profiles(id) on delete set null
 );
-alter table public.documents add column if not exists category text default 'other';
-alter table public.documents add column if not exists description text;
-alter table public.documents add column if not exists file_size integer;
 
-create index if not exists documents_horse_idx on public.documents (horse_id);
-create index if not exists documents_category_idx on public.documents (category);
+-- Enable RLS for documents
 alter table public.documents enable row level security;
 
--- ============================================================
--- 8. MARES BREEDING
--- ============================================================
-create table if not exists public.mares_breeding (
+-- 8. MARES BREEDING TRACKING
+-- Tracks breeding cycles and statuses of Mares in the breeding module
+create table public.mares_breeding (
     id uuid default gen_random_uuid() primary key,
     created_at timestamptz default now() not null,
     mare_id uuid references public.horses(id) on delete cascade not null,
     stallion_name text not null,
     service_date date,
     expected_foal_date date,
-    status text not null default 'inseminated',
+    status text not null check (status in ('inseminated', 'confirmed_pregnant', 'empty', 'aborted', 'foaled')),
     notes text
 );
-alter table public.mares_breeding add column if not exists stallion_studbook text;
-alter table public.mares_breeding add column if not exists service_type text;
-alter table public.mares_breeding add column if not exists scan_dates text[];
-alter table public.mares_breeding add column if not exists last_scan_result text;
-alter table public.mares_breeding add column if not exists vet_name text;
-alter table public.mares_breeding add column if not exists photo_urls text[];
-alter table public.mares_breeding add column if not exists passport_url text;
-alter table public.mares_breeding add column if not exists cost numeric(12, 2);
 
-create index if not exists mares_breeding_mare_idx on public.mares_breeding (mare_id);
+-- Enable RLS for mares_breeding
 alter table public.mares_breeding enable row level security;
 
--- ============================================================
 -- 9. EMBRYOS
--- ============================================================
-create table if not exists public.embryos (
+-- Advanced breeding: tracks flushed/frozen/transferred embryos
+create table public.embryos (
     id uuid default gen_random_uuid() primary key,
     created_at timestamptz default now() not null,
     donor_mare_id uuid references public.horses(id) on delete cascade not null,
     stallion_name text not null,
     flush_date date not null,
     recipient_mare_id uuid references public.horses(id) on delete set null,
-    status text not null default 'frozen',
+    status text not null check (status in ('frozen', 'transferred', 'pregnant', 'failed')),
     notes text
 );
-alter table public.embryos add column if not exists stallion_studbook text;
-alter table public.embryos add column if not exists grade text;
-alter table public.embryos add column if not exists recipient_mare_name text;
-alter table public.embryos add column if not exists transfer_date date;
-alter table public.embryos add column if not exists storage_location text;
-alter table public.embryos add column if not exists storage_tank text;
-alter table public.embryos add column if not exists straw_number text;
-alter table public.embryos add column if not exists vet_name text;
-alter table public.embryos add column if not exists cost numeric(12, 2);
-alter table public.embryos add column if not exists photo_urls text[];
 
-create index if not exists embryos_donor_idx on public.embryos (donor_mare_id);
+-- Enable RLS for embryos
 alter table public.embryos enable row level security;
 
--- ============================================================
--- 9b. FOALS
--- ============================================================
-create table if not exists public.foals (
-    id uuid default gen_random_uuid() primary key,
-    created_at timestamptz default now() not null,
-    name text not null,
-    dam_id uuid references public.horses(id) on delete set null,
-    sire_name text,
-    birth_date date not null,
-    birth_time time,
-    sex text,
-    color text,
-    markings text,
-    birth_weight text,
-    birth_type text,
-    placenta_passed boolean,
-    vet_present boolean default false,
-    vet_name text,
-    igg_tested boolean default false,
-    igg_result text,
-    microchip text,
-    passport_number text,
-    registration_number text,
-    studbook text,
-    weaning_date date,
-    status text not null default 'healthy',
-    photo_urls text[],
-    passport_url text,
-    notes text
-);
-create index if not exists foals_dam_idx on public.foals (dam_id);
-create index if not exists foals_birth_idx on public.foals (birth_date);
-alter table public.foals enable row level security;
-
--- ============================================================
--- 10. LOCATIONS
--- ============================================================
-create table if not exists public.locations (
-    id uuid default gen_random_uuid() primary key,
-    created_at timestamptz default now() not null,
-    name text not null,
-    location_type text not null default 'stable',
-    address text,
-    city text,
-    province text,
-    country text,
-    continent text,
-    postal_code text,
-    latitude numeric(10, 7),
-    longitude numeric(10, 7),
-    photo_url text,
-    notes text,
-    capacity integer
-);
-alter table public.locations enable row level security;
-
--- ============================================================
--- 11. CONTACTS
--- ============================================================
-create table if not exists public.contacts (
+-- 10. CONTACTS / CLIENTS
+-- Stable contacts: owners, clients, veterinarians, farriers, riders
+create table public.contacts (
     id uuid default gen_random_uuid() primary key,
     created_at timestamptz default now() not null,
     name text not null,
     email text,
     phone text,
-    role text not null default 'other',
+    role text not null check (role in ('owner', 'client', 'vet', 'farrier', 'rider', 'supplier', 'other')),
     notes text
 );
-alter table public.contacts add column if not exists company text;
-alter table public.contacts add column if not exists address text;
-alter table public.contacts add column if not exists city text;
-alter table public.contacts add column if not exists country text;
-alter table public.contacts add column if not exists website text;
 
+-- Enable RLS for contacts
 alter table public.contacts enable row level security;
 
--- ============================================================
--- 12. SUPPLIES NEEDED
--- ============================================================
-create table if not exists public.supplies_needed (
+-- 11. STABLE SUPPLIES / SHOPPING LIST
+-- Tracks supplies needed by grooms (bedding, feed, tools, medical supplies)
+create table public.supplies_needed (
     id uuid default gen_random_uuid() primary key,
     created_at timestamptz default now() not null,
     item_name text not null,
-    quantity text,
-    requested_by text,
-    status text not null default 'pending',
+    quantity text, -- e.g. "5 bags", "2 bottles"
+    requested_by text, -- name of the groom (e.g. Kyara, Christina)
+    status text not null default 'pending' check (status in ('pending', 'purchased')),
     notes text,
     completed_at timestamptz,
     completed_by uuid references public.profiles(id) on delete set null
 );
+
+-- Enable RLS for supplies_needed
 alter table public.supplies_needed enable row level security;
 
--- ============================================================
--- 13. CLIENTS
--- ============================================================
-create table if not exists public.clients (
-    id uuid default gen_random_uuid() primary key,
-    created_at timestamptz default now() not null,
-    name text not null,
-    company text,
-    email text,
-    phone text,
-    client_type text not null default 'other',
-    address text,
-    city text,
-    country text,
-    billing_email text,
-    vat_number text,
-    horse_ids text[],
-    notes text,
-    active boolean not null default true
-);
-create index if not exists clients_type_idx on public.clients (client_type);
-alter table public.clients enable row level security;
 
 -- ============================================================
--- 14. BOOKINGS
+-- Row-Level Security (RLS) Basic Policies
+-- (Allows reading and writing to authenticated users of the app)
 -- ============================================================
-create table if not exists public.bookings (
-    id uuid default gen_random_uuid() primary key,
-    created_at timestamptz default now() not null,
-    title text not null,
-    booking_type text not null default 'other',
-    booking_date date not null,
-    start_time time,
-    end_time time,
-    horse_id uuid references public.horses(id) on delete set null,
-    client_id uuid references public.clients(id) on delete set null,
-    contact_id uuid references public.contacts(id) on delete set null,
-    status text not null default 'pending',
-    recurring boolean not null default false,
-    recurrence_rule text,
-    location text,
-    price numeric(12, 2),
-    notes text,
-    calendar_url text
-);
-create index if not exists bookings_date_idx on public.bookings (booking_date);
-create index if not exists bookings_type_idx on public.bookings (booking_type);
-create index if not exists bookings_status_idx on public.bookings (status);
-alter table public.bookings enable row level security;
 
--- ============================================================
--- 15. COMPANY SETTINGS
--- ============================================================
-create table if not exists public.company_settings (
-    id uuid default gen_random_uuid() primary key,
-    company_name text not null default 'Equiviesa Stable',
-    address text,
-    city text,
-    country text,
-    postal_code text,
-    phone text,
-    email text,
-    website text,
-    vat_number text,
-    chamber_of_commerce text,
-    iban text,
-    bank_name text,
-    logo_url text,
-    invoice_prefix text default 'INV',
-    invoice_next_number integer default 1,
-    currency text default 'EUR',
-    tax_rate numeric(5, 2) default 21.00,
-    payment_terms text default 'Net 30',
-    footer_text text
-);
-alter table public.company_settings enable row level security;
-
--- ============================================================
--- 16. INVOICES
--- ============================================================
-create table if not exists public.invoices (
-    id uuid default gen_random_uuid() primary key,
-    created_at timestamptz default now() not null,
-    invoice_number text not null unique,
-    client_id uuid references public.clients(id) on delete set null,
-    client_name text not null,
-    client_email text,
-    client_address text,
-    client_vat text,
-    invoice_date date not null default current_date,
-    due_date date not null,
-    status text not null default 'draft',
-    line_items jsonb not null default '[]'::jsonb,
-    subtotal numeric(12, 2) not null default 0,
-    tax_rate numeric(5, 2) not null default 21.00,
-    tax_amount numeric(12, 2) not null default 0,
-    total numeric(12, 2) not null default 0,
-    notes text,
-    payment_date date,
-    payment_method text,
-    pdf_url text,
-    horse_id uuid references public.horses(id) on delete set null,
-    created_by uuid references public.profiles(id) on delete set null
-);
-create index if not exists invoices_status_idx on public.invoices (status);
-create index if not exists invoices_client_idx on public.invoices (client_id);
-create index if not exists invoices_date_idx on public.invoices (invoice_date);
-alter table public.invoices enable row level security;
-
--- ============================================================
--- 17. CATALOG
--- ============================================================
-create table if not exists public.catalog (
-    id uuid default gen_random_uuid() primary key,
-    created_at timestamptz default now() not null,
-    horse_id uuid references public.horses(id) on delete cascade not null,
-    title text not null,
-    listing_type text not null default 'for_sale',
-    price numeric(12, 2),
-    price_on_request boolean not null default false,
-    currency text default 'EUR',
-    description text,
-    highlights text,
-    level text,
-    achievements text,
-    vet_checked boolean not null default false,
-    xray_available boolean not null default false,
-    video_urls text[],
-    photo_urls text[],
-    contact_name text,
-    contact_phone text,
-    contact_email text,
-    location text,
-    status text not null default 'active',
-    featured boolean not null default false,
-    views_count integer default 0,
-    published_at timestamptz
-);
-create index if not exists catalog_status_idx on public.catalog (status);
-create index if not exists catalog_horse_idx on public.catalog (horse_id);
-create index if not exists catalog_type_idx on public.catalog (listing_type);
-alter table public.catalog enable row level security;
+-- Simple policy for authenticated users: they can do all actions (CRUD) on all tables.
+create policy "Allow authenticated CRUD" on public.profiles for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.horses for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.feed_schedules for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.transactions for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.tasks for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.health_records for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.documents for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.mares_breeding for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.embryos for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.contacts for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.supplies_needed for all using (auth.role() = 'authenticated');
 
 
 -- ============================================================
--- RLS POLICIES (drop + recreate to avoid duplicates)
+-- Triggers for Automatic User Profile Creation
 -- ============================================================
-do $$
-declare
-  tbl text;
-begin
-  for tbl in
-    select unnest(array[
-      'profiles','horses','feed_schedules','transactions','tasks',
-      'health_records','documents','mares_breeding','embryos','foals',
-      'contacts','supplies_needed','locations','clients','bookings',
-      'company_settings','invoices','catalog'
-    ])
-  loop
-    execute format('drop policy if exists "Allow authenticated CRUD" on public.%I', tbl);
-    execute format('create policy "Allow authenticated CRUD" on public.%I for all using (auth.role() = ''authenticated'')', tbl);
-  end loop;
-end;
-$$;
 
-
--- ============================================================
--- TRIGGER: auto-create profile on signup
--- ============================================================
+-- Function to handle new registered users in Supabase Auth
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
@@ -468,14 +245,14 @@ begin
     new.id,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
     new.email,
-    'roleStaff',
-    array['permHorses', 'permCalendar', 'permTasks', 'permFeeding']::text[]
+    'roleStaff', -- default role
+    array['permHorses', 'permCalendar', 'permTasks', 'permFeeding']::text[] -- default basic permissions
   );
   return new;
 end;
 $$ language plpgsql security definer;
 
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
+-- Trigger to execute when a user signs up
+create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();

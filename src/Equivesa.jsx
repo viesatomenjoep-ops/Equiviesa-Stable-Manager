@@ -1,9 +1,9 @@
 import React, { useState, useMemo, createContext, useContext } from "react";
 import {
   Menu, X, Bell, Plus, Search, ChevronRight, ChevronLeft, Check,
-  Home, Calendar, CalendarDays, CheckSquare, Heart, Carrot, MapPin, Contact,
+  Home, Calendar, CheckSquare, Heart, Carrot, MapPin, Contact,
   FileText, Users, Settings, HelpCircle, Receipt, BookOpen,
-  Package, Baby, ShoppingCart, Sparkles, Trash2, Camera, MoreHorizontal, Globe, Wallet, ArrowUpRight, ArrowDownRight, Paperclip, ChevronDown, LogOut, Download, Upload
+  Package, Baby, ShoppingCart, Sparkles, Trash2, Camera, MoreHorizontal, Globe, Wallet, ArrowUpRight, ArrowDownRight, Paperclip, ChevronDown, LogOut
 } from "lucide-react";
 import { supabase } from "./supabaseClient";
 
@@ -102,6 +102,7 @@ const I18N = {
     prevMonth: "Vorige maand", nextMonth: "Volgende maand",
     selectHorse: "Selecteer paard", allCats: "Alle categorieën",
     taskCommon: ["Stal uitmesten", "Paddock", "Longeren", "Poetsen", "Hooi vullen", "Watercheck", "Weide maaien"],
+    timeStart: "Starttijd", timeEnd: "Eindtijd",
   },
   en: {
     code: "EN",
@@ -185,6 +186,7 @@ const I18N = {
     prevMonth: "Previous month", nextMonth: "Next month",
     selectHorse: "Select horse", allCats: "All categories",
     taskCommon: ["Muck out", "Paddock", "Lunging", "Grooming", "Fill hay", "Water check", "Mow pasture"],
+    timeStart: "Start time", timeEnd: "End time",
   },
   es: {
     code: "ES",
@@ -268,6 +270,7 @@ const I18N = {
     prevMonth: "Mes anterior", nextMonth: "Mes siguiente",
     selectHorse: "Seleccionar caballo", allCats: "Todas las categorías",
     taskCommon: ["Limpiar cuadra", "Paddock", "Cuerda", "Cepillar", "Llenar heno", "Revisar agua", "Cortar pasto"],
+    timeStart: "Hora inicio", timeEnd: "Hora fin",
   },
 };
 
@@ -384,12 +387,20 @@ function StoreProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const cleanObj = (obj) => {
+    const o = { ...obj };
+    Object.keys(o).forEach(k => { if (o[k] === "") o[k] = null; });
+    return o;
+  };
+
   const fetchHorses = async () => {
     const { data } = await supabase.from('horses').select('*').order('created_at', { ascending: false });
     if (data) setHorses(data.map(h => ({...h, tint: h.tint || HORSE_TINTS[Math.floor(Math.random() * HORSE_TINTS.length)]})));
   };
   const addHorse = async (h) => {
-    const { data } = await supabase.from('horses').insert([{...h, tint: HORSE_TINTS[horses.length % HORSE_TINTS.length]}]).select();
+    const cleanH = cleanObj({ ...h, tint: HORSE_TINTS[horses.length % HORSE_TINTS.length] });
+    const { data, error } = await supabase.from('horses').insert([cleanH]).select();
+    if (error) console.error("Error adding horse:", error);
     if (data) setHorses(prev => [data[0], ...prev]);
   };
   const deleteHorse = async (id) => {
@@ -402,7 +413,8 @@ function StoreProvider({ children }) {
     if (data) setTxns(data);
   };
   const addTxn = async (tx) => {
-    const { data } = await supabase.from('transactions').insert([tx]).select();
+    const { data, error } = await supabase.from('transactions').insert([cleanObj(tx)]).select();
+    if (error) console.error("Error adding txn:", error);
     if (data) setTxns(prev => [data[0], ...prev]);
   };
   const deleteTxn = async (id) => {
@@ -415,7 +427,8 @@ function StoreProvider({ children }) {
     if (data) setUsers(data);
   };
   const addUser = async (u) => {
-    const { data } = await supabase.from('profiles').insert([u]).select();
+    const { data, error } = await supabase.from('profiles').insert([cleanObj(u)]).select();
+    if (error) console.error("Error adding user:", error);
     if (data) setUsers(prev => [data[0], ...prev]);
   };
   const deleteUser = async (id) => {
@@ -428,7 +441,8 @@ function StoreProvider({ children }) {
     if (data) setSupplies(data);
   };
   const addSupply = async (item) => {
-    const { data } = await supabase.from('supplies_needed').insert([{...item, status: 'pending'}]).select();
+    const { data, error } = await supabase.from('supplies_needed').insert([cleanObj({...item, status: 'pending'})]).select();
+    if (error) console.error("Error adding supply:", error);
     if (data) setSupplies(prev => [data[0], ...prev]);
   };
   const toggleSupplyStatus = async (id) => {
@@ -455,7 +469,8 @@ function StoreProvider({ children }) {
     }
   };
   const addFeedItem = async (horseId, slot, item) => {
-    const { data } = await supabase.from('feed_schedules').insert([{ horse_id: horseId, slot, product: item.product, qty: item.qty }]).select();
+    const { data, error } = await supabase.from('feed_schedules').insert([cleanObj({ horse_id: horseId, slot, product: item.product, qty: item.qty })]).select();
+    if (error) console.error("Error adding feed:", error);
     if (data && data[0]) {
       setFeed(prev => {
         const h = prev[horseId] || { morning: [], noon: [], evening: [], night: [] };
@@ -477,7 +492,8 @@ function StoreProvider({ children }) {
     if (data) setTasks(data);
   };
   const addTask = async (task) => {
-    const { data } = await supabase.from('tasks').insert([task]).select();
+    const { data, error } = await supabase.from('tasks').insert([cleanObj(task)]).select();
+    if (error) console.error("Error adding task:", error);
     if (data) setTasks(prev => [data[0], ...prev]);
   };
   const toggleTask = async (id) => {
@@ -498,7 +514,8 @@ function StoreProvider({ children }) {
     if (data) setHealthRecords(data);
   };
   const addHealthRecord = async (rec) => {
-    const { data } = await supabase.from('health_records').insert([rec]).select();
+    const { data, error } = await supabase.from('health_records').insert([cleanObj(rec)]).select();
+    if (error) console.error("Error adding health record:", error);
     if (data) setHealthRecords(prev => [data[0], ...prev]);
   };
   const toggleHealthRecord = async (id) => {
@@ -513,128 +530,12 @@ function StoreProvider({ children }) {
     setHealthRecords(prev => prev.filter(x => x.id !== id));
   };
 
-  /* --- Locations CRUD --- */
-  const [locations, setLocations] = useState([]);
-  const fetchLocations = async () => {
-    const { data } = await supabase.from('locations').select('*').order('name');
-    if (data) setLocations(data);
-  };
-  const addLocation = async (loc) => {
-    const { data } = await supabase.from('locations').insert([loc]).select();
-    if (data) setLocations(prev => [data[0], ...prev]);
-  };
-  const deleteLocation = async (id) => {
-    await supabase.from('locations').delete().eq('id', id);
-    setLocations(prev => prev.filter(x => x.id !== id));
-  };
-
-  /* --- Contacts CRUD --- */
-  const [contacts, setContacts] = useState([]);
-  const fetchContacts = async () => {
-    const { data } = await supabase.from('contacts').select('*').order('name');
-    if (data) setContacts(data);
-  };
-  const addContact = async (c) => {
-    const { data } = await supabase.from('contacts').insert([c]).select();
-    if (data) setContacts(prev => [data[0], ...prev]);
-  };
-  const deleteContact = async (id) => {
-    await supabase.from('contacts').delete().eq('id', id);
-    setContacts(prev => prev.filter(x => x.id !== id));
-  };
-
-  /* --- Documents CRUD --- */
-  const [documents, setDocuments] = useState([]);
-  const fetchDocuments = async () => {
-    const { data } = await supabase.from('documents').select('*').order('created_at', { ascending: false });
-    if (data) setDocuments(data);
-  };
-  const addDocument = async (doc) => {
-    const { data } = await supabase.from('documents').insert([doc]).select();
-    if (data) setDocuments(prev => [data[0], ...prev]);
-  };
-  const deleteDocument = async (id) => {
-    await supabase.from('documents').delete().eq('id', id);
-    setDocuments(prev => prev.filter(x => x.id !== id));
-  };
-
-  // Fetch locations, contacts, documents on auth
-  React.useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) { fetchLocations(); fetchContacts(); fetchDocuments(); fetchClients(); fetchBookings(); fetchInvoices(); fetchCompanySettings(); fetchCatalog(); fetchMares(); fetchEmbryos(); fetchFoals(); }
-    });
-  }, []);
-
-  /* --- Clients CRUD --- */
-  const [clients, setClients] = useState([]);
-  const fetchClients = async () => { const { data } = await supabase.from('clients').select('*').order('name'); if (data) setClients(data); };
-  const addClient = async (c) => { const { data } = await supabase.from('clients').insert([c]).select(); if (data) setClients(p => [data[0], ...p]); };
-  const deleteClient = async (id) => { await supabase.from('clients').delete().eq('id', id); setClients(p => p.filter(x => x.id !== id)); };
-
-  /* --- Bookings CRUD --- */
-  const [bookings, setBookings] = useState([]);
-  const fetchBookings = async () => { const { data } = await supabase.from('bookings').select('*').order('booking_date', { ascending: false }); if (data) setBookings(data); };
-  const addBooking = async (b) => { const { data } = await supabase.from('bookings').insert([b]).select(); if (data) setBookings(p => [data[0], ...p]); };
-  const deleteBooking = async (id) => { await supabase.from('bookings').delete().eq('id', id); setBookings(p => p.filter(x => x.id !== id)); };
-  const updateBooking = async (id, updates) => { const { data } = await supabase.from('bookings').update(updates).eq('id', id).select(); if (data) setBookings(p => p.map(x => x.id === id ? data[0] : x)); };
-
-  /* --- Invoices CRUD --- */
-  const [invoices, setInvoices] = useState([]);
-  const fetchInvoices = async () => { const { data } = await supabase.from('invoices').select('*').order('created_at', { ascending: false }); if (data) setInvoices(data); };
-  const addInvoice = async (inv) => { const { data } = await supabase.from('invoices').insert([inv]).select(); if (data) setInvoices(p => [data[0], ...p]); };
-  const updateInvoice = async (id, updates) => { const { data } = await supabase.from('invoices').update(updates).eq('id', id).select(); if (data) setInvoices(p => p.map(x => x.id === id ? data[0] : x)); };
-  const deleteInvoice = async (id) => { await supabase.from('invoices').delete().eq('id', id); setInvoices(p => p.filter(x => x.id !== id)); };
-
-  /* --- Company Settings --- */
-  const [companySettings, setCompanySettings] = useState(null);
-  const fetchCompanySettings = async () => { const { data } = await supabase.from('company_settings').select('*').limit(1); if (data && data[0]) setCompanySettings(data[0]); };
-  const saveCompanySettings = async (s) => {
-    if (companySettings?.id) { const { data } = await supabase.from('company_settings').update(s).eq('id', companySettings.id).select(); if (data) setCompanySettings(data[0]); }
-    else { const { data } = await supabase.from('company_settings').insert([s]).select(); if (data) setCompanySettings(data[0]); }
-  };
-
-  /* --- Catalog CRUD --- */
-  const [catalog, setCatalog] = useState([]);
-  const fetchCatalog = async () => { const { data } = await supabase.from('catalog').select('*').order('created_at', { ascending: false }); if (data) setCatalog(data); };
-  const addCatalogItem = async (item) => { const { data } = await supabase.from('catalog').insert([item]).select(); if (data) setCatalog(p => [data[0], ...p]); };
-  const updateCatalogItem = async (id, updates) => { const { data } = await supabase.from('catalog').update(updates).eq('id', id).select(); if (data) setCatalog(p => p.map(x => x.id === id ? data[0] : x)); };
-  const deleteCatalogItem = async (id) => { await supabase.from('catalog').delete().eq('id', id); setCatalog(p => p.filter(x => x.id !== id)); };
-
-  /* --- Mares Breeding CRUD --- */
-  const [maresBreeding, setMaresBreeding] = useState([]);
-  const fetchMares = async () => { const { data } = await supabase.from('mares_breeding').select('*').order('created_at', { ascending: false }); if (data) setMaresBreeding(data); };
-  const addMareBreeding = async (m) => { const { data } = await supabase.from('mares_breeding').insert([m]).select(); if (data) setMaresBreeding(p => [data[0], ...p]); };
-  const deleteMareBreeding = async (id) => { await supabase.from('mares_breeding').delete().eq('id', id); setMaresBreeding(p => p.filter(x => x.id !== id)); };
-
-  /* --- Embryos CRUD --- */
-  const [embryos, setEmbryos] = useState([]);
-  const fetchEmbryos = async () => { const { data } = await supabase.from('embryos').select('*').order('created_at', { ascending: false }); if (data) setEmbryos(data); };
-  const addEmbryo = async (e) => { const { data } = await supabase.from('embryos').insert([e]).select(); if (data) setEmbryos(p => [data[0], ...p]); };
-  const deleteEmbryo = async (id) => { await supabase.from('embryos').delete().eq('id', id); setEmbryos(p => p.filter(x => x.id !== id)); };
-
-  /* --- Foals CRUD --- */
-  const [foals, setFoals] = useState([]);
-  const fetchFoals = async () => { const { data } = await supabase.from('foals').select('*').order('birth_date', { ascending: false }); if (data) setFoals(data); };
-  const addFoal = async (f) => { const { data } = await supabase.from('foals').insert([f]).select(); if (data) setFoals(p => [data[0], ...p]); };
-  const deleteFoal = async (id) => { await supabase.from('foals').delete().eq('id', id); setFoals(p => p.filter(x => x.id !== id)); };
-
   return (
     <Store.Provider value={{ horses, addHorse, deleteHorse, txns, addTxn, deleteTxn,
       users, addUser, deleteUser, feed, addFeedItem, deleteFeedItem,
       supplies, addSupply, toggleSupplyStatus, deleteSupply,
       tasks, addTask, toggleTask, deleteTask,
-      healthRecords, addHealthRecord, toggleHealthRecord, deleteHealthRecord,
-      locations, addLocation, deleteLocation,
-      contacts, addContact, deleteContact,
-      documents, addDocument, deleteDocument,
-      clients, addClient, deleteClient,
-      bookings, addBooking, updateBooking, deleteBooking,
-      invoices, addInvoice, updateInvoice, deleteInvoice,
-      companySettings, saveCompanySettings,
-      catalog, addCatalogItem, updateCatalogItem, deleteCatalogItem,
-      maresBreeding, addMareBreeding, deleteMareBreeding,
-      embryos, addEmbryo, deleteEmbryo,
-      foals, addFoal, deleteFoal }}>{children}</Store.Provider>
+      healthRecords, addHealthRecord, toggleHealthRecord, deleteHealthRecord }}>{children}</Store.Provider>
   );
 }
 
@@ -696,11 +597,6 @@ function AppRoot() {
         .ev-card { animation: evUp .4s ease both; }
         @keyframes evUp { from { opacity:0; transform: translateY(12px);} to {opacity:1; transform:none;} }
         @keyframes evFade { from {opacity:0;} to {opacity:1;} }
-        @media (max-width: 520px) {
-          .ev-modal-grid { grid-template-columns: 1fr !important; }
-          .ev-modal-panel { max-height: 100vh !important; border-radius: 0 !important; padding: 18px !important; }
-          .ev-modal-wrap { padding: 0 !important; align-items: flex-end !important; }
-        }
         input, select { font-family: inherit; }
         .ev-scroll::-webkit-scrollbar { width: 0; height: 0; }
       `}</style>
@@ -1103,18 +999,8 @@ function Screen({ active, route, setRoute, t }) {
   if (active === "health") return <div style={wrap}><HealthScreen t={t} /></div>;
   if (active === "finance") return <div style={wrap}><FinanceScreen t={t} /></div>;
   if (active === "users") return <div style={wrap}><UsersScreen t={t} /></div>;
-  if (active === "feeding") return <div style={wrap}><FeedingScreen t={t} setRoute={setRoute} /></div>;
+  if (active === "feeding") return <div style={wrap}><FeedingScreen t={t} /></div>;
   if (active === "supplies") return <div style={wrap}><SuppliesScreen t={t} /></div>;
-  if (active === "locations") return <div style={wrap}><LocationsScreen t={t} /></div>;
-  if (active === "contacts") return <div style={wrap}><ContactsScreen t={t} /></div>;
-  if (active === "documents") return <div style={wrap}><DocumentsScreen t={t} /></div>;
-  if (active === "clients") return <div style={wrap}><ClientsScreen t={t} /></div>;
-  if (active === "bookings") return <div style={wrap}><BookingsScreen t={t} /></div>;
-  if (active === "invoices") return <div style={wrap}><InvoicesScreen t={t} /></div>;
-  if (active === "mares") return <div style={wrap}><MaresScreen t={t} /></div>;
-  if (active === "embryos") return <div style={wrap}><EmbryosScreen t={t} /></div>;
-  if (active === "foals") return <div style={wrap}><FoalsScreen t={t} /></div>;
-  if (active === "catalog") return <div style={wrap}><CatalogScreen t={t} /></div>;
   return <div style={wrap}><PlaceholderScreen t={t} active={active} /></div>;
 }
 
@@ -1204,39 +1090,12 @@ function HorseCard({ h, t, onClick }) {
   );
 }
 
-/* ---------- Horses: add form ---------- */
-const SEX_OPTS = ["sexMare", "sexStallion", "sexGelding"];
-const BREEDS = [
-  "KWPN", "Holsteiner", "Hannoveraner", "Oldenburger", "Selle Français", "BWP", "Westfalen",
-  "Trakehner", "Irish Sport Horse", "Thoroughbred", "Arabian", "Friesian", "Lusitano",
-  "Andalusian (PRE)", "Quarter Horse", "Warmblood", "Welsh Pony", "Haflinger", "Connemara",
-  "Shetland Pony", "New Forest", "Icelandic", "Lipizzaner", "Appaloosa", "Paint Horse",
-  "Morgan", "Clydesdale", "Shire", "Knabstrupper", "Fjord", "Dartmoor Pony", "Other",
-];
-const DISCIPLINES = [
-  "Show Jumping", "Dressage", "Eventing", "Hunter", "Equitation", "Reining", "Western Pleasure",
-  "Endurance", "Driving", "Polo", "Vaulting", "Para-Dressage", "Cross Country", "Show Hack",
-  "Trail Riding", "Pleasure", "Breeding", "Liberty", "Working Equitation", "Mounted Games", "Other",
-];
-const HORSE_TYPES = [
-  "Sport Horse", "Pony", "Warmblood", "Coldblood", "Thoroughbred", "Draft Horse",
-  "Miniature Horse", "Gaited Horse", "Stock Horse", "Baroque Horse", "Other",
-];
-const COLORS_LIST = [
-  "Bay", "Chestnut", "Black", "Grey", "Palomino", "Buckskin", "Dun", "Roan",
-  "Pinto", "Appaloosa", "Cremello", "Dapple Grey", "Liver Chestnut", "Dark Bay",
-  "Flaxen", "Tobiano", "Overo", "Sabino", "Other",
-];
-
+const HORSE_COLORS = ["Bay", "Black", "Chestnut", "Grey", "Roan", "Palomino"];
 function HorseForm({ t, onDone }) {
   const { addHorse } = useStore();
-  const [f, setF] = useState({
-    name: "", studbook: "", sex: "", color: "", birthdate: "", ueln: "", chip: "",
-    feiid: "", location: "", photo_url: "", breed: "", discipline: "", horse_type: ""
-  });
+  const [f, setF] = useState({ name: "", studbook: "", sex: "", color: "", birthdate: "", ueln: "", chip: "", feiid: "", location: "", photo_url: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
@@ -1246,12 +1105,22 @@ function HorseForm({ t, onDone }) {
     formData.append("file", file);
     formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "equivesa_uploads");
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "daj1lyfgk";
+
     try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: formData });
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: "POST",
+        body: formData,
+      });
       const data = await res.json();
-      if (data.secure_url) setF(prev => ({ ...prev, photo_url: data.secure_url }));
-    } catch (err) { console.error(err); alert("Upload failed."); }
-    finally { setUploading(false); }
+      if (data.secure_url) {
+        setF(prev => ({ ...prev, photo_url: data.secure_url }));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const submit = () => {
@@ -1261,122 +1130,81 @@ function HorseForm({ t, onDone }) {
   };
 
   return (
-    <div className="ev-card" style={{ maxWidth: 640, margin: "0 auto" }}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-        <button onClick={onDone} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
-          <ChevronLeft size={22} />
-        </button>
-        <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 22, fontWeight: 700 }}>{t.addHorse}</h2>
-      </div>
-
-      {/* Photo upload */}
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
+    <ModalShell t={t} onClose={onDone} accent={C.mint} icon={<Home size={22} />} title={t.addHorse}>
+      {/* photo upload placeholder */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
         <label style={{
-          width: 110, height: 110, borderRadius: "30%", border: `2px dashed ${C.line}`,
-          background: C.field, cursor: "pointer", display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", gap: 6,
-          color: C.sub, overflow: "hidden", position: "relative",
-          transition: "border-color .2s",
+          width: 96, height: 96, borderRadius: "30%", border: `2px dashed ${C.line}`,
+          background: C.field, cursor: "pointer", display: "grid", placeItems: "center",
+          color: C.sub, gap: 4, overflow: "hidden", position: "relative"
         }}>
           {f.photo_url ? (
-            <img src={f.photo_url} alt="Horse" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
+            <img src={f.photo_url} alt="Horse" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : uploading ? (
-            <span style={{ fontSize: 13, fontWeight: 600 }}>Uploading...</span>
+            <span style={{ fontSize: 12 }}>Up...</span>
           ) : (
-            <><Camera size={28} /><span style={{ fontSize: 11, fontWeight: 600 }}>{t.photo}</span></>
+            <Camera size={26} />
           )}
           <input type="file" accept="image/*" onChange={handleUpload} style={{ display: "none" }} />
         </label>
       </div>
 
-      {/* Name - required */}
       <Field label={t.name} required>
-        <input value={f.name} onChange={(e) => { set("name")(e); setErr(false); }}
+        <input value={f.name} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }}
           placeholder={t.name + " *"} style={inputStyle(err)} />
       </Field>
       {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.nameRequired}</div>}
 
+      <Field label={t.sex}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {SEX_OPTS.map((s) => (
+            <button key={s} type="button" onClick={() => setF({...f, sex: s})} className="ev-tap"
+              style={{
+                padding: "8px 14px", borderRadius: 16, border: `1px solid ${f.sex === s ? C.mint : C.line}`,
+                background: f.sex === s ? C.mint : C.field, color: f.sex === s ? "#fff" : C.sub,
+                fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+              }}>
+              {t[s]}
+            </button>
+          ))}
+        </div>
+      </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.birthdate}><input type="date" value={f.birthdate} onChange={(e) => setF({...f, birthdate: e.target.value})} style={inputStyle()} /></Field>
+        <Field label={t.studbook}><input value={f.studbook} onChange={(e) => setF({...f, studbook: e.target.value})} placeholder={t.select} style={inputStyle()} /></Field>
+      </div>
+
+      <Field label={t.color}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+          {HORSE_COLORS.map((c) => (
+            <button key={c} type="button" onClick={() => setF({...f, color: c})} className="ev-tap"
+              style={{
+                padding: "8px 14px", borderRadius: 16, border: `1px solid ${f.color === c ? C.mint : C.line}`,
+                background: f.color === c ? C.mint : C.field, color: f.color === c ? "#fff" : C.sub,
+                fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+              }}>
+              {c}
+            </button>
+          ))}
+        </div>
+        <input value={f.color} onChange={(e) => setF({...f, color: e.target.value})} placeholder={t.color} style={inputStyle()} />
+      </Field>
+
       <Divider label={t.optional} />
 
-      {/* Sex & Type - side by side */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label={t.sex}>
-          <select value={f.sex} onChange={set("sex")} style={{ ...inputStyle(), color: f.sex ? C.ink : C.sub }}>
-            <option value="">{t.select}</option>
-            {SEX_OPTS.map((s) => <option key={s} value={s}>{t[s]}</option>)}
-          </select>
-        </Field>
-        <Field label="Type">
-          <select value={f.horse_type} onChange={set("horse_type")} style={{ ...inputStyle(), color: f.horse_type ? C.ink : C.sub }}>
-            <option value="">{t.select}</option>
-            {HORSE_TYPES.map(b => <option key={b} value={b}>{b}</option>)}
-          </select>
-        </Field>
+        <Field label={t.ueln}><input value={f.ueln} onChange={(e) => setF({...f, ueln: e.target.value})} placeholder="UELN" style={inputStyle()} /></Field>
+        <Field label={t.chip}><input value={f.chip} onChange={(e) => setF({...f, chip: e.target.value})} placeholder={t.chip} style={inputStyle()} /></Field>
       </div>
-
-      {/* Breed & Discipline - side by side */}
+      
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Breed">
-          <select value={f.breed} onChange={set("breed")} style={{ ...inputStyle(), color: f.breed ? C.ink : C.sub }}>
-            <option value="">{t.select}</option>
-            {BREEDS.map(b => <option key={b} value={b}>{b}</option>)}
-          </select>
-        </Field>
-        <Field label="Discipline">
-          <select value={f.discipline} onChange={set("discipline")} style={{ ...inputStyle(), color: f.discipline ? C.ink : C.sub }}>
-            <option value="">{t.select}</option>
-            {DISCIPLINES.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
-        </Field>
+        <Field label={t.feiid}><input value={f.feiid} onChange={(e) => setF({...f, feiid: e.target.value})} placeholder="FEI ID" style={inputStyle()} /></Field>
+        <Field label={t.location}><input value={f.location} onChange={(e) => setF({...f, location: e.target.value})} placeholder={t.select} style={inputStyle()} /></Field>
       </div>
 
-      {/* Color & Studbook - side by side */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label={t.color}>
-          <select value={f.color} onChange={set("color")} style={{ ...inputStyle(), color: f.color ? C.ink : C.sub }}>
-            <option value="">{t.select}</option>
-            {COLORS_LIST.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </Field>
-        <Field label={t.studbook}>
-          <input value={f.studbook} onChange={set("studbook")} placeholder={t.studbook} style={inputStyle()} />
-        </Field>
-      </div>
-
-      {/* Birthdate & Location - side by side */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label={t.birthdate}>
-          <input type="date" value={f.birthdate} onChange={set("birthdate")} style={inputStyle()} />
-        </Field>
-        <Field label={t.location}>
-          <input value={f.location} onChange={set("location")} placeholder={t.location} style={inputStyle()} />
-        </Field>
-      </div>
-
-      <Divider label="ID" />
-
-      {/* UELN & Chip - side by side */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label={t.ueln}><input value={f.ueln} onChange={set("ueln")} placeholder="UELN" style={inputStyle()} /></Field>
-        <Field label={t.chip}><input value={f.chip} onChange={set("chip")} placeholder={t.chip} style={inputStyle()} /></Field>
-      </div>
-      <Field label={t.feiid}><input value={f.feiid} onChange={set("feiid")} placeholder="FEI ID" style={inputStyle()} /></Field>
-
-      {/* Action buttons */}
-      <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
-        <button onClick={onDone} className="ev-tap" style={{
-          flex: 1, padding: "15px", borderRadius: 14, border: `1px solid ${C.line}`,
-          background: C.surface, color: C.ink, fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-        }}>{t.cancel}</button>
-        <button onClick={submit} className="ev-tap" style={{
-          flex: 2, padding: "15px", borderRadius: 14, border: "none",
-          background: C.mint, color: "#fff", fontSize: 16, fontWeight: 600, cursor: "pointer",
-          fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          boxShadow: "0 8px 22px rgba(47,182,160,.4)",
-        }}><Check size={20} /> {t.save}</button>
-      </div>
-    </div>
+      <ModalFooter t={t} onClose={onDone} onSave={submit} accent={C.mint} saveLabel={t.save} saveIcon={<Check size={20} />} />
+    </ModalShell>
   );
 }
 
@@ -1391,11 +1219,9 @@ function Field({ label, required, children }) {
   );
 }
 const inputStyle = (err) => ({
-  width: "100%", padding: "14px 16px", borderRadius: 14, fontSize: 16,
+  width: "100%", padding: "15px 16px", borderRadius: 14, fontSize: 16,
   border: `1.5px solid ${err ? C.coral : "transparent"}`, background: C.field,
-  color: C.ink, outline: "none", boxSizing: "border-box",
-  WebkitAppearance: "none", MozAppearance: "none", appearance: "none",
-  fontFamily: "inherit", minHeight: 50,
+  color: C.ink, outline: "none",
 });
 function Divider({ label }) {
   return (
@@ -1598,7 +1424,7 @@ function TasksScreen({ t }) {
 
   return (
     <div className="ev-card">
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
         <div style={{ display: "inline-flex", gap: 2, background: C.bg, borderRadius: 12, padding: 3 }}>
           {[t.open, t.completedTasks].map((label, i) => (
             <button key={i} onClick={() => setTab(i)} className="ev-tap" style={{
@@ -1609,11 +1435,10 @@ function TasksScreen({ t }) {
             }}>{label}</button>
           ))}
         </div>
-        <div style={{ flex: 1 }} />
         <button onClick={() => setModal(true)} className="ev-tap" style={{
-          display: "flex", alignItems: "center", gap: 8, border: "none", cursor: "pointer", fontFamily: "inherit",
+          marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, border: "none", cursor: "pointer", fontFamily: "inherit",
           background: C.amber, color: "#fff", fontSize: 15, fontWeight: 600, padding: "11px 18px", borderRadius: 13,
-          boxShadow: `0 6px 16px ${C.amber}66`, whiteSpace: "nowrap" }}>
+          boxShadow: `0 6px 16px ${C.amber}66` }}>
           <Plus size={19} /> {t.addTask}
         </button>
       </div>
@@ -1644,6 +1469,9 @@ function TasksScreen({ t }) {
                   {tk.description && <div style={{ fontSize: 13, color: C.sub, marginTop: 4 }}>{tk.description}</div>}
                   <div style={{ fontSize: 12, color: C.sub, marginTop: 6, display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
                     {tk.due_date && <span>📅 {tk.due_date.slice(0, 10)}</span>}
+                    {(tk.start_time || tk.end_time) && (
+                      <span>⏱️ {tk.start_time?.slice(0,5) || "-"} {tk.end_time ? `- ${tk.end_time.slice(0,5)}` : ""}</span>
+                    )}
                     {horse && <span>🐴 {horse.name}</span>}
                     {tk.category && <span style={{ padding: "2px 8px", borderRadius: 8, background: tk.category === "horse" ? C.mintSoft : C.bg,
                       fontSize: 11, fontWeight: 600 }}>{tk.category === "horse" ? t.horses : t.general}</span>}
@@ -1666,12 +1494,12 @@ function TasksScreen({ t }) {
 }
 
 function TaskModal({ t, horses, onClose, onSave }) {
-  const [f, setF] = useState({ title: "", description: "", due_date: "", category: "general", horse_id: null });
+  const [f, setF] = useState({ title: "", description: "", due_date: "", start_time: "", end_time: "", category: "general", horse_id: null });
   const [err, setErr] = useState(false);
 
   const save = () => {
     if (!f.title.trim()) { setErr(true); return; }
-    onSave(f);
+    onSave({ ...f, start_time: f.start_time || null, end_time: f.end_time || null });
   };
 
   return (
@@ -1712,6 +1540,17 @@ function TaskModal({ t, horses, onClose, onSave }) {
             <option value="">{t.general}</option>
             {horses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
           </select>
+        </Field>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.timeStart}>
+          <input type="time" value={f.start_time} onChange={(e) => setF({...f, start_time: e.target.value})}
+            style={inputStyle()} />
+        </Field>
+        <Field label={t.timeEnd}>
+          <input type="time" value={f.end_time} onChange={(e) => setF({...f, end_time: e.target.value})}
+            style={inputStyle()} />
         </Field>
       </div>
 
@@ -2255,7 +2094,7 @@ function UserModal({ t, onClose }) {
 
 /* ---------- FEEDING ---------- */
 const SLOTS = ["morning", "noon", "evening", "night"];
-function FeedingScreen({ t, setRoute }) {
+function FeedingScreen({ t }) {
   const { horses, feed, addFeedItem, deleteFeedItem } = useStore();
   const [tab, setTab] = useState(0); // 0 feeding 1 order
   const [slot, setSlot] = useState("morning");
@@ -2266,8 +2105,7 @@ function FeedingScreen({ t, setRoute }) {
     return (
       <div className="ev-card">
         <EmptyHero accent={C.amber} icon={<Carrot size={46} strokeWidth={1.6} />}
-          title={t.noFeed} sub={t.noFeedSub} cta={t.addHorse}
-          onClick={() => setRoute && setRoute({ name: "add" })} />
+          title={t.noFeed} sub={t.noFeedSub} cta={t.addHorse} onClick={() => {}} />
       </div>
     );
   }
@@ -2377,12 +2215,6 @@ function OrderTab({ t }) {
   );
 }
 
-const FEED_PRODUCTS = [
-  "Hay", "Haylage", "Alfalfa", "Oats", "Barley", "Beet Pulp", "Chaff",
-  "Pellets", "Muesli", "Oil", "Supplements", "Electrolytes", "Salt Lick",
-  "Bran", "Rice Bran", "Linseed", "Carrots", "Apples", "Balancer", "Other",
-];
-
 function FeedModal({ t, slot, onClose, onSave }) {
   const [f, setF] = useState({ product: "", qty: "" });
   const [err, setErr] = useState(false);
@@ -2391,22 +2223,8 @@ function FeedModal({ t, slot, onClose, onSave }) {
     <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<Carrot size={22} />}
       title={`${t.addProduct} · ${t[slot]}`}>
       <Field label={t.product} required>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-          {FEED_PRODUCTS.map(p => (
-            <button key={p} type="button" onClick={() => { setF({...f, product: p}); setErr(false); }}
-              className="ev-tap"
-              style={{
-                padding: "8px 14px", borderRadius: 16, border: `1px solid ${f.product === p ? C.amber : C.line}`,
-                background: f.product === p ? C.amber : C.field,
-                color: f.product === p ? "#fff" : C.sub,
-                fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
-              }}>
-              {p}
-            </button>
-          ))}
-        </div>
         <input value={f.product} onChange={(e) => { setF({ ...f, product: e.target.value }); setErr(false); }}
-          placeholder={t.product} style={inputStyle(err)} />
+          autoFocus style={inputStyle(err)} />
       </Field>
       <Field label={t.qty}>
         <input value={f.qty} onChange={(e) => setF({ ...f, qty: e.target.value })}
@@ -2420,18 +2238,17 @@ function FeedModal({ t, slot, onClose, onSave }) {
 /* ---------- reusable modal shell ---------- */
 function ModalShell({ t, onClose, accent, icon, title, children }) {
   return (
-    <div className="ev-modal-wrap" style={{ position: "fixed", inset: 0, zIndex: 60, animation: "evFade .2s ease",
-      display: "flex", alignItems: "center", justifyContent: "center", padding: 16, overflowY: "auto" }}>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(31,45,58,.45)", zIndex: 0 }} />
-      <div className="ev-scroll ev-modal-panel" style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 560,
-        maxHeight: "92vh", overflowY: "auto", background: C.surface, borderRadius: 24, padding: 24,
-        animation: "evUp .25s ease both", boxShadow: "0 24px 60px rgba(0,0,0,.25)",
-        WebkitOverflowScrolling: "touch" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 60, animation: "evFade .2s ease",
+      display: "grid", placeItems: "center", padding: 16 }}>
+      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(31,45,58,.45)" }} />
+      <div className="ev-scroll" style={{ position: "relative", width: "100%", maxWidth: 560, maxHeight: "90vh",
+        overflowY: "auto", background: C.surface, borderRadius: 24, padding: 24,
+        animation: "evUp .25s ease both", boxShadow: "0 24px 60px rgba(0,0,0,.25)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 22 }}>
           <span style={{ width: 44, height: 44, borderRadius: 13, display: "grid", placeItems: "center",
-            background: `${accent}1c`, color: accent, flexShrink: 0 }}>{icon}</span>
-          <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 21, fontWeight: 700, minWidth: 0 }}>{title}</h2>
-          <button onClick={onClose} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg, flexShrink: 0 }}>
+            background: `${accent}1c`, color: accent }}>{icon}</span>
+          <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 23, fontWeight: 700 }}>{title}</h2>
+          <button onClick={onClose} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
             <X size={22} />
           </button>
         </div>
@@ -2443,726 +2260,17 @@ function ModalShell({ t, onClose, accent, icon, title, children }) {
 
 function ModalFooter({ t, onClose, onSave, accent, saveLabel, saveIcon }) {
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 24 }}>
+    <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
       <button onClick={onClose} className="ev-tap" style={{
-        flex: "1 1 120px", padding: "15px", borderRadius: 14, border: `1px solid ${C.line}`, background: C.surface,
+        flex: 1, padding: "15px", borderRadius: 14, border: `1px solid ${C.line}`, background: C.surface,
         color: C.ink, fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{t.cancel}</button>
       <button onClick={onSave} className="ev-tap" style={{
-        flex: "2 1 180px", padding: "15px", borderRadius: 14, border: "none", background: accent, color: "#fff",
+        flex: 2, padding: "15px", borderRadius: 14, border: "none", background: accent, color: "#fff",
         fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
         display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 8px 22px ${accent}55` }}>
         {saveIcon} {saveLabel}
       </button>
     </div>
-  );
-}
-
-/* ============================================================
-   NEW MODULE SCREENS
-   ============================================================ */
-
-/* ---------- LOCATIONS ---------- */
-const LOCATION_TYPES = ["stable","paddock","arena","clinic","field","pasture","trailer","showground","breeding_center","quarantine","other"];
-const CONTINENTS = ["Europe","North America","South America","Asia","Africa","Oceania","Antarctica"];
-
-function LocationsScreen({ t }) {
-  const { locations, addLocation, deleteLocation } = useStore();
-  const [modal, setModal] = useState(false);
-  return (
-    <div className="ev-card">
-      <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:10, marginBottom:16 }}>
-        <h2 className="ev-display" style={{ margin:0, fontSize:22, fontWeight:700, flex:1 }}>{t.locations}</h2>
-        <button onClick={()=>setModal(true)} className="ev-tap" style={{ display:"flex", alignItems:"center", gap:8, border:"none", cursor:"pointer", fontFamily:"inherit", background:C.sky, color:"#fff", fontSize:14, fontWeight:600, padding:"10px 16px", borderRadius:13, boxShadow:`0 6px 16px ${C.sky}55`, whiteSpace:"nowrap" }}><Plus size={18} /> {t.addLocation || "Add Location"}</button>
-      </div>
-      {locations.length===0 ? (
-        <EmptyHero accent={C.sky} icon={<MapPin size={46} strokeWidth={1.6}/>} title={t.noLocations||"No locations yet"} sub={t.noLocationsSub||"Add your stables, paddocks and arenas."} cta={t.addLocation||"Add Location"} onClick={()=>setModal(true)}/>
-      ) : (
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {locations.map(loc => (
-            <div key={loc.id} style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:18, padding:16, display:"flex", alignItems:"flex-start", gap:14 }}>
-              <span style={{ width:44, height:44, borderRadius:13, display:"grid", placeItems:"center", background:`${C.sky}1f`, color:C.sky, flexShrink:0 }}><MapPin size={22}/></span>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:16, fontWeight:600 }}>{loc.name}</div>
-                <div style={{ fontSize:13, color:C.sub, marginTop:4 }}>
-                  {[loc.location_type, loc.city, loc.country, loc.continent].filter(Boolean).join(" · ")}
-                </div>
-                {loc.address && <div style={{ fontSize:12, color:C.sub, marginTop:2 }}>{loc.address}</div>}
-                {loc.notes && <div style={{ fontSize:13, background:C.field, padding:"6px 10px", borderRadius:8, marginTop:6 }}>{loc.notes}</div>}
-                {(loc.latitude && loc.longitude) && <a href={`https://maps.google.com/?q=${loc.latitude},${loc.longitude}`} target="_blank" rel="noreferrer" style={{ fontSize:12, color:C.sky, marginTop:4, display:"inline-block" }}>📍 Google Maps</a>}
-              </div>
-              <button onClick={()=>deleteLocation(loc.id)} className="ev-tap" style={{ border:"none", background:"transparent", cursor:"pointer", color:C.sub, padding:6 }}><Trash2 size={17}/></button>
-            </div>
-          ))}
-        </div>
-      )}
-      {modal && <LocationModal t={t} onClose={()=>setModal(false)} onSave={(l)=>{addLocation(l);setModal(false);}}/>}
-    </div>
-  );
-}
-function LocationModal({ t, onClose, onSave }) {
-  const [f,setF]=useState({name:"",location_type:"stable",address:"",city:"",province:"",country:"",continent:"",postal_code:"",notes:"",capacity:"",latitude:"",longitude:""});
-  const [err,setErr]=useState(false);
-  const save=()=>{if(!f.name.trim()){setErr(true);return;}onSave({...f,capacity:f.capacity?parseInt(f.capacity):null,latitude:f.latitude?parseFloat(f.latitude):null,longitude:f.longitude?parseFloat(f.longitude):null});};
-  return(
-    <ModalShell t={t} onClose={onClose} accent={C.sky} icon={<MapPin size={22}/>} title={t.addLocation||"Add Location"}>
-      <Field label={t.name} required><input value={f.name} onChange={e=>{setF({...f,name:e.target.value});setErr(false);}} style={inputStyle(err)}/></Field>
-      <Field label="Type"><select value={f.location_type} onChange={e=>setF({...f,location_type:e.target.value})} style={inputStyle()}>{LOCATION_TYPES.map(lt=><option key={lt} value={lt}>{lt.replace(/_/g," ")}</option>)}</select></Field>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label={t.address||"Address"}><input value={f.address} onChange={e=>setF({...f,address:e.target.value})} style={inputStyle()}/></Field>
-        <Field label={t.city||"City"}><input value={f.city} onChange={e=>setF({...f,city:e.target.value})} style={inputStyle()}/></Field>
-      </div>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label={t.province||"Province"}><input value={f.province} onChange={e=>setF({...f,province:e.target.value})} style={inputStyle()}/></Field>
-        <Field label={t.country||"Country"}><input value={f.country} onChange={e=>setF({...f,country:e.target.value})} style={inputStyle()}/></Field>
-      </div>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label="Continent"><select value={f.continent} onChange={e=>setF({...f,continent:e.target.value})} style={inputStyle()}><option value="">{t.select}</option>{CONTINENTS.map(c=><option key={c} value={c}>{c}</option>)}</select></Field>
-        <Field label="Capacity"><input type="number" value={f.capacity} onChange={e=>setF({...f,capacity:e.target.value})} placeholder="Max horses" style={inputStyle()}/></Field>
-      </div>
-      <Field label={t.recordNotes||"Notes"}><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})} rows={2} style={{...inputStyle(),resize:"none"}}/></Field>
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.sky} saveLabel={t.add||"Add"} saveIcon={<Plus size={20}/>}/>
-    </ModalShell>
-  );
-}
-
-/* ---------- CONTACTS ---------- */
-const CONTACT_ROLES = ["owner","client","vet","farrier","rider","supplier","dealer","trainer","breeder","transporter","insurance","dentist","physiotherapist","osteopath","saddler","photographer","sponsor","federation","stable_hand","manager","private","other"];
-
-function ContactsScreen({ t }) {
-  const { contacts, addContact, deleteContact } = useStore();
-  const [modal, setModal] = useState(false);
-  const [search, setSearch] = useState("");
-  const filtered = contacts.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
-  return (
-    <div className="ev-card">
-      <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:10, marginBottom:16 }}>
-        <h2 className="ev-display" style={{ margin:0, fontSize:22, fontWeight:700 }}>{t.contacts}</h2>
-        <div style={{ flex:1 }}/>
-        <button onClick={()=>setModal(true)} className="ev-tap" style={{ display:"flex", alignItems:"center", gap:8, border:"none", cursor:"pointer", fontFamily:"inherit", background:C.lilac, color:"#fff", fontSize:14, fontWeight:600, padding:"10px 16px", borderRadius:13, boxShadow:`0 6px 16px ${C.lilac}55`, whiteSpace:"nowrap" }}><Plus size={18}/> {t.addContact||"Add Contact"}</button>
-      </div>
-      {contacts.length>0 && <div style={{ marginBottom:14 }}><input value={search} onChange={e=>setSearch(e.target.value)} placeholder={t.search} style={{...inputStyle(),padding:"11px 14px"}}/></div>}
-      {filtered.length===0 ? (
-        <EmptyHero accent={C.lilac} icon={<Users size={46} strokeWidth={1.6}/>} title={t.noContacts||"No contacts yet"} sub={t.noContactsSub||"Add vets, farriers, trainers and more."} cta={t.addContact||"Add Contact"} onClick={()=>setModal(true)}/>
-      ) : (
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {filtered.map(c => (
-            <div key={c.id} style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:18, padding:16, display:"flex", alignItems:"center", gap:14 }}>
-              <span style={{ width:44, height:44, borderRadius:"50%", display:"grid", placeItems:"center", background:`${C.lilac}1f`, color:C.lilac, flexShrink:0, fontWeight:700, fontSize:17 }}>{c.name.charAt(0).toUpperCase()}</span>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:16, fontWeight:600 }}>{c.name}{c.company && <span style={{ color:C.sub, fontWeight:400 }}> — {c.company}</span>}</div>
-                <div style={{ fontSize:12, color:C.sub, marginTop:2 }}>{[c.role?.replace(/_/g," "), c.city, c.country].filter(Boolean).join(" · ")}</div>
-                {c.phone && <div style={{ fontSize:12, color:C.sub }}>📞 {c.phone}</div>}
-                {c.email && <div style={{ fontSize:12, color:C.sub }}>{c.email}</div>}
-              </div>
-              <button onClick={()=>deleteContact(c.id)} className="ev-tap" style={{ border:"none", background:"transparent", cursor:"pointer", color:C.sub, padding:6 }}><Trash2 size={17}/></button>
-            </div>
-          ))}
-        </div>
-      )}
-      {modal && <ContactModal t={t} onClose={()=>setModal(false)} onSave={(c)=>{addContact(c);setModal(false);}}/>}
-    </div>
-  );
-}
-function ContactModal({ t, onClose, onSave }) {
-  const [f,setF]=useState({name:"",company:"",email:"",phone:"",role:"other",address:"",city:"",country:"",website:"",notes:""});
-  const [err,setErr]=useState(false);
-  const save=()=>{if(!f.name.trim()){setErr(true);return;}onSave(f);};
-  return(
-    <ModalShell t={t} onClose={onClose} accent={C.lilac} icon={<Users size={22}/>} title={t.addContact||"Add Contact"}>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label={t.name} required><input value={f.name} onChange={e=>{setF({...f,name:e.target.value});setErr(false);}} style={inputStyle(err)}/></Field>
-        <Field label="Company"><input value={f.company} onChange={e=>setF({...f,company:e.target.value})} style={inputStyle()}/></Field>
-      </div>
-      <Field label="Role">
-        <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:8 }}>
-          {CONTACT_ROLES.slice(0,10).map(r=>(
-            <button key={r} type="button" onClick={()=>setF({...f,role:r})} className="ev-tap" style={{ padding:"6px 12px", borderRadius:14, border:`1px solid ${f.role===r?C.lilac:C.line}`, background:f.role===r?C.lilac:C.field, color:f.role===r?"#fff":C.sub, fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>{r.replace(/_/g," ")}</button>
-          ))}
-        </div>
-        <select value={f.role} onChange={e=>setF({...f,role:e.target.value})} style={inputStyle()}>{CONTACT_ROLES.map(r=><option key={r} value={r}>{r.replace(/_/g," ")}</option>)}</select>
-      </Field>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label="Email"><input type="email" value={f.email} onChange={e=>setF({...f,email:e.target.value})} style={inputStyle()}/></Field>
-        <Field label="Phone"><input value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} style={inputStyle()}/></Field>
-      </div>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label={t.city||"City"}><input value={f.city} onChange={e=>setF({...f,city:e.target.value})} style={inputStyle()}/></Field>
-        <Field label={t.country||"Country"}><input value={f.country} onChange={e=>setF({...f,country:e.target.value})} style={inputStyle()}/></Field>
-      </div>
-      <Field label={t.recordNotes||"Notes"}><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})} rows={2} style={{...inputStyle(),resize:"none"}}/></Field>
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.lilac} saveLabel={t.add||"Add"} saveIcon={<Plus size={20}/>}/>
-    </ModalShell>
-  );
-}
-
-/* ---------- DOCUMENTS ---------- */
-const DOC_CATS = ["passport","vaccination","vet_report","xray","insurance","contract","invoice","registration","pedigree","sales_photo","sales_video","competition","training","farrier_report","dental_report","transport","feed_plan","other"];
-
-function DocumentsScreen({ t }) {
-  const { documents, addDocument, deleteDocument, horses } = useStore();
-  const [modal, setModal] = useState(false);
-  const [catFilter, setCatFilter] = useState("");
-  const filtered = catFilter ? documents.filter(d => d.category === catFilter) : documents;
-  return (
-    <div className="ev-card">
-      <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:10, marginBottom:16 }}>
-        <h2 className="ev-display" style={{ margin:0, fontSize:22, fontWeight:700 }}>{t.documents}</h2>
-        <div style={{ flex:1 }}/>
-        <button onClick={()=>setModal(true)} className="ev-tap" style={{ display:"flex", alignItems:"center", gap:8, border:"none", cursor:"pointer", fontFamily:"inherit", background:C.sky, color:"#fff", fontSize:14, fontWeight:600, padding:"10px 16px", borderRadius:13 }}><Plus size={18}/> Upload</button>
-      </div>
-      <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:16 }}>
-        <button onClick={()=>setCatFilter("")} className="ev-tap" style={{ padding:"6px 12px", borderRadius:14, border:`1px solid ${!catFilter?C.sky:C.line}`, background:!catFilter?C.sky:C.field, color:!catFilter?"#fff":C.sub, fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>All</button>
-        {DOC_CATS.slice(0,8).map(c=>(
-          <button key={c} onClick={()=>setCatFilter(c)} className="ev-tap" style={{ padding:"6px 12px", borderRadius:14, border:`1px solid ${catFilter===c?C.sky:C.line}`, background:catFilter===c?C.sky:C.field, color:catFilter===c?"#fff":C.sub, fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>{c.replace(/_/g," ")}</button>
-        ))}
-      </div>
-      {filtered.length===0 ? (
-        <EmptyHero accent={C.sky} icon={<FileText size={46} strokeWidth={1.6}/>} title="No documents" sub="Upload passports, vet reports, photos and videos." cta="Upload" onClick={()=>setModal(true)}/>
-      ) : (
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {filtered.map(d => {
-            const horse = horses.find(h=>h.id===d.horse_id);
-            return (
-              <div key={d.id} style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:18, padding:16, display:"flex", alignItems:"center", gap:14 }}>
-                <span style={{ width:44, height:44, borderRadius:13, display:"grid", placeItems:"center", background:`${C.sky}1f`, color:C.sky, flexShrink:0 }}><FileText size={20}/></span>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:15, fontWeight:600 }}>{d.name}</div>
-                  <div style={{ fontSize:12, color:C.sub, marginTop:2 }}>{[d.category?.replace(/_/g," "), d.file_type, horse?.name].filter(Boolean).join(" · ")}</div>
-                </div>
-                <a href={d.url} target="_blank" rel="noreferrer" style={{ color:C.sky, padding:6 }}><Download size={17}/></a>
-                <button onClick={()=>deleteDocument(d.id)} className="ev-tap" style={{ border:"none", background:"transparent", cursor:"pointer", color:C.sub, padding:6 }}><Trash2 size={17}/></button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {modal && <DocModal t={t} horses={horses} onClose={()=>setModal(false)} onSave={(d)=>{addDocument(d);setModal(false);}}/>}
-    </div>
-  );
-}
-function DocModal({ t, horses, onClose, onSave }) {
-  const [f,setF]=useState({name:"",url:"",file_type:"",category:"other",description:"",horse_id:""});
-  const [uploading,setUploading]=useState(false);
-  const [err,setErr]=useState(false);
-  const handleUpload = async(e)=>{
-    const file=e.target.files[0]; if(!file) return;
-    setUploading(true);
-    const fd=new FormData(); fd.append("file",file); fd.append("upload_preset","equivesa_uploads"); fd.append("resource_type","auto");
-    try {
-      const res=await fetch("https://api.cloudinary.com/v1_1/daj1lyfgk/auto/upload",{method:"POST",body:fd});
-      const data=await res.json();
-      if(data.secure_url) setF(p=>({...p, url:data.secure_url, name:p.name||file.name, file_type:file.name.split('.').pop().toLowerCase(), file_size:file.size}));
-    } catch(e){console.error(e);}
-    finally{setUploading(false);}
-  };
-  const save=()=>{if(!f.name.trim()||!f.url){setErr(true);return;}onSave(f);};
-  return(
-    <ModalShell t={t} onClose={onClose} accent={C.sky} icon={<FileText size={22}/>} title="Upload Document">
-      <div style={{ border:`2px dashed ${C.line}`, borderRadius:16, padding:24, textAlign:"center", marginBottom:16, cursor:"pointer", background:C.field }}>
-        <label style={{ cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
-          {uploading ? <span style={{ fontSize:14, fontWeight:600 }}>Uploading...</span> : f.url ? <><Check size={28} color={C.mint}/><span style={{ fontSize:13, color:C.mint, fontWeight:600 }}>Uploaded ✓</span></> : <><Upload size={28} color={C.sub}/><span style={{ fontSize:13, color:C.sub }}>Click to upload (PDF, JPG, MP4, etc.)</span></>}
-          <input type="file" accept="*/*" onChange={handleUpload} style={{ display:"none" }}/>
-        </label>
-      </div>
-      <Field label={t.name} required><input value={f.name} onChange={e=>{setF({...f,name:e.target.value});setErr(false);}} style={inputStyle(err&&!f.name.trim())}/></Field>
-      <Field label="Category">
-        <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:8 }}>
-          {DOC_CATS.map(c=>(
-            <button key={c} type="button" onClick={()=>setF({...f,category:c})} className="ev-tap" style={{ padding:"6px 10px", borderRadius:14, border:`1px solid ${f.category===c?C.sky:C.line}`, background:f.category===c?C.sky:C.field, color:f.category===c?"#fff":C.sub, fontSize:11, cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>{c.replace(/_/g," ")}</button>
-          ))}
-        </div>
-      </Field>
-      <Field label={t.selectHorse||"Horse"}><select value={f.horse_id} onChange={e=>setF({...f,horse_id:e.target.value})} style={inputStyle()}><option value="">— None —</option>{horses.map(h=><option key={h.id} value={h.id}>{h.name}</option>)}</select></Field>
-      <Field label="Description"><textarea value={f.description} onChange={e=>setF({...f,description:e.target.value})} rows={2} style={{...inputStyle(),resize:"none"}}/></Field>
-      {err&&!f.url && <div style={{ color:C.coral, fontSize:13, marginBottom:10 }}>Please upload a file first</div>}
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.sky} saveLabel="Save" saveIcon={<Check size={20}/>}/>
-    </ModalShell>
-  );
-}
-
-/* ---------- CLIENTS ---------- */
-const CLIENT_TYPES = ["horse_owner","boarder","lesson_student","buyer","seller","breeding_client","competition_rider","training_client","livery","half_lease","full_lease","investor","syndicate","other"];
-
-function ClientsScreen({ t }) {
-  const { clients, addClient, deleteClient } = useStore();
-  const [modal, setModal] = useState(false);
-  return (
-    <div className="ev-card">
-      <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:10, marginBottom:16 }}>
-        <h2 className="ev-display" style={{ margin:0, fontSize:22, fontWeight:700 }}>{t.clients}</h2>
-        <div style={{ flex:1 }}/>
-        <button onClick={()=>setModal(true)} className="ev-tap" style={{ display:"flex", alignItems:"center", gap:8, border:"none", cursor:"pointer", fontFamily:"inherit", background:C.mint, color:"#fff", fontSize:14, fontWeight:600, padding:"10px 16px", borderRadius:13 }}><Plus size={18}/> {t.addClient||"Add Client"}</button>
-      </div>
-      {clients.length===0 ? (
-        <EmptyHero accent={C.mint} icon={<Users size={46} strokeWidth={1.6}/>} title="No clients yet" sub="Add horse owners, boarders, lesson students and more." cta={t.addClient||"Add Client"} onClick={()=>setModal(true)}/>
-      ) : (
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {clients.map(c=>(
-            <div key={c.id} style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:18, padding:16, display:"flex", alignItems:"center", gap:14 }}>
-              <span style={{ width:44, height:44, borderRadius:"50%", display:"grid", placeItems:"center", background:`${C.mint}1f`, color:C.mint, flexShrink:0, fontWeight:700, fontSize:17 }}>{c.name.charAt(0).toUpperCase()}</span>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:16, fontWeight:600 }}>{c.name}{c.company&&<span style={{ color:C.sub, fontWeight:400 }}> — {c.company}</span>}</div>
-                <div style={{ fontSize:12, color:C.sub, marginTop:2 }}>{[c.client_type?.replace(/_/g," "), c.city, c.country].filter(Boolean).join(" · ")}</div>
-                {c.email && <div style={{ fontSize:12, color:C.sub }}>{c.email}</div>}
-              </div>
-              <button onClick={()=>deleteClient(c.id)} className="ev-tap" style={{ border:"none", background:"transparent", cursor:"pointer", color:C.sub, padding:6 }}><Trash2 size={17}/></button>
-            </div>
-          ))}
-        </div>
-      )}
-      {modal && <ClientModal t={t} onClose={()=>setModal(false)} onSave={(c)=>{addClient(c);setModal(false);}}/>}
-    </div>
-  );
-}
-function ClientModal({ t, onClose, onSave }) {
-  const [f,setF]=useState({name:"",company:"",email:"",phone:"",client_type:"horse_owner",address:"",city:"",country:"",billing_email:"",vat_number:"",notes:""});
-  const [err,setErr]=useState(false);
-  const save=()=>{if(!f.name.trim()){setErr(true);return;}onSave(f);};
-  return(
-    <ModalShell t={t} onClose={onClose} accent={C.mint} icon={<Users size={22}/>} title={t.addClient||"Add Client"}>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label={t.name} required><input value={f.name} onChange={e=>{setF({...f,name:e.target.value});setErr(false);}} style={inputStyle(err)}/></Field>
-        <Field label="Company"><input value={f.company} onChange={e=>setF({...f,company:e.target.value})} style={inputStyle()}/></Field>
-      </div>
-      <Field label="Client Type">
-        <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
-          {CLIENT_TYPES.map(ct=>(
-            <button key={ct} type="button" onClick={()=>setF({...f,client_type:ct})} className="ev-tap" style={{ padding:"6px 12px", borderRadius:14, border:`1px solid ${f.client_type===ct?C.mint:C.line}`, background:f.client_type===ct?C.mint:C.field, color:f.client_type===ct?"#fff":C.sub, fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>{ct.replace(/_/g," ")}</button>
-          ))}
-        </div>
-      </Field>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label="Email"><input type="email" value={f.email} onChange={e=>setF({...f,email:e.target.value})} style={inputStyle()}/></Field>
-        <Field label="Phone"><input value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} style={inputStyle()}/></Field>
-      </div>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label="Billing Email"><input type="email" value={f.billing_email} onChange={e=>setF({...f,billing_email:e.target.value})} style={inputStyle()}/></Field>
-        <Field label="VAT Number"><input value={f.vat_number} onChange={e=>setF({...f,vat_number:e.target.value})} style={inputStyle()}/></Field>
-      </div>
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.mint} saveLabel={t.add||"Add"} saveIcon={<Plus size={20}/>}/>
-    </ModalShell>
-  );
-}
-
-/* ---------- BOOKINGS ---------- */
-const BOOKING_TYPES = ["arena","lesson","training","vet_visit","farrier_visit","dentist_visit","transport","competition","clinic","viewing","trial_ride","photo_shoot","stable_visit","paddock","walker","solarium","wash_bay","other"];
-const BOOKING_STATUS = ["pending","confirmed","cancelled","completed","no_show"];
-
-function BookingsScreen({ t }) {
-  const { bookings, addBooking, deleteBooking, horses, clients } = useStore();
-  const [modal, setModal] = useState(false);
-  return (
-    <div className="ev-card">
-      <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:10, marginBottom:16 }}>
-        <h2 className="ev-display" style={{ margin:0, fontSize:22, fontWeight:700 }}>{t.bookings}</h2>
-        <div style={{ flex:1 }}/>
-        <button onClick={()=>setModal(true)} className="ev-tap" style={{ display:"flex", alignItems:"center", gap:8, border:"none", cursor:"pointer", fontFamily:"inherit", background:C.amber, color:"#fff", fontSize:14, fontWeight:600, padding:"10px 16px", borderRadius:13 }}><Plus size={18}/> {t.addBooking||"Add Booking"}</button>
-      </div>
-      {bookings.length===0 ? (
-        <EmptyHero accent={C.amber} icon={<CalendarDays size={46} strokeWidth={1.6}/>} title="No bookings" sub="Schedule arena time, lessons, vet visits and more." cta={t.addBooking||"Add Booking"} onClick={()=>setModal(true)}/>
-      ) : (
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {bookings.map(b=>{
-            const horse=horses.find(h=>h.id===b.horse_id);
-            const statusColor={pending:C.amber,confirmed:C.mint,cancelled:C.sub,completed:C.sky,no_show:C.coral}[b.status]||C.sub;
-            return(
-              <div key={b.id} style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:18, padding:16, display:"flex", alignItems:"flex-start", gap:14 }}>
-                <span style={{ width:44, height:44, borderRadius:13, display:"grid", placeItems:"center", background:`${C.amber}1f`, color:C.amber, flexShrink:0 }}><CalendarDays size={20}/></span>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:16, fontWeight:600 }}>{b.title}</div>
-                  <div style={{ fontSize:12, color:C.sub, marginTop:3, display:"flex", flexWrap:"wrap", gap:"3px 10px" }}>
-                    <span>📅 {b.booking_date?.slice(0,10)}</span>
-                    {b.start_time && <span>🕐 {b.start_time?.slice(0,5)}{b.end_time&&`–${b.end_time?.slice(0,5)}`}</span>}
-                    {horse && <span>🐴 {horse.name}</span>}
-                    <span style={{ padding:"2px 8px", borderRadius:8, background:`${statusColor}1f`, color:statusColor, fontSize:11, fontWeight:600 }}>{b.status}</span>
-                  </div>
-                  {b.calendar_url && <a href={b.calendar_url} target="_blank" rel="noreferrer" style={{ fontSize:12, color:C.sky, marginTop:4, display:"inline-block" }}>📅 Add to Calendar</a>}
-                </div>
-                <button onClick={()=>deleteBooking(b.id)} className="ev-tap" style={{ border:"none", background:"transparent", cursor:"pointer", color:C.sub, padding:6 }}><Trash2 size={17}/></button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {modal && <BookingModal t={t} horses={horses} clients={clients} onClose={()=>setModal(false)} onSave={(b)=>{
-        // Generate Google Calendar link
-        const calUrl = b.booking_date ? `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(b.title)}&dates=${b.booking_date.replace(/-/g,"")}/${b.booking_date.replace(/-/g,"")}&details=${encodeURIComponent(b.notes||"")}` : "";
-        addBooking({...b, calendar_url:calUrl}); setModal(false);
-      }}/>}
-    </div>
-  );
-}
-function BookingModal({ t, horses, clients, onClose, onSave }) {
-  const [f,setF]=useState({title:"",booking_type:"arena",booking_date:"",start_time:"",end_time:"",horse_id:"",client_id:"",status:"pending",location:"",price:"",notes:""});
-  const [err,setErr]=useState(false);
-  const save=()=>{if(!f.title.trim()||!f.booking_date){setErr(true);return;}onSave({...f,price:f.price?parseFloat(f.price):null});};
-  return(
-    <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<CalendarDays size={22}/>} title={t.addBooking||"Add Booking"}>
-      <Field label="Booking Type">
-        <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:8 }}>
-          {BOOKING_TYPES.slice(0,10).map(bt=>(<button key={bt} type="button" onClick={()=>setF({...f,booking_type:bt,title:bt.replace(/_/g," ")})} className="ev-tap" style={{ padding:"6px 12px", borderRadius:14, border:`1px solid ${f.booking_type===bt?C.amber:C.line}`, background:f.booking_type===bt?C.amber:C.field, color:f.booking_type===bt?"#fff":C.sub, fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>{bt.replace(/_/g," ")}</button>))}
-        </div>
-      </Field>
-      <Field label="Title" required><input value={f.title} onChange={e=>{setF({...f,title:e.target.value});setErr(false);}} style={inputStyle(err&&!f.title.trim())}/></Field>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
-        <Field label="Date" required><input type="date" value={f.booking_date} onChange={e=>{setF({...f,booking_date:e.target.value});setErr(false);}} style={inputStyle(err&&!f.booking_date)}/></Field>
-        <Field label="Start"><input type="time" value={f.start_time} onChange={e=>setF({...f,start_time:e.target.value})} style={inputStyle()}/></Field>
-        <Field label="End"><input type="time" value={f.end_time} onChange={e=>setF({...f,end_time:e.target.value})} style={inputStyle()}/></Field>
-      </div>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label="Horse"><select value={f.horse_id} onChange={e=>setF({...f,horse_id:e.target.value})} style={inputStyle()}><option value="">—</option>{horses.map(h=><option key={h.id} value={h.id}>{h.name}</option>)}</select></Field>
-        <Field label="Status"><select value={f.status} onChange={e=>setF({...f,status:e.target.value})} style={inputStyle()}>{BOOKING_STATUS.map(s=><option key={s} value={s}>{s}</option>)}</select></Field>
-      </div>
-      <Field label={t.recordNotes||"Notes"}><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})} rows={2} style={{...inputStyle(),resize:"none"}}/></Field>
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.add||"Add"} saveIcon={<Plus size={20}/>}/>
-    </ModalShell>
-  );
-}
-
-/* ---------- MARES BREEDING ---------- */
-const MARE_STATUS = ["inseminated","confirmed_pregnant","empty","aborted","foaled","resorbed","twin_reduced"];
-const SERVICE_TYPES = ["natural","fresh_ai","chilled_ai","frozen_ai","icsi"];
-
-function MaresScreen({ t }) {
-  const { maresBreeding, addMareBreeding, deleteMareBreeding, horses } = useStore();
-  const [modal, setModal] = useState(false);
-  const mares = horses.filter(h=>h.sex==="sexMare");
-  return (
-    <div className="ev-card">
-      <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:10, marginBottom:16 }}>
-        <h2 className="ev-display" style={{ margin:0, fontSize:22, fontWeight:700 }}>{t.mares}</h2>
-        <div style={{ flex:1 }}/>
-        <button onClick={()=>setModal(true)} className="ev-tap" style={{ display:"flex", alignItems:"center", gap:8, border:"none", cursor:"pointer", fontFamily:"inherit", background:C.coral, color:"#fff", fontSize:14, fontWeight:600, padding:"10px 16px", borderRadius:13 }}><Plus size={18}/> Add Record</button>
-      </div>
-      {maresBreeding.length===0 ? (
-        <EmptyHero accent={C.coral} icon={<Heart size={46} strokeWidth={1.6}/>} title="No breeding records" sub="Track inseminations, pregnancies and foaling." cta="Add Record" onClick={()=>setModal(true)}/>
-      ) : (
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {maresBreeding.map(m=>{
-            const mare=horses.find(h=>h.id===m.mare_id);
-            const statusColor={inseminated:C.amber,confirmed_pregnant:C.mint,empty:C.sub,aborted:C.coral,foaled:C.sky}[m.status]||C.sub;
-            return(
-              <div key={m.id} style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:18, padding:16, display:"flex", alignItems:"flex-start", gap:14 }}>
-                <span style={{ width:44, height:44, borderRadius:13, display:"grid", placeItems:"center", background:`${C.coral}1f`, color:C.coral, flexShrink:0 }}><Heart size={20}/></span>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:16, fontWeight:600 }}>{mare?.name||"Unknown Mare"} × {m.stallion_name}</div>
-                  <div style={{ fontSize:12, color:C.sub, marginTop:3, display:"flex", flexWrap:"wrap", gap:"3px 10px" }}>
-                    {m.service_date && <span>📅 {m.service_date.slice(0,10)}</span>}
-                    {m.expected_foal_date && <span>🐣 Expected: {m.expected_foal_date.slice(0,10)}</span>}
-                    <span style={{ padding:"2px 8px", borderRadius:8, background:`${statusColor}1f`, color:statusColor, fontSize:11, fontWeight:600 }}>{m.status?.replace(/_/g," ")}</span>
-                  </div>
-                  {m.notes && <div style={{ fontSize:13, background:C.field, padding:"6px 10px", borderRadius:8, marginTop:6 }}>{m.notes}</div>}
-                </div>
-                <button onClick={()=>deleteMareBreeding(m.id)} className="ev-tap" style={{ border:"none", background:"transparent", cursor:"pointer", color:C.sub, padding:6 }}><Trash2 size={17}/></button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {modal && <MareModal t={t} mares={mares} onClose={()=>setModal(false)} onSave={(m)=>{addMareBreeding(m);setModal(false);}}/>}
-    </div>
-  );
-}
-function MareModal({ t, mares, onClose, onSave }) {
-  const [f,setF]=useState({mare_id:"",stallion_name:"",stallion_studbook:"",service_date:"",service_type:"",expected_foal_date:"",vet_name:"",status:"inseminated",notes:"",cost:""});
-  const [err,setErr]=useState(false);
-  const save=()=>{if(!f.mare_id||!f.stallion_name.trim()){setErr(true);return;}onSave({...f,cost:f.cost?parseFloat(f.cost):null});};
-  return(
-    <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<Heart size={22}/>} title="Add Breeding Record">
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label="Mare" required><select value={f.mare_id} onChange={e=>{setF({...f,mare_id:e.target.value});setErr(false);}} style={inputStyle(err&&!f.mare_id)}><option value="">Select mare...</option>{mares.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></Field>
-        <Field label="Stallion" required><input value={f.stallion_name} onChange={e=>{setF({...f,stallion_name:e.target.value});setErr(false);}} style={inputStyle(err&&!f.stallion_name.trim())}/></Field>
-      </div>
-      <Field label="Service Type"><div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>{SERVICE_TYPES.map(st=>(<button key={st} type="button" onClick={()=>setF({...f,service_type:st})} className="ev-tap" style={{ padding:"6px 12px", borderRadius:14, border:`1px solid ${f.service_type===st?C.coral:C.line}`, background:f.service_type===st?C.coral:C.field, color:f.service_type===st?"#fff":C.sub, fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>{st.replace(/_/g," ")}</button>))}</div></Field>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label="Service Date"><input type="date" value={f.service_date} onChange={e=>setF({...f,service_date:e.target.value})} style={inputStyle()}/></Field>
-        <Field label="Expected Foal Date"><input type="date" value={f.expected_foal_date} onChange={e=>setF({...f,expected_foal_date:e.target.value})} style={inputStyle()}/></Field>
-      </div>
-      <Field label="Status"><div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>{MARE_STATUS.map(s=>(<button key={s} type="button" onClick={()=>setF({...f,status:s})} className="ev-tap" style={{ padding:"6px 12px", borderRadius:14, border:`1px solid ${f.status===s?C.coral:C.line}`, background:f.status===s?C.coral:C.field, color:f.status===s?"#fff":C.sub, fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>{s.replace(/_/g," ")}</button>))}</div></Field>
-      <Field label="Notes"><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})} rows={2} style={{...inputStyle(),resize:"none"}}/></Field>
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.add||"Add"} saveIcon={<Plus size={20}/>}/>
-    </ModalShell>
-  );
-}
-
-/* ---------- EMBRYOS ---------- */
-function EmbryosScreen({ t }) {
-  const { embryos, addEmbryo, deleteEmbryo, horses } = useStore();
-  const [modal, setModal] = useState(false);
-  return (
-    <div className="ev-card">
-      <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:10, marginBottom:16 }}>
-        <h2 className="ev-display" style={{ margin:0, fontSize:22, fontWeight:700 }}>{t.embryos}</h2>
-        <div style={{ flex:1 }}/>
-        <button onClick={()=>setModal(true)} className="ev-tap" style={{ display:"flex", alignItems:"center", gap:8, border:"none", cursor:"pointer", fontFamily:"inherit", background:C.lilac, color:"#fff", fontSize:14, fontWeight:600, padding:"10px 16px", borderRadius:13 }}><Plus size={18}/> Add Embryo</button>
-      </div>
-      {embryos.length===0 ? (
-        <EmptyHero accent={C.lilac} icon={<Sparkles size={46} strokeWidth={1.6}/>} title="No embryos" sub="Track flushed, frozen and transferred embryos." cta="Add Embryo" onClick={()=>setModal(true)}/>
-      ) : (
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {embryos.map(e=>{
-            const donor=horses.find(h=>h.id===e.donor_mare_id);
-            return(
-              <div key={e.id} style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:18, padding:16, display:"flex", alignItems:"flex-start", gap:14 }}>
-                <span style={{ width:44, height:44, borderRadius:13, display:"grid", placeItems:"center", background:`${C.lilac}1f`, color:C.lilac, flexShrink:0 }}><Sparkles size={20}/></span>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:16, fontWeight:600 }}>{donor?.name||"Unknown"} × {e.stallion_name}</div>
-                  <div style={{ fontSize:12, color:C.sub, marginTop:3 }}>Flush: {e.flush_date?.slice(0,10)} · {e.status?.replace(/_/g," ")}{e.grade&&` · Grade ${e.grade}`}</div>
-                  {e.notes && <div style={{ fontSize:13, background:C.field, padding:"6px 10px", borderRadius:8, marginTop:6 }}>{e.notes}</div>}
-                </div>
-                <button onClick={()=>deleteEmbryo(e.id)} className="ev-tap" style={{ border:"none", background:"transparent", cursor:"pointer", color:C.sub, padding:6 }}><Trash2 size={17}/></button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {modal && <EmbryoModal t={t} horses={horses} onClose={()=>setModal(false)} onSave={(e)=>{addEmbryo(e);setModal(false);}}/>}
-    </div>
-  );
-}
-function EmbryoModal({ t, horses, onClose, onSave }) {
-  const mares=horses.filter(h=>h.sex==="sexMare");
-  const [f,setF]=useState({donor_mare_id:"",stallion_name:"",flush_date:"",grade:"",status:"frozen",storage_location:"",straw_number:"",vet_name:"",notes:"",cost:""});
-  const [err,setErr]=useState(false);
-  const save=()=>{if(!f.donor_mare_id||!f.stallion_name.trim()||!f.flush_date){setErr(true);return;}onSave({...f,cost:f.cost?parseFloat(f.cost):null});};
-  return(
-    <ModalShell t={t} onClose={onClose} accent={C.lilac} icon={<Sparkles size={22}/>} title="Add Embryo">
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label="Donor Mare" required><select value={f.donor_mare_id} onChange={e=>{setF({...f,donor_mare_id:e.target.value});setErr(false);}} style={inputStyle(err&&!f.donor_mare_id)}><option value="">Select...</option>{mares.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></Field>
-        <Field label="Stallion" required><input value={f.stallion_name} onChange={e=>{setF({...f,stallion_name:e.target.value});setErr(false);}} style={inputStyle(err&&!f.stallion_name.trim())}/></Field>
-      </div>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
-        <Field label="Flush Date" required><input type="date" value={f.flush_date} onChange={e=>{setF({...f,flush_date:e.target.value});setErr(false);}} style={inputStyle(err&&!f.flush_date)}/></Field>
-        <Field label="Grade"><input value={f.grade} onChange={e=>setF({...f,grade:e.target.value})} placeholder="1-4" style={inputStyle()}/></Field>
-        <Field label="Status"><select value={f.status} onChange={e=>setF({...f,status:e.target.value})} style={inputStyle()}>{["frozen","transferred","pregnant","failed","discarded","exported"].map(s=><option key={s} value={s}>{s}</option>)}</select></Field>
-      </div>
-      <Field label="Notes"><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})} rows={2} style={{...inputStyle(),resize:"none"}}/></Field>
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.lilac} saveLabel={t.add||"Add"} saveIcon={<Plus size={20}/>}/>
-    </ModalShell>
-  );
-}
-
-/* ---------- FOALS ---------- */
-function FoalsScreen({ t }) {
-  const { foals, addFoal, deleteFoal, horses } = useStore();
-  const [modal, setModal] = useState(false);
-  return (
-    <div className="ev-card">
-      <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:10, marginBottom:16 }}>
-        <h2 className="ev-display" style={{ margin:0, fontSize:22, fontWeight:700 }}>{t.foals}</h2>
-        <div style={{ flex:1 }}/>
-        <button onClick={()=>setModal(true)} className="ev-tap" style={{ display:"flex", alignItems:"center", gap:8, border:"none", cursor:"pointer", fontFamily:"inherit", background:C.amber, color:"#fff", fontSize:14, fontWeight:600, padding:"10px 16px", borderRadius:13 }}><Plus size={18}/> Add Foal</button>
-      </div>
-      {foals.length===0 ? (
-        <EmptyHero accent={C.amber} icon={<Baby size={46} strokeWidth={1.6}/>} title="No foals" sub="Register newborn foals with birth details." cta="Add Foal" onClick={()=>setModal(true)}/>
-      ) : (
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {foals.map(fo=>{
-            const dam=horses.find(h=>h.id===fo.dam_id);
-            return(
-              <div key={fo.id} style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:18, padding:16, display:"flex", alignItems:"flex-start", gap:14 }}>
-                <span style={{ width:44, height:44, borderRadius:13, display:"grid", placeItems:"center", background:`${C.amber}1f`, color:C.amber, flexShrink:0 }}><Baby size={20}/></span>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:16, fontWeight:600 }}>{fo.name}</div>
-                  <div style={{ fontSize:12, color:C.sub, marginTop:3 }}>{[dam&&`Dam: ${dam.name}`, fo.sire_name&&`Sire: ${fo.sire_name}`, `Born: ${fo.birth_date?.slice(0,10)}`, fo.sex&&t[fo.sex]].filter(Boolean).join(" · ")}</div>
-                  {fo.notes && <div style={{ fontSize:13, background:C.field, padding:"6px 10px", borderRadius:8, marginTop:6 }}>{fo.notes}</div>}
-                </div>
-                <button onClick={()=>deleteFoal(fo.id)} className="ev-tap" style={{ border:"none", background:"transparent", cursor:"pointer", color:C.sub, padding:6 }}><Trash2 size={17}/></button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {modal && <FoalModal t={t} horses={horses} onClose={()=>setModal(false)} onSave={(fo)=>{addFoal(fo);setModal(false);}}/>}
-    </div>
-  );
-}
-function FoalModal({ t, horses, onClose, onSave }) {
-  const mares=horses.filter(h=>h.sex==="sexMare");
-  const [f,setF]=useState({name:"",dam_id:"",sire_name:"",birth_date:"",sex:"",color:"",birth_type:"normal",vet_present:false,notes:""});
-  const [err,setErr]=useState(false);
-  const save=()=>{if(!f.name.trim()||!f.birth_date){setErr(true);return;}onSave(f);};
-  return(
-    <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<Baby size={22}/>} title="Register Foal">
-      <Field label={t.name} required><input value={f.name} onChange={e=>{setF({...f,name:e.target.value});setErr(false);}} style={inputStyle(err&&!f.name.trim())}/></Field>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label="Dam"><select value={f.dam_id} onChange={e=>setF({...f,dam_id:e.target.value})} style={inputStyle()}><option value="">—</option>{mares.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></Field>
-        <Field label="Sire"><input value={f.sire_name} onChange={e=>setF({...f,sire_name:e.target.value})} style={inputStyle()}/></Field>
-      </div>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
-        <Field label="Birth Date" required><input type="date" value={f.birth_date} onChange={e=>{setF({...f,birth_date:e.target.value});setErr(false);}} style={inputStyle(err&&!f.birth_date)}/></Field>
-        <Field label={t.sex}><select value={f.sex} onChange={e=>setF({...f,sex:e.target.value})} style={inputStyle()}><option value="">—</option>{SEX_OPTS.map(s=><option key={s} value={s}>{t[s]}</option>)}</select></Field>
-        <Field label={t.color}><select value={f.color} onChange={e=>setF({...f,color:e.target.value})} style={inputStyle()}><option value="">—</option>{COLORS_LIST.map(c=><option key={c} value={c}>{c}</option>)}</select></Field>
-      </div>
-      <Field label="Notes"><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})} rows={2} style={{...inputStyle(),resize:"none"}}/></Field>
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.add||"Add"} saveIcon={<Plus size={20}/>}/>
-    </ModalShell>
-  );
-}
-
-/* ---------- CATALOG ---------- */
-const LISTING_TYPES = ["for_sale","for_lease","stud_service","broodmare","auction","free_lease","half_lease","retirement","adoption","other"];
-
-function CatalogScreen({ t }) {
-  const { catalog, addCatalogItem, deleteCatalogItem, horses } = useStore();
-  const [modal, setModal] = useState(false);
-  return (
-    <div className="ev-card">
-      <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:10, marginBottom:16 }}>
-        <h2 className="ev-display" style={{ margin:0, fontSize:22, fontWeight:700 }}>{t.catalog}</h2>
-        <div style={{ flex:1 }}/>
-        <button onClick={()=>setModal(true)} className="ev-tap" style={{ display:"flex", alignItems:"center", gap:8, border:"none", cursor:"pointer", fontFamily:"inherit", background:C.mint, color:"#fff", fontSize:14, fontWeight:600, padding:"10px 16px", borderRadius:13 }}><Plus size={18}/> New Listing</button>
-      </div>
-      {catalog.length===0 ? (
-        <EmptyHero accent={C.mint} icon={<ShoppingCart size={46} strokeWidth={1.6}/>} title="No listings" sub="Create horse sales ads, lease listings and stud services." cta="New Listing" onClick={()=>setModal(true)}/>
-      ) : (
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:14 }}>
-          {catalog.map(item=>{
-            const horse=horses.find(h=>h.id===item.horse_id);
-            return(
-              <div key={item.id} style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:18, overflow:"hidden" }}>
-                {horse?.photo_url && <img src={horse.photo_url} alt={horse.name} style={{ width:"100%", height:160, objectFit:"cover" }}/>}
-                <div style={{ padding:16 }}>
-                  <div style={{ fontSize:16, fontWeight:600 }}>{item.title}</div>
-                  <div style={{ fontSize:13, color:C.sub, marginTop:4 }}>{item.listing_type?.replace(/_/g," ")} · {item.status}</div>
-                  {!item.price_on_request && item.price && <div className="ev-display" style={{ fontSize:22, fontWeight:700, color:C.mint, marginTop:6 }}>€{Number(item.price).toLocaleString()}</div>}
-                  {item.price_on_request && <div style={{ fontSize:14, fontWeight:600, color:C.amber, marginTop:6 }}>Price on request</div>}
-                  {item.description && <div style={{ fontSize:13, color:C.sub, marginTop:6, lineHeight:1.4 }}>{item.description.slice(0,100)}{item.description.length>100?"...":""}</div>}
-                  <div style={{ display:"flex", gap:8, marginTop:12 }}>
-                    <button onClick={()=>deleteCatalogItem(item.id)} className="ev-tap" style={{ border:"none", background:`${C.coral}1f`, cursor:"pointer", color:C.coral, padding:"8px 14px", borderRadius:10, fontSize:13, fontWeight:600, fontFamily:"inherit" }}><Trash2 size={15}/> Delete</button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {modal && <CatalogModal t={t} horses={horses} onClose={()=>setModal(false)} onSave={(item)=>{addCatalogItem(item);setModal(false);}}/>}
-    </div>
-  );
-}
-function CatalogModal({ t, horses, onClose, onSave }) {
-  const [f,setF]=useState({horse_id:"",title:"",listing_type:"for_sale",price:"",price_on_request:false,description:"",highlights:"",level:"",achievements:"",contact_name:"",contact_phone:"",contact_email:"",location:"",status:"active"});
-  const [err,setErr]=useState(false);
-  const save=()=>{if(!f.horse_id||!f.title.trim()){setErr(true);return;}onSave({...f,price:f.price?parseFloat(f.price):null});};
-  return(
-    <ModalShell t={t} onClose={onClose} accent={C.mint} icon={<ShoppingCart size={22}/>} title="New Listing">
-      <Field label="Horse" required><select value={f.horse_id} onChange={e=>{setF({...f,horse_id:e.target.value,title:horses.find(h=>h.id===e.target.value)?.name||f.title});setErr(false);}} style={inputStyle(err&&!f.horse_id)}><option value="">Select horse...</option>{horses.map(h=><option key={h.id} value={h.id}>{h.name}</option>)}</select></Field>
-      <Field label="Title" required><input value={f.title} onChange={e=>{setF({...f,title:e.target.value});setErr(false);}} style={inputStyle(err&&!f.title.trim())}/></Field>
-      <Field label="Listing Type"><div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>{LISTING_TYPES.map(lt=>(<button key={lt} type="button" onClick={()=>setF({...f,listing_type:lt})} className="ev-tap" style={{ padding:"6px 12px", borderRadius:14, border:`1px solid ${f.listing_type===lt?C.mint:C.line}`, background:f.listing_type===lt?C.mint:C.field, color:f.listing_type===lt?"#fff":C.sub, fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>{lt.replace(/_/g," ")}</button>))}</div></Field>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label="Price (€)"><input type="number" value={f.price} onChange={e=>setF({...f,price:e.target.value})} style={inputStyle()}/></Field>
-        <Field label="Level"><input value={f.level} onChange={e=>setF({...f,level:e.target.value})} placeholder="e.g. 1.40m" style={inputStyle()}/></Field>
-      </div>
-      <Field label="Description"><textarea value={f.description} onChange={e=>setF({...f,description:e.target.value})} rows={3} style={{...inputStyle(),resize:"none"}}/></Field>
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.mint} saveLabel="Publish" saveIcon={<Check size={20}/>}/>
-    </ModalShell>
-  );
-}
-
-/* ---------- INVOICES ---------- */
-function InvoicesScreen({ t }) {
-  const { invoices, addInvoice, deleteInvoice, clients, companySettings } = useStore();
-  const [modal, setModal] = useState(false);
-  const statusColor = s => ({draft:C.sub,sent:C.sky,paid:C.mint,overdue:C.coral,cancelled:C.sub,partial:C.amber}[s]||C.sub);
-  return (
-    <div className="ev-card">
-      <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:10, marginBottom:16 }}>
-        <h2 className="ev-display" style={{ margin:0, fontSize:22, fontWeight:700 }}>{t.invoices}</h2>
-        <div style={{ flex:1 }}/>
-        <button onClick={()=>setModal(true)} className="ev-tap" style={{ display:"flex", alignItems:"center", gap:8, border:"none", cursor:"pointer", fontFamily:"inherit", background:C.mint, color:"#fff", fontSize:14, fontWeight:600, padding:"10px 16px", borderRadius:13 }}><Plus size={18}/> New Invoice</button>
-      </div>
-      {invoices.length===0 ? (
-        <EmptyHero accent={C.mint} icon={<FileText size={46} strokeWidth={1.6}/>} title="No invoices" sub="Create and manage invoices for your clients." cta="New Invoice" onClick={()=>setModal(true)}/>
-      ) : (
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {invoices.map(inv=>(
-            <div key={inv.id} style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:18, padding:16, display:"flex", alignItems:"center", gap:14 }}>
-              <span style={{ width:44, height:44, borderRadius:13, display:"grid", placeItems:"center", background:`${C.mint}1f`, color:C.mint, flexShrink:0 }}><FileText size={20}/></span>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:16, fontWeight:600 }}>{inv.invoice_number}</div>
-                <div style={{ fontSize:13, color:C.sub }}>{inv.client_name} · {inv.invoice_date?.slice(0,10)}</div>
-              </div>
-              <span style={{ padding:"4px 10px", borderRadius:8, background:`${statusColor(inv.status)}1f`, color:statusColor(inv.status), fontSize:12, fontWeight:600 }}>{inv.status}</span>
-              <div className="ev-display" style={{ fontSize:18, fontWeight:700, color:C.ink }}>€{Number(inv.total||0).toFixed(2)}</div>
-              <button onClick={()=>deleteInvoice(inv.id)} className="ev-tap" style={{ border:"none", background:"transparent", cursor:"pointer", color:C.sub, padding:6 }}><Trash2 size={17}/></button>
-            </div>
-          ))}
-        </div>
-      )}
-      {modal && <InvoiceModal t={t} clients={clients} companySettings={companySettings} invoiceCount={invoices.length} onClose={()=>setModal(false)} onSave={(inv)=>{addInvoice(inv);setModal(false);}}/>}
-    </div>
-  );
-}
-function InvoiceModal({ t, clients, companySettings, invoiceCount, onClose, onSave }) {
-  const prefix = companySettings?.invoice_prefix||"INV";
-  const nextNum = String(invoiceCount+1).padStart(4,"0");
-  const [f,setF]=useState({
-    invoice_number:`${prefix}-${nextNum}`, client_id:"", client_name:"", client_email:"", client_address:"",
-    invoice_date:new Date().toISOString().slice(0,10), due_date:"", status:"draft",
-    line_items:[{description:"",qty:1,unit_price:0,amount:0}],
-    tax_rate:Number(companySettings?.tax_rate||21), notes:""
-  });
-  const [err,setErr]=useState(false);
-
-  const updateLine=(i,key,val)=>{
-    const items=[...f.line_items]; items[i]={...items[i],[key]:val};
-    if(key==="qty"||key==="unit_price") items[i].amount=Number(items[i].qty||0)*Number(items[i].unit_price||0);
-    setF({...f,line_items:items});
-  };
-  const addLine=()=>setF({...f,line_items:[...f.line_items,{description:"",qty:1,unit_price:0,amount:0}]});
-  const removeLine=(i)=>setF({...f,line_items:f.line_items.filter((_,j)=>j!==i)});
-
-  const subtotal=f.line_items.reduce((s,l)=>s+Number(l.amount||0),0);
-  const taxAmount=subtotal*(f.tax_rate/100);
-  const total=subtotal+taxAmount;
-
-  const selectClient=(id)=>{
-    const client=clients.find(c=>c.id===id);
-    if(client) setF({...f, client_id:id, client_name:client.name, client_email:client.email||"", client_address:[client.address,client.city,client.country].filter(Boolean).join(", ")});
-  };
-
-  const save=()=>{
-    if(!f.client_name.trim()||!f.invoice_date||!f.due_date){setErr(true);return;}
-    onSave({...f, subtotal, tax_amount:taxAmount, total, line_items:JSON.stringify(f.line_items)});
-  };
-
-  return(
-    <ModalShell t={t} onClose={onClose} accent={C.mint} icon={<FileText size={22}/>} title="New Invoice">
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label="Invoice #"><input value={f.invoice_number} onChange={e=>setF({...f,invoice_number:e.target.value})} style={inputStyle()}/></Field>
-        <Field label="Client" required>
-          <select value={f.client_id} onChange={e=>{selectClient(e.target.value);setErr(false);}} style={inputStyle(err&&!f.client_name.trim())}>
-            <option value="">Select client...</option>
-            {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </Field>
-      </div>
-      <div className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
-        <Field label="Invoice Date" required><input type="date" value={f.invoice_date} onChange={e=>{setF({...f,invoice_date:e.target.value});setErr(false);}} style={inputStyle(err&&!f.invoice_date)}/></Field>
-        <Field label="Due Date" required><input type="date" value={f.due_date} onChange={e=>{setF({...f,due_date:e.target.value});setErr(false);}} style={inputStyle(err&&!f.due_date)}/></Field>
-        <Field label="VAT %"><input type="number" value={f.tax_rate} onChange={e=>setF({...f,tax_rate:Number(e.target.value)})} style={inputStyle()}/></Field>
-      </div>
-
-      <Divider label="Line Items"/>
-      {f.line_items.map((line,i)=>(
-        <div key={i} className="ev-modal-grid" style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr auto", gap:8, marginBottom:8 }}>
-          <input value={line.description} onChange={e=>updateLine(i,"description",e.target.value)} placeholder="Description" style={{...inputStyle(),padding:"10px 12px",fontSize:14}}/>
-          <input type="number" value={line.qty} onChange={e=>updateLine(i,"qty",e.target.value)} placeholder="Qty" style={{...inputStyle(),padding:"10px 12px",fontSize:14}}/>
-          <input type="number" value={line.unit_price} onChange={e=>updateLine(i,"unit_price",e.target.value)} placeholder="Price" style={{...inputStyle(),padding:"10px 12px",fontSize:14}}/>
-          <button onClick={()=>removeLine(i)} className="ev-tap" style={{ border:"none", background:"transparent", cursor:"pointer", color:C.coral, padding:6 }}><Trash2 size={16}/></button>
-        </div>
-      ))}
-      <button onClick={addLine} className="ev-tap" style={{ border:`1px dashed ${C.line}`, background:C.field, borderRadius:10, padding:"8px 14px", cursor:"pointer", fontSize:13, fontWeight:600, color:C.sky, fontFamily:"inherit", width:"100%", marginBottom:16 }}><Plus size={16}/> Add line</button>
-
-      <div style={{ background:C.field, borderRadius:14, padding:16 }}>
-        <div style={{ display:"flex", justifyContent:"space-between", fontSize:14, marginBottom:4 }}><span style={{ color:C.sub }}>Subtotal</span><span style={{ fontWeight:600 }}>€{subtotal.toFixed(2)}</span></div>
-        <div style={{ display:"flex", justifyContent:"space-between", fontSize:14, marginBottom:4 }}><span style={{ color:C.sub }}>VAT ({f.tax_rate}%)</span><span style={{ fontWeight:600 }}>€{taxAmount.toFixed(2)}</span></div>
-        <div style={{ display:"flex", justifyContent:"space-between", fontSize:18, fontWeight:700, borderTop:`1px solid ${C.line}`, paddingTop:8, marginTop:8 }}><span>Total</span><span style={{ color:C.mint }}>€{total.toFixed(2)}</span></div>
-      </div>
-
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.mint} saveLabel="Create Invoice" saveIcon={<Check size={20}/>}/>
-    </ModalShell>
   );
 }
 
