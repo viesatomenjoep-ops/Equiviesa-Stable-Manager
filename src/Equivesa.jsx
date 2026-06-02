@@ -600,34 +600,32 @@ function LangPicker({ lang, setLang, block }) {
 
 function LangMenu({ lang, setLang, t }) {
   const [open, setOpen] = useState(false);
-  const langs = [["en","English", "🇬🇧"],["nl","Nederlands", "🇳🇱"],["es","Español", "🇪🇸"]];
-  const activeLang = langs.find(x => x[0] === lang) || langs[0];
+  const langs = [["en","English"],["nl","Nederlands"],["es","Español"]];
   return (
     <div style={{ position: "relative" }}>
       <button onClick={() => setOpen((o) => !o)} className="ev-tap" aria-label={t.language}
-        style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 20,
-          background: open ? C.line : "rgba(31,45,58,.04)", color: C.ink, border: "none", cursor: "pointer",
-          transition: "background .15s ease", fontFamily: "inherit" }}>
-        <span style={{ fontSize: 16 }}>{activeLang[2]}</span>
-        <span style={{ fontSize: 13, fontWeight: 700 }}>{activeLang[0].toUpperCase()}</span>
-        <ChevronDown size={14} color={C.sub} style={{ marginLeft: 2 }} />
+        style={{ ...iconBtn, gap: 5, width: "auto", padding: "0 12px",
+          background: open ? C.mintSoft : C.surface, color: open ? C.mint : C.ink }}>
+        <Globe size={19} />
+        <span style={{ fontSize: 13, fontWeight: 700 }}>{I18N[lang].code}</span>
       </button>
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
-          <div style={{ position: "absolute", top: 44, right: 0, zIndex: 41, background: C.surface,
-            borderRadius: 14, border: `1px solid ${C.line}`, boxShadow: "0 12px 34px rgba(31,45,58,.12)",
-            padding: 6, minWidth: 160, animation: "evUp .18s ease both" }}>
-            {langs.map(([l, label, flag]) => (
+          <div style={{ position: "absolute", top: 50, right: 0, zIndex: 41, background: C.surface,
+            borderRadius: 14, border: `1px solid ${C.line}`, boxShadow: "0 12px 34px rgba(31,45,58,.18)",
+            padding: 6, minWidth: 168, animation: "evUp .18s ease both" }}>
+            {langs.map(([l, label]) => (
               <button key={l} onClick={() => { setLang(l); setOpen(false); }} className="ev-tap" style={{
                 display: "flex", alignItems: "center", gap: 10, width: "100%", border: "none",
-                background: lang === l ? "rgba(31,45,58,.04)" : "transparent", cursor: "pointer", borderRadius: 10,
-                padding: "10px 12px", fontFamily: "inherit", fontSize: 14,
-                fontWeight: lang === l ? 700 : 500, color: C.ink, textAlign: "left",
+                background: lang === l ? C.mintSoft : "transparent", cursor: "pointer", borderRadius: 10,
+                padding: "11px 12px", fontFamily: "inherit", fontSize: 15,
+                fontWeight: lang === l ? 600 : 500, color: C.ink, textAlign: "left",
               }}>
-                <span style={{ fontSize: 16 }}>{flag}</span>
-                <span style={{ flex: 1 }}>{label}</span>
-                {lang === l && <Check size={16} color={C.ink} />}
+                <span style={{ fontSize: 12, fontWeight: 700, color: lang === l ? C.mint : C.sub,
+                  width: 26 }}>{I18N[l].code}</span>
+                {label}
+                {lang === l && <Check size={17} color={C.mint} style={{ marginLeft: "auto" }} />}
               </button>
             ))}
           </div>
