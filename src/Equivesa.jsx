@@ -497,10 +497,15 @@ function StoreProvider({ children }) {
     const { data } = await supabase.from('tasks').select('*').order('due_date', { ascending: true });
     if (data) setTasks(data);
   };
-  const addTask = async (task) => {
-    const { data, error } = await supabase.from('tasks').insert([cleanObj(task)]).select();
+  const addTask = async (t) => {
+    const { data, error } = await supabase.from('tasks').insert([cleanObj(t)]).select();
     if (error) console.error("Error adding task:", error);
     if (data) setTasks(prev => [data[0], ...prev]);
+  };
+  const editTask = async (id, t) => {
+    const { data, error } = await supabase.from('tasks').update(cleanObj(t)).eq('id', id).select();
+    if (error) console.error("Error editing task:", error);
+    if (data) setTasks(prev => prev.map(x => x.id === id ? data[0] : x));
   };
   const toggleTask = async (id) => {
     const t = tasks.find(x => x.id === id);
@@ -524,6 +529,11 @@ function StoreProvider({ children }) {
     if (error) console.error("Error adding health record:", error);
     if (data) setHealthRecords(prev => [data[0], ...prev]);
   };
+  const editHealthRecord = async (id, rec) => {
+    const { data, error } = await supabase.from('health_records').update(cleanObj(rec)).eq('id', id).select();
+    if (error) console.error("Error editing health record:", error);
+    if (data) setHealthRecords(prev => prev.map(x => x.id === id ? data[0] : x));
+  };
   const toggleHealthRecord = async (id) => {
     const r = healthRecords.find(x => x.id === id);
     if (!r) return;
@@ -540,8 +550,8 @@ function StoreProvider({ children }) {
     <Store.Provider value={{ horses, addHorse, editHorse, deleteHorse, txns, addTxn, deleteTxn,
       users, addUser, deleteUser, feed, addFeedItem, deleteFeedItem,
       supplies, addSupply, toggleSupplyStatus, deleteSupply,
-      tasks, addTask, toggleTask, deleteTask,
-      healthRecords, addHealthRecord, toggleHealthRecord, deleteHealthRecord }}>{children}</Store.Provider>
+      tasks, addTask, editTask, toggleTask, deleteTask,
+      healthRecords, addHealthRecord, editHealthRecord, toggleHealthRecord, deleteHealthRecord }}>{children}</Store.Provider>
   );
 }
 
@@ -994,16 +1004,18 @@ function Drawer({ t, active, go, close, mode, setMode }) {
 /* ============================================================
    SCREENS
    ============================================================ */
+function HorseEditWrapper({ t, id, setRoute }) {
+  const { horses } = useStore();
+  const h = horses.find(x => x.id === id);
+  if (!h) return null;
+  return <HorseForm t={t} initialData={h} onDone={() => setRoute({ name: "detail", id })} />;
+}
+
 function Screen({ active, route, setRoute, t }) {
   const wrap = { maxWidth: 920, margin: "0 auto", padding: "22px 18px" };
   if (active === "horses") {
     if (route.name === "add") return <div style={wrap}><HorseForm t={t} onDone={() => setRoute({ name: "list" })} /></div>;
-    if (route.name === "edit") {
-      const { horses } = useStore();
-      const h = horses.find(x => x.id === route.id);
-      if (!h) return null;
-      return <div style={wrap}><HorseForm t={t} initialData={h} onDone={() => setRoute({ name: "detail", id: route.id })} /></div>;
-    }
+    if (route.name === "edit") return <div style={wrap}><HorseEditWrapper t={t} id={route.id} setRoute={setRoute} /></div>;
     if (route.name === "detail") return <div style={wrap}><HorseDetail t={t} id={route.id} setRoute={setRoute} /></div>;
     return <div style={wrap}><HorsesList t={t} setRoute={setRoute} /></div>;
   }
@@ -1190,7 +1202,7 @@ function HorseForm({ t, initialData, onDone }) {
         </div>
       </Field>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Field label={t.birthdate}><input type="date" value={f.birthdate} onChange={(e) => setF({...f, birthdate: e.target.value})} style={inputStyle()} /></Field>
         <Field label={t.studbook}><input value={f.studbook} onChange={(e) => setF({...f, studbook: e.target.value})} placeholder={t.select} style={inputStyle()} /></Field>
       </div>
@@ -1213,12 +1225,12 @@ function HorseForm({ t, initialData, onDone }) {
 
       <Divider label={t.optional} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Field label={t.ueln}><input value={f.ueln} onChange={(e) => setF({...f, ueln: e.target.value})} placeholder="UELN" style={inputStyle()} /></Field>
         <Field label={t.chip}><input value={f.chip} onChange={(e) => setF({...f, chip: e.target.value})} placeholder={t.chip} style={inputStyle()} /></Field>
       </div>
       
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Field label={t.feiid}><input value={f.feiid} onChange={(e) => setF({...f, feiid: e.target.value})} placeholder="FEI ID" style={inputStyle()} /></Field>
         <Field label={t.location}><input value={f.location} onChange={(e) => setF({...f, location: e.target.value})} placeholder={t.select} style={inputStyle()} /></Field>
       </div>
@@ -1438,9 +1450,10 @@ function CalendarScreen({ t }) {
 
 /* ---------- Tasks ---------- */
 function TasksScreen({ t }) {
-  const { tasks, addTask, toggleTask, deleteTask, horses } = useStore();
+  const { tasks, addTask, editTask, toggleTask, deleteTask, horses } = useStore();
   const [tab, setTab] = useState(0); // 0 = open, 1 = completed
   const [modal, setModal] = useState(false);
+  const [editObj, setEditObj] = useState(null);
 
   const filtered = tasks.filter(tk => tab === 0 ? !tk.is_completed : tk.is_completed);
 
@@ -1499,10 +1512,17 @@ function TasksScreen({ t }) {
                       fontSize: 11, fontWeight: 600 }}>{tk.category === "horse" ? t.horses : t.general}</span>}
                   </div>
                 </div>
-                <button onClick={() => deleteTask(tk.id)} className="ev-tap" style={{
-                  border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
-                  <Trash2 size={17} />
-                </button>
+                </div>
+                <div style={{ display: "flex", gap: 6, opacity: tk.is_completed ? 0.5 : 1 }}>
+                  <button onClick={() => setEditObj(tk)} className="ev-tap" style={{
+                    border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
+                    <Edit2 size={17} />
+                  </button>
+                  <button onClick={() => deleteTask(tk.id)} className="ev-tap" style={{
+                    border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
+                    <Trash2 size={17} />
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -1511,12 +1531,14 @@ function TasksScreen({ t }) {
 
       {modal && <TaskModal t={t} horses={horses} onClose={() => setModal(false)}
         onSave={(task) => { addTask(task); setModal(false); }} />}
+      {editObj && <TaskModal t={t} initialData={editObj} horses={horses} onClose={() => setEditObj(null)}
+        onSave={(task) => { editTask(editObj.id, task); setEditObj(null); }} />}
     </div>
   );
 }
 
-function TaskModal({ t, horses, onClose, onSave }) {
-  const [f, setF] = useState({ title: "", description: "", due_date: "", start_time: "", end_time: "", category: "general", horse_id: null });
+function TaskModal({ t, initialData, horses, onClose, onSave }) {
+  const [f, setF] = useState(initialData || { title: "", description: "", due_date: "", start_time: "", end_time: "", category: "general", horse_id: null });
   const [err, setErr] = useState(false);
 
   const save = () => {
@@ -1525,8 +1547,8 @@ function TaskModal({ t, horses, onClose, onSave }) {
   };
 
   return (
-    <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<CheckSquare size={22} />} title={t.addTask}
-      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.add} saveIcon={<Plus size={20} />} />}>
+    <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<CheckSquare size={22} />} title={initialData ? t.editTask || "Edit Task" : t.addTask}
+      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
       <Field label={t.taskTitle} required>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
           {(t.taskCommon || []).map(s => (
@@ -1552,7 +1574,7 @@ function TaskModal({ t, horses, onClose, onSave }) {
           rows={2} style={{ ...inputStyle(), resize: "none" }} placeholder={t.notesHint} />
       </Field>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Field label={t.taskDue}>
           <input type="date" value={f.due_date} onChange={(e) => setF({...f, due_date: e.target.value})}
             style={inputStyle()} />
@@ -1566,7 +1588,7 @@ function TaskModal({ t, horses, onClose, onSave }) {
         </Field>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Field label={t.timeStart}>
           <input type="time" value={f.start_time} onChange={(e) => setF({...f, start_time: e.target.value})}
             style={inputStyle()} />
@@ -1653,10 +1675,17 @@ function HealthScreen({ t }) {
                       </div>
                     )}
                   </div>
-                  <button onClick={() => deleteHealthRecord(hr.id)} className="ev-tap" style={{
-                    border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
-                    <Trash2 size={17} />
-                  </button>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, opacity: hr.completed ? 0.5 : 1 }}>
+                    <button onClick={() => setEditRecord(hr)} className="ev-tap" style={{
+                      border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
+                      <Edit2 size={17} />
+                    </button>
+                    <button onClick={() => deleteHealthRecord(hr.id)} className="ev-tap" style={{
+                      border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
+                      <Trash2 size={17} />
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -1666,6 +1695,9 @@ function HealthScreen({ t }) {
         {modal && <HealthModal t={t} category={modal} horses={horses}
           onClose={() => setModal(null)}
           onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />}
+        {editRecord && <HealthModal t={t} initialData={editRecord} horses={horses}
+          onClose={() => setEditRecord(null)}
+          onSave={(rec) => { editHealthRecord(editRecord.id, rec); setEditRecord(null); }} />}
       </div>
     );
   }
@@ -1702,14 +1734,17 @@ function HealthScreen({ t }) {
       {modal && <HealthModal t={t} category={modal} horses={horses}
         onClose={() => setModal(null)}
         onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />}
+      {editRecord && <HealthModal t={t} initialData={editRecord} horses={horses}
+        onClose={() => setEditRecord(null)}
+        onSave={(rec) => { editHealthRecord(editRecord.id, rec); setEditRecord(null); }} />}
     </div>
   );
 }
 
-function HealthModal({ t, category, horses, onClose, onSave }) {
-  const [f, setF] = useState({ horse_id: "", scheduled_date: "", notes: "", performed_by: "", cost: "", category });
+function HealthModal({ t, category, initialData, horses, onClose, onSave }) {
+  const [f, setF] = useState(initialData || { horse_id: "", scheduled_date: "", notes: "", performed_by: "", cost: "", category: category || "generalCare" });
   const [err, setErr] = useState(false);
-  const [catSel, setCatSel] = useState(category);
+  const [catSel, setCatSel] = useState(initialData ? initialData.category : category);
 
   const save = () => {
     if (!f.horse_id || !f.scheduled_date) { setErr(true); return; }
@@ -1717,8 +1752,8 @@ function HealthModal({ t, category, horses, onClose, onSave }) {
   };
 
   return (
-    <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<Heart size={22} />} title={t.addRecord}
-      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.add} saveIcon={<Plus size={20} />} />}>
+    <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<Heart size={22} />} title={initialData ? t.editRecord || "Edit Record" : t.addRecord}
+      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
       {/* Category pills */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
         {HEALTH_CATS.map(([key, , color]) => (
@@ -1734,7 +1769,7 @@ function HealthModal({ t, category, horses, onClose, onSave }) {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Field label={t.selectHorse} required>
           <select value={f.horse_id} onChange={(e) => { setF({...f, horse_id: e.target.value}); setErr(false); }}
             style={inputStyle(err && !f.horse_id)}>
@@ -1748,7 +1783,7 @@ function HealthModal({ t, category, horses, onClose, onSave }) {
         </Field>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Field label={t.performedBy}>
           <input value={f.performed_by} onChange={(e) => setF({...f, performed_by: e.target.value})}
             placeholder={t.performedBy} style={inputStyle()} />
@@ -2250,7 +2285,7 @@ function ModalShell({ t, onClose, accent, icon, title, children, footer }) {
       
       {/* Header (Fixed) */}
       <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px",
-        background: C.surface, borderBottom: `1px solid ${C.line}` }}>
+        background: C.surface, borderBottom: `1px solid ${C.line}`, flexShrink: 0 }}>
         <span style={{ width: 44, height: 44, borderRadius: 14, display: "grid", placeItems: "center",
           background: `${accent}1c`, color: accent }}>{icon}</span>
         <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 24, fontWeight: 700, color: C.ink }}>{title}</h2>
@@ -2260,20 +2295,20 @@ function ModalShell({ t, onClose, accent, icon, title, children, footer }) {
       </div>
 
       {/* Content (Scrollable) */}
-      <div className="ev-scroll" style={{ flex: 1, overflowY: "auto", padding: "24px 20px" }}>
-        <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className="ev-scroll" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+        <div style={{ padding: "24px 20px", maxWidth: 760, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
           {children}
         </div>
-      </div>
-
-      {/* Footer (Fixed) */}
-      {footer && (
-        <div style={{ padding: "16px 20px", background: C.surface, borderTop: `1px solid ${C.line}` }}>
-          <div style={{ maxWidth: 760, margin: "0 auto" }}>
-            {footer}
+        
+        {/* Footer (Pushed to bottom of scroll area) */}
+        {footer && (
+          <div style={{ padding: "16px 20px", background: C.surface, borderTop: `1px solid ${C.line}`, width: "100%", marginTop: "auto" }}>
+            <div style={{ maxWidth: 760, margin: "0 auto" }}>
+              {footer}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -2582,7 +2617,7 @@ function SupplyModal({ t, lang, onClose, onSave }) {
       </Field>
       {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.supplyItem} {t.required}</div>}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Field label={t.qty}>
           <input value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })}
             placeholder={t.qtyHint} style={inputStyle()} />
