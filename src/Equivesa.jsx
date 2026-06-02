@@ -393,6 +393,8 @@ function StoreProvider({ children }) {
   const cleanObj = (obj) => {
     const o = { ...obj };
     Object.keys(o).forEach(k => { if (o[k] === "") o[k] = null; });
+    delete o.id;
+    delete o.created_at;
     return o;
   };
 
@@ -2470,15 +2472,19 @@ function GenericModuleScreen({ t, active }) {
     
     const o = { ...f };
     Object.keys(o).forEach(k => { if (o[k] === "") o[k] = null; });
+    delete o.id;
+    delete o.created_at;
     
     if (editObj) {
-      const { data: res } = await supabase.from(conf.table).update(o).eq('id', editObj.id).select();
+      const { data: res, error } = await supabase.from(conf.table).update(o).eq('id', editObj.id).select();
+      if (error) { console.error(error); alert("Database Error: " + error.message); }
       if (res) {
         setData(prev => prev.map(x => x.id === editObj.id ? res[0] : x));
         setEditObj(null);
       }
     } else {
-      const { data: res } = await supabase.from(conf.table).insert([o]).select();
+      const { data: res, error } = await supabase.from(conf.table).insert([o]).select();
+      if (error) { console.error(error); alert("Database Error: " + error.message); }
       if (res) {
         setData(prev => [res[0], ...prev]);
         setModal(false);
