@@ -279,8 +279,8 @@ const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 /* ---------- palette (fresh & light) ---------- */
 const C = {
-  bg: "#F4F7F5", surface: "#FFFFFF", ink: "#1F2D3A", sub: "#7C8A99",
-  line: "#E8EEEA", field: "#F6F9F7",
+  bg: "#E9EFEA", surface: "#FFFFFF", ink: "#1F2D3A", sub: "#64748B",
+  line: "#CBD5E1", field: "#F1F5F9",
   mint: "#2FB6A0", mintSoft: "#E3F5F0",
   sky: "#5B9BD5", coral: "#FF8A6B", amber: "#F2B441", pink: "#E86A9A", lilac: "#8E7CE0",
 };
@@ -2218,7 +2218,7 @@ function FeedingScreen({ t }) {
           </div>
         </>
       ) : (
-        <OrderTab t={t} />
+        <OrderTab t={t} setTab={setTab} />
       )}
 
       {addFor != null && (
@@ -2230,7 +2230,7 @@ function FeedingScreen({ t }) {
   );
 }
 
-function OrderTab({ t }) {
+function OrderTab({ t, setTab }) {
   const { feed } = useStore();
   // aggregate products across all horses & slots
   const totals = {};
@@ -2239,7 +2239,7 @@ function OrderTab({ t }) {
   const entries = Object.entries(totals);
 
   if (entries.length === 0) {
-    return <EmptyHero accent={C.sky} icon={<Package size={46} strokeWidth={1.6} />} title={t.empty} sub="" cta={t.addProduct} onClick={() => {}} />;
+    return <EmptyHero accent={C.sky} icon={<Package size={46} strokeWidth={1.6} />} title={t.empty} sub="" cta={t.feedingTab} onClick={() => setTab(0)} />;
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -2340,13 +2340,14 @@ const GENERIC_CONFIG = {
   foals: { table: "horses", defaultVals: { archived: false }, fields: [{n:"name",l:"Name",r:true}, {n:"birthdate",l:"Birthdate",t:"date"}] }
 };
 
-function PlaceholderScreen({ t, active }) {
-  const Icon = ICONS[active] || Sparkles;
-  const color = ACCENT[active] || C.mint;
+function GenericModuleScreen({ t, active }) {
   const conf = GENERIC_CONFIG[active];
+  const color = ACCENT[active] || C.mint;
+  const Icon = MODULE_ICONS[active] || Sparkles;
   
   const [data, setData] = useState([]);
   const [modal, setModal] = useState(false);
+  const [editObj, setEditObj] = useState(null);
   const [f, setF] = useState(conf ? (conf.defaultVals || {}) : {});
   const [err, setErr] = useState(false);
 
@@ -2380,11 +2381,20 @@ function PlaceholderScreen({ t, active }) {
     
     const o = { ...f };
     Object.keys(o).forEach(k => { if (o[k] === "") o[k] = null; });
-    const { data: res } = await supabase.from(conf.table).insert([o]).select();
-    if (res) {
-      setData(prev => [res[0], ...prev]);
-      setModal(false);
-      setF(conf.defaultVals || {});
+    
+    if (editObj) {
+      const { data: res } = await supabase.from(conf.table).update(o).eq('id', editObj.id).select();
+      if (res) {
+        setData(prev => prev.map(x => x.id === editObj.id ? res[0] : x));
+        setEditObj(null);
+      }
+    } else {
+      const { data: res } = await supabase.from(conf.table).insert([o]).select();
+      if (res) {
+        setData(prev => [res[0], ...prev]);
+        setModal(false);
+        setF(conf.defaultVals || {});
+      }
     }
   };
 
@@ -2420,18 +2430,25 @@ function PlaceholderScreen({ t, active }) {
                   {Object.keys(x).filter(k => k !== 'id' && k !== 'created_at' && k !== 'name' && x[k]).map(k => String(x[k])).join(" · ")}
                 </div>
               </div>
-              <button onClick={() => del(x.id)} className="ev-tap" style={{ border: "none", background: "transparent",
-                cursor: "pointer", color: C.sub, padding: 6 }}><Trash2 size={17} /></button>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button onClick={() => { setEditObj(x); setF(x); }} className="ev-tap" style={{
+                  border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
+                  <Edit2 size={17} />
+                </button>
+                <button onClick={() => del(x.id)} className="ev-tap" style={{ border: "none", background: "transparent",
+                  cursor: "pointer", color: C.sub, padding: 6 }}><Trash2 size={17} /></button>
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      {modal && (
-        <ModalShell t={t} onClose={() => setModal(false)} accent={color} icon={<Icon size={22} />} title={`${t.add} ${t[active] || active}`}
-          footer={<ModalFooter t={t} onClose={() => setModal(false)} onSave={save} accent={color} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
+      {(modal || editObj) && (
+        <ModalShell t={t} onClose={() => { setModal(false); setEditObj(null); setF(conf.defaultVals || {}); }} accent={color} icon={<Icon size={22} />} 
+          title={editObj ? t.edit || "Edit" : `${t.add} ${t[active] || active}`}
+          footer={<ModalFooter t={t} onClose={() => { setModal(false); setEditObj(null); setF(conf.defaultVals || {}); }} onSave={save} accent={color} saveLabel={editObj ? t.save : t.add} saveIcon={editObj ? <Check size={20} /> : <Plus size={20} />} />}>
           {conf.fields.map(field => (
-            <Field key={field.n} label={field.l} required={field.r}>
+            <Field key={field.n} label={t[field.n] || field.n} required={field.r}>
               {field.opts ? (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {field.opts.map(opt => (
