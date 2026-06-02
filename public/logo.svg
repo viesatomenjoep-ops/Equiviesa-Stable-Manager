@@ -11,28 +11,32 @@
   </style>
 
   <!-- Outer circle boundary -->
-  <circle cx="100" cy="100" r="85" stroke="#000000" stroke-width="4" fill="none"/>
+  <circle cx="100" cy="100" r="85" stroke="#000000" stroke-width="8" fill="none"/>
 
-  <!-- Rotating arms group -->
+  <!-- Rotating arms and horses group -->
   <g class="rotating">
-    <!-- Arm 1 (top) -->
-    <line x1="100" y1="100" x2="100" y2="25" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
-    <circle cx="100" cy="25" r="8" fill="#000000"/>
+    <!-- Arm 1 (top) with horse -->
+    <line x1="100" y1="100" x2="100" y2="30" stroke="#000000" stroke-width="10" stroke-linecap="round"/>
+    <path d="M95 25 L95 18 L97 15 L100 14 L103 15 L105 18 L105 25 L103 28 L100 30 L97 28 Z" fill="#000000"/>
+    <circle cx="100" cy="18" r="3" fill="#000000"/>
 
-    <!-- Arm 2 (right) -->
-    <line x1="100" y1="100" x2="175" y2="100" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
-    <circle cx="175" cy="100" r="8" fill="#000000"/>
+    <!-- Arm 2 (right) with horse -->
+    <line x1="100" y1="100" x2="170" y2="100" stroke="#000000" stroke-width="10" stroke-linecap="round"/>
+    <path d="M175 95 L182 95 L185 97 L186 100 L185 103 L182 105 L175 105 L172 103 L170 100 L172 97 Z" fill="#000000"/>
+    <circle cx="182" cy="100" r="3" fill="#000000"/>
 
-    <!-- Arm 3 (bottom) -->
-    <line x1="100" y1="100" x2="100" y2="175" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
-    <circle cx="100" cy="175" r="8" fill="#000000"/>
+    <!-- Arm 3 (bottom) with horse -->
+    <line x1="100" y1="100" x2="100" y2="170" stroke="#000000" stroke-width="10" stroke-linecap="round"/>
+    <path d="M95 175 L95 182 L97 185 L100 186 L103 185 L105 182 L105 175 L103 172 L100 170 L97 172 Z" fill="#000000"/>
+    <circle cx="100" cy="182" r="3" fill="#000000"/>
 
-    <!-- Arm 4 (left) -->
-    <line x1="100" y1="100" x2="25" y2="100" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
-    <circle cx="25" cy="100" r="8" fill="#000000"/>
+    <!-- Arm 4 (left) with horse -->
+    <line x1="100" y1="100" x2="30" y2="100" stroke="#000000" stroke-width="10" stroke-linecap="round"/>
+    <path d="M25 95 L18 95 L15 97 L14 100 L15 103 L18 105 L25 105 L28 103 L30 100 L28 97 Z" fill="#000000"/>
+    <circle cx="18" cy="100" r="3" fill="#000000"/>
   </g>
 
   <!-- Center hub -->
-  <circle cx="100" cy="100" r="12" fill="#000000"/>
-  <circle cx="100" cy="100" r="6" fill="#FFFFFF"/>
+  <circle cx="100" cy="100" r="16" fill="#000000"/>
+  <circle cx="100" cy="100" r="8" fill="#FFFFFF"/>
 </svg>
