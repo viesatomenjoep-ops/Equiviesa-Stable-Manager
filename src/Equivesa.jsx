@@ -1406,7 +1406,7 @@ function CalendarScreen({ t }) {
               cursor: "pointer", textAlign: "center", fontFamily: "inherit", minHeight: 52,
               display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
             }}>
-              <span style={{ fontSize: 15, fontWeight: isToday ? 800 : 500, color: isToday ? C.mint : C.ink,
+              <span style={{ fontSize: 15, fontWeight: isToday ? 800 : 500,
                 width: 30, height: 30, lineHeight: "30px", borderRadius: "50%",
                 background: isToday ? C.mint : "transparent", color: isToday ? "#fff" : C.ink,
                 display: "inline-block" }}>{d}</span>
@@ -1511,7 +1511,6 @@ function TasksScreen({ t }) {
                     {tk.category && <span style={{ padding: "2px 8px", borderRadius: 8, background: tk.category === "horse" ? C.mintSoft : C.bg,
                       fontSize: 11, fontWeight: 600 }}>{tk.category === "horse" ? t.horses : t.general}</span>}
                   </div>
-                </div>
                 </div>
                 <div style={{ display: "flex", gap: 6, opacity: tk.is_completed ? 0.5 : 1 }}>
                   <button onClick={() => setEditObj(tk)} className="ev-tap" style={{
@@ -1674,7 +1673,6 @@ function HealthScreen({ t }) {
                         {hr.notes}
                       </div>
                     )}
-                  </div>
                   </div>
                   <div style={{ display: "flex", gap: 6, opacity: hr.completed ? 0.5 : 1 }}>
                     <button onClick={() => setEditRecord(hr)} className="ev-tap" style={{
