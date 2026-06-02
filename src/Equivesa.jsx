@@ -1192,9 +1192,9 @@ function HorseForm({ t, initialData, onDone }) {
           {SEX_OPTS.map((s) => (
             <button key={s} type="button" onClick={() => setF({...f, sex: s})} className="ev-tap"
               style={{
-                padding: "8px 14px", borderRadius: 16, border: `1px solid ${f.sex === s ? C.mint : C.line}`,
-                background: f.sex === s ? C.mint : C.field, color: f.sex === s ? "#fff" : C.sub,
-                fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+                padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f.sex === s ? C.mint : C.line}`,
+                background: f.sex === s ? C.mint : C.surface, color: f.sex === s ? "#fff" : C.sub,
+                fontSize: 16, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
               }}>
               {t[s]}
             </button>
@@ -1212,9 +1212,9 @@ function HorseForm({ t, initialData, onDone }) {
           {HORSE_COLORS.map((c) => (
             <button key={c} type="button" onClick={() => setF({...f, color: c})} className="ev-tap"
               style={{
-                padding: "8px 14px", borderRadius: 16, border: `1px solid ${f.color === c ? C.mint : C.line}`,
-                background: f.color === c ? C.mint : C.field, color: f.color === c ? "#fff" : C.sub,
-                fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+                padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f.color === c ? C.mint : C.line}`,
+                background: f.color === c ? C.mint : C.surface, color: f.color === c ? "#fff" : C.sub,
+                fontSize: 16, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
               }}>
               {c}
             </button>
@@ -1402,10 +1402,10 @@ function CalendarScreen({ t }) {
           const evs = events[ds] || [];
           return (
             <button key={d} onClick={() => setSelDay(d === selDay ? null : d)} className="ev-tap" style={{
-              border: isSel ? `2px solid ${C.mint}` : "1px solid transparent", borderRadius: 14, padding: "8px 2px",
+              border: isSel ? `2px solid ${C.mint}` : "1px solid transparent", borderRadius: 16, padding: "16px 4px",
               background: isToday ? C.mintSoft : isSel ? `${C.mint}0d` : "transparent",
-              cursor: "pointer", textAlign: "center", fontFamily: "inherit", minHeight: 52,
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+              cursor: "pointer", textAlign: "center", fontFamily: "inherit", minHeight: 80,
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
             }}>
               <span style={{ fontSize: 15, fontWeight: isToday ? 800 : 500,
                 width: 30, height: 30, lineHeight: "30px", borderRadius: "50%",
@@ -1571,7 +1571,7 @@ function TaskModal({ t, initialData, horses, onClose, onSave }) {
 
       <Field label={t.taskDesc}>
         <textarea value={f.description} onChange={(e) => setF({...f, description: e.target.value})}
-          rows={2} style={{ ...inputStyle(), resize: "none" }} placeholder={t.notesHint} />
+          style={{ ...inputStyle(), resize: "vertical", minHeight: 120 }} placeholder={t.notesHint} />
       </Field>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -1796,7 +1796,7 @@ function HealthModal({ t, category, initialData, horses, onClose, onSave }) {
 
       <Field label={t.recordNotes}>
         <textarea value={f.notes} onChange={(e) => setF({...f, notes: e.target.value})}
-          rows={2} style={{ ...inputStyle(), resize: "none" }} placeholder={t.notesHint} />
+          style={{ ...inputStyle(), resize: "vertical", minHeight: 120 }} placeholder={t.notesHint} />
       </Field>
 
       {err && <div style={{ color: C.coral, fontSize: 13, marginBottom: 10 }}>{t.selectHorse} & {t.recordDate} {t.required}</div>}
@@ -2122,10 +2122,10 @@ function UserModal({ t, onClose }) {
           const on = f.perms.includes(p);
           return (
             <button key={p} onClick={() => togglePerm(p)} className="ev-tap" style={{
-              border: `1.5px solid ${on ? C.mint : C.line}`, cursor: "pointer", fontFamily: "inherit",
-              background: on ? C.mintSoft : C.surface, color: on ? C.mint : C.sub,
-              padding: "9px 14px", borderRadius: 11, fontSize: 13.5, fontWeight: 600,
-              display: "flex", alignItems: "center", gap: 6 }}>
+              border: `1.5px solid ${on ? C.sky : C.line}`, cursor: "pointer", fontFamily: "inherit",
+              background: on ? C.sky + "1f" : C.surface, color: on ? C.sky : C.sub,
+              padding: "16px 24px", borderRadius: 16, fontSize: 16, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 8 }}>
               {on && <Check size={14} />}{t[p]}
             </button>
           );
@@ -2166,8 +2166,8 @@ function FeedingScreen({ t }) {
             <div style={{ display: "inline-flex", gap: 3, background: C.bg, borderRadius: 13, padding: 4 }}>
               {SLOTS.map((s) => (
                 <button key={s} onClick={() => setSlot(s)} className="ev-tap" style={{
-                  border: "none", cursor: "pointer", borderRadius: 10, padding: "9px 16px",
-                  fontSize: 14, fontWeight: 600, fontFamily: "inherit",
+                  border: "none", cursor: "pointer", borderRadius: 14, padding: "16px 24px",
+                  fontSize: 16, fontWeight: 600, fontFamily: "inherit",
                   background: slot === s ? C.sky : "transparent", color: slot === s ? "#fff" : C.sub }}>
                   {t[s]}
                 </button>
@@ -2686,7 +2686,7 @@ function SupplyModal({ t, lang, onClose, onSave }) {
 
       <Field label={t.notes}>
         <textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })}
-          rows={2} style={{ ...inputStyle(), resize: "none" }} placeholder={t.notesHint} />
+          style={{ ...inputStyle(), resize: "vertical", minHeight: 120 }} placeholder={t.notesHint} />
       </Field>
     </ModalShell>
   );
