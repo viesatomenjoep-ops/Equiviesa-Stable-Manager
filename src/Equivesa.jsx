@@ -403,6 +403,12 @@ function StoreProvider({ children }) {
     if (error) console.error("Error adding horse:", error);
     if (data) setHorses(prev => [data[0], ...prev]);
   };
+  const editHorse = async (id, h) => {
+    const cleanH = cleanObj(h);
+    const { data, error } = await supabase.from('horses').update(cleanH).eq('id', id).select();
+    if (error) console.error("Error editing horse:", error);
+    if (data) setHorses(prev => prev.map(x => x.id === id ? data[0] : x));
+  };
   const deleteHorse = async (id) => {
     await supabase.from('horses').delete().eq('id', id);
     setHorses(prev => prev.filter(h => h.id !== id));
@@ -531,7 +537,7 @@ function StoreProvider({ children }) {
   };
 
   return (
-    <Store.Provider value={{ horses, addHorse, deleteHorse, txns, addTxn, deleteTxn,
+    <Store.Provider value={{ horses, addHorse, editHorse, deleteHorse, txns, addTxn, deleteTxn,
       users, addUser, deleteUser, feed, addFeedItem, deleteFeedItem,
       supplies, addSupply, toggleSupplyStatus, deleteSupply,
       tasks, addTask, toggleTask, deleteTask,
@@ -992,6 +998,12 @@ function Screen({ active, route, setRoute, t }) {
   const wrap = { maxWidth: 920, margin: "0 auto", padding: "22px 18px" };
   if (active === "horses") {
     if (route.name === "add") return <div style={wrap}><HorseForm t={t} onDone={() => setRoute({ name: "list" })} /></div>;
+    if (route.name === "edit") {
+      const { horses } = useStore();
+      const h = horses.find(x => x.id === route.id);
+      if (!h) return null;
+      return <div style={wrap}><HorseForm t={t} initialData={h} onDone={() => setRoute({ name: "detail", id: route.id })} /></div>;
+    }
     if (route.name === "detail") return <div style={wrap}><HorseDetail t={t} id={route.id} setRoute={setRoute} /></div>;
     return <div style={wrap}><HorsesList t={t} setRoute={setRoute} /></div>;
   }
@@ -1094,9 +1106,9 @@ function HorseCard({ h, t, onClick }) {
 /* ---------- Horses: add form ---------- */
 const SEX_OPTS = ["sexMare", "sexStallion", "sexGelding"];
 const HORSE_COLORS = ["Bay", "Black", "Chestnut", "Grey", "Roan", "Palomino"];
-function HorseForm({ t, onDone }) {
-  const { addHorse } = useStore();
-  const [f, setF] = useState({ name: "", studbook: "", sex: "", color: "", birthdate: "", ueln: "", chip: "", feiid: "", location: "", photo_url: "" });
+function HorseForm({ t, initialData, onDone }) {
+  const { addHorse, editHorse } = useStore();
+  const [f, setF] = useState(initialData || { name: "", studbook: "", sex: "", color: "", birthdate: "", ueln: "", chip: "", feiid: "", location: "", photo_url: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -1128,12 +1140,16 @@ function HorseForm({ t, onDone }) {
 
   const submit = () => {
     if (!f.name.trim()) { setErr(true); return; }
-    addHorse(f);
+    if (initialData) {
+      editHorse(initialData.id, f);
+    } else {
+      addHorse(f);
+    }
     onDone();
   };
 
   return (
-    <ModalShell t={t} onClose={onDone} accent={C.mint} icon={<Home size={22} />} title={t.addHorse}
+    <ModalShell t={t} onClose={onDone} accent={C.mint} icon={<Home size={22} />} title={initialData ? f.name : t.addHorse}
       footer={<ModalFooter t={t} onClose={onDone} onSave={submit} accent={C.mint} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
       {/* photo upload placeholder */}
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
@@ -1251,7 +1267,11 @@ function HorseDetail({ t, id, setRoute }) {
 
   return (
     <div className="ev-card" style={{ maxWidth: 620, margin: "0 auto" }}>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 24 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 24, position: "relative" }}>
+        <button onClick={() => setRoute({ name: "edit", id })} className="ev-tap" style={{
+          position: "absolute", top: 0, right: 0, border: `1px solid ${C.line}`, background: C.surface, color: C.ink,
+          padding: "8px 12px", borderRadius: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, fontFamily: "inherit"
+        }}><Edit2 size={15} /> Edit</button>
         <HorseAvatar h={h} size={96} />
         <h2 className="ev-display" style={{ fontSize: 30, fontWeight: 700, margin: "16px 0 4px" }}>{h.name}</h2>
         <div style={{ color: C.sub, fontSize: 15 }}>
