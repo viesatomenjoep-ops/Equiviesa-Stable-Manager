@@ -256,3 +256,54 @@ $$ language plpgsql security definer;
 create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- 12. LOCATIONS
+create table public.locations (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    name text not null,
+    type text not null,
+    capacity integer,
+    notes text
+);
+alter table public.locations enable row level security;
+create policy "Allow authenticated CRUD" on public.locations for all using (auth.role() = 'authenticated');
+
+-- 13. BOOKINGS
+create table public.bookings (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    date date not null,
+    status text not null default 'pending',
+    notes text,
+    horse_id uuid references public.horses(id) on delete cascade,
+    client_id uuid references public.contacts(id) on delete set null
+);
+alter table public.bookings enable row level security;
+create policy "Allow authenticated CRUD" on public.bookings for all using (auth.role() = 'authenticated');
+
+-- 14. INVOICES
+create table public.invoices (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    reference text not null,
+    date date not null,
+    amount numeric(12, 2) not null,
+    status text not null default 'unpaid',
+    client_id uuid references public.contacts(id) on delete set null,
+    document_url text
+);
+alter table public.invoices enable row level security;
+create policy "Allow authenticated CRUD" on public.invoices for all using (auth.role() = 'authenticated');
+
+-- 15. CATALOG
+create table public.catalog (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    horse_id uuid references public.horses(id) on delete cascade,
+    price numeric(12, 2),
+    description text,
+    visible boolean default false
+);
+alter table public.catalog enable row level security;
+create policy "Allow authenticated CRUD" on public.catalog for all using (auth.role() = 'authenticated');

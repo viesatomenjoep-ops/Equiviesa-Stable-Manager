@@ -597,6 +597,7 @@ function AppRoot() {
         .ev-card { animation: evUp .4s ease both; }
         @keyframes evUp { from { opacity:0; transform: translateY(12px);} to {opacity:1; transform:none;} }
         @keyframes evFade { from {opacity:0;} to {opacity:1;} }
+        @keyframes evRotate { from {transform: rotate(0deg);} to {transform: rotate(360deg);} }
         input, select { font-family: inherit; }
         .ev-scroll::-webkit-scrollbar { width: 0; height: 0; }
       `}</style>
@@ -766,8 +767,8 @@ function PinModal({ t, target, onClose, onOk }) {
 function Brand() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 6px" }}>
-      <img src="/logo.svg" alt="Equiviesa Logo" style={{ width: 38, height: 38, objectFit: "contain" }} />
-      <div className="ev-display" style={{ fontSize: 21, fontWeight: 700, letterSpacing: -0.3 }}>Equiviesa</div>
+      <img src="/logo.svg" alt="Equiviesa Logo" style={{ width: 38, height: 38, objectFit: "contain", animation: "evRotate 20s linear infinite" }} />
+      <div className="ev-display" style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.3 }}>Equiviesa</div>
     </div>
   );
 }
@@ -2273,12 +2274,130 @@ function ModalFooter({ t, onClose, onSave, accent, saveLabel, saveIcon }) {
   );
 }
 
+const GENERIC_CONFIG = {
+  locations: { table: "locations", fields: [{n:"name",l:"Name",r:true}, {n:"type",l:"Type",r:true}, {n:"capacity",l:"Capacity",t:"number"}, {n:"notes",l:"Notes"}] },
+  contacts: { table: "contacts", fields: [{n:"name",l:"Name",r:true}, {n:"email",l:"Email"}, {n:"phone",l:"Phone"}, {n:"role",l:"Role",opts:["owner","client","vet","farrier","rider","supplier","other"]}, {n:"notes",l:"Notes"}] },
+  documents: { table: "documents", fields: [{n:"name",l:"Name",r:true}, {n:"file_type",l:"Type"}, {n:"url",l:"URL (Cloudinary)",r:true}] },
+  clients: { table: "contacts", defaultVals: { role: "client" }, fields: [{n:"name",l:"Name",r:true}, {n:"email",l:"Email"}, {n:"phone",l:"Phone"}, {n:"notes",l:"Notes"}] },
+  bookings: { table: "bookings", fields: [{n:"date",l:"Date",t:"date",r:true}, {n:"status",l:"Status"}, {n:"notes",l:"Notes"}] },
+  invoices: { table: "invoices", fields: [{n:"reference",l:"Reference",r:true}, {n:"date",l:"Date",t:"date",r:true}, {n:"amount",l:"Amount",t:"number",r:true}, {n:"status",l:"Status"}] },
+  catalog: { table: "catalog", fields: [{n:"price",l:"Price",t:"number"}, {n:"description",l:"Description"}] },
+  mares: { table: "mares_breeding", fields: [{n:"stallion_name",l:"Stallion",r:true}, {n:"service_date",l:"Service Date",t:"date"}, {n:"expected_foal_date",l:"Expected Foal Date",t:"date"}, {n:"status",l:"Status",opts:["inseminated", "confirmed_pregnant", "empty", "aborted", "foaled"],r:true}] },
+  embryos: { table: "embryos", fields: [{n:"stallion_name",l:"Stallion",r:true}, {n:"flush_date",l:"Flush Date",t:"date",r:true}, {n:"status",l:"Status",opts:["frozen", "transferred", "pregnant", "failed"],r:true}] },
+  foals: { table: "horses", defaultVals: { archived: false }, fields: [{n:"name",l:"Name",r:true}, {n:"birthdate",l:"Birthdate",t:"date"}] }
+};
+
 function PlaceholderScreen({ t, active }) {
   const Icon = ICONS[active] || Sparkles;
   const color = ACCENT[active] || C.mint;
+  const conf = GENERIC_CONFIG[active];
+  
+  const [data, setData] = useState([]);
+  const [modal, setModal] = useState(false);
+  const [f, setF] = useState(conf ? (conf.defaultVals || {}) : {});
+  const [err, setErr] = useState(false);
+
+  React.useEffect(() => {
+    if (!conf) return;
+    const fetch = async () => {
+      const { data: res } = await supabase.from(conf.table).select('*').order('created_at', { ascending: false });
+      if (res) {
+        if (conf.defaultVals) {
+          const keys = Object.keys(conf.defaultVals);
+          setData(res.filter(x => keys.every(k => x[k] === conf.defaultVals[k])));
+        } else {
+          setData(res);
+        }
+      }
+    };
+    fetch();
+  }, [active, conf]);
+
+  if (!conf) {
+    return (
+      <div className="ev-card">
+        <EmptyHero accent={color} icon={<Icon size={46} strokeWidth={1.6} />} title={t[active] || active} sub={t.comingSoon} cta={t.new} />
+      </div>
+    );
+  }
+
+  const save = async () => {
+    const missing = conf.fields.some(field => field.r && !f[field.n]);
+    if (missing) { setErr(true); return; }
+    
+    const o = { ...f };
+    Object.keys(o).forEach(k => { if (o[k] === "") o[k] = null; });
+    const { data: res } = await supabase.from(conf.table).insert([o]).select();
+    if (res) {
+      setData(prev => [res[0], ...prev]);
+      setModal(false);
+      setF(conf.defaultVals || {});
+    }
+  };
+
+  const del = async (id) => {
+    await supabase.from(conf.table).delete().eq('id', id);
+    setData(prev => prev.filter(x => x.id !== id));
+  };
+
   return (
     <div className="ev-card">
-      <EmptyHero accent={color} icon={<Icon size={46} strokeWidth={1.6} />} title={t[active] || ""} sub={t.comingSoon} cta={t.new} />
+      <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+        <button onClick={() => setModal(true)} className="ev-tap" style={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          padding: "15px 24px", borderRadius: 15, border: "none", cursor: "pointer", fontFamily: "inherit",
+          background: color, color: "#fff", fontSize: 15.5, fontWeight: 600, boxShadow: `0 8px 20px ${color}50`,
+        }}>
+          <Plus size={20} /> {t.add} {t[active] || active}
+        </button>
+      </div>
+
+      {data.length === 0 ? (
+        <EmptyHero accent={color} icon={<Icon size={46} strokeWidth={1.6} />} title={t.empty} cta={t.add} onClick={() => setModal(true)} />
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {data.map((x) => (
+            <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 14, background: C.surface,
+              border: `1px solid ${C.line}`, borderRadius: 16, padding: "14px 16px" }}>
+              <span style={{ width: 42, height: 42, borderRadius: 12, display: "grid", placeItems: "center",
+                background: `${color}1c`, color: color, flexShrink: 0 }}><Icon size={20} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600 }}>{x.name || x.reference || x.stallion_name || t[active]}</div>
+                <div style={{ fontSize: 13, color: C.sub, marginTop: 4 }}>
+                  {Object.keys(x).filter(k => k !== 'id' && k !== 'created_at' && k !== 'name' && x[k]).map(k => String(x[k])).join(" · ")}
+                </div>
+              </div>
+              <button onClick={() => del(x.id)} className="ev-tap" style={{ border: "none", background: "transparent",
+                cursor: "pointer", color: C.sub, padding: 6 }}><Trash2 size={17} /></button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {modal && (
+        <ModalShell t={t} onClose={() => setModal(false)} accent={color} icon={<Icon size={22} />} title={`${t.add} ${t[active] || active}`}
+          footer={<ModalFooter t={t} onClose={() => setModal(false)} onSave={save} accent={color} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
+          {conf.fields.map(field => (
+            <Field key={field.n} label={field.l} required={field.r}>
+              {field.opts ? (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {field.opts.map(opt => (
+                    <button key={opt} type="button" onClick={() => setF({...f, [field.n]: opt})} className="ev-tap"
+                      style={{ padding: "8px 14px", borderRadius: 16, border: `1px solid ${f[field.n] === opt ? color : C.line}`,
+                        background: f[field.n] === opt ? color : C.field, color: f[field.n] === opt ? "#fff" : C.sub,
+                        fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                      {t[opt] || opt}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <input type={field.t || "text"} value={f[field.n] || ""} onChange={(e) => { setF({...f, [field.n]: field.t === 'checkbox' ? e.target.checked : e.target.value}); setErr(false); }}
+                  style={inputStyle(err && field.r && !f[field.n])} />
+              )}
+            </Field>
+          ))}
+        </ModalShell>
+      )}
     </div>
   );
 }
