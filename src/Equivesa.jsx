@@ -1190,7 +1190,7 @@ function HorseForm({ t, initialData, onDone }) {
         </div>
       </Field>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
         <Field label={t.birthdate}><input type="date" value={f.birthdate} onChange={(e) => setF({...f, birthdate: e.target.value})} style={inputStyle()} /></Field>
         <Field label={t.studbook}><input value={f.studbook} onChange={(e) => setF({...f, studbook: e.target.value})} placeholder={t.select} style={inputStyle()} /></Field>
       </div>
@@ -1213,12 +1213,12 @@ function HorseForm({ t, initialData, onDone }) {
 
       <Divider label={t.optional} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
         <Field label={t.ueln}><input value={f.ueln} onChange={(e) => setF({...f, ueln: e.target.value})} placeholder="UELN" style={inputStyle()} /></Field>
         <Field label={t.chip}><input value={f.chip} onChange={(e) => setF({...f, chip: e.target.value})} placeholder={t.chip} style={inputStyle()} /></Field>
       </div>
       
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
         <Field label={t.feiid}><input value={f.feiid} onChange={(e) => setF({...f, feiid: e.target.value})} placeholder="FEI ID" style={inputStyle()} /></Field>
         <Field label={t.location}><input value={f.location} onChange={(e) => setF({...f, location: e.target.value})} placeholder={t.select} style={inputStyle()} /></Field>
       </div>
@@ -1533,10 +1533,10 @@ function TaskModal({ t, horses, onClose, onSave }) {
             <button key={s} type="button" onClick={() => { setF({...f, title: s}); setErr(false); }}
               className="ev-tap"
               style={{
-                padding: "8px 14px", borderRadius: 16, border: `1px solid ${f.title === s ? C.amber : C.line}`,
+                padding: "12px 18px", borderRadius: 16, border: `1px solid ${f.title === s ? C.amber : C.line}`,
                 background: f.title === s ? C.amber : C.field,
                 color: f.title === s ? "#fff" : C.sub,
-                fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+                fontSize: 14.5, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
               }}>
               {s}
             </button>
@@ -1552,7 +1552,7 @@ function TaskModal({ t, horses, onClose, onSave }) {
           rows={2} style={{ ...inputStyle(), resize: "none" }} placeholder={t.notesHint} />
       </Field>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
         <Field label={t.taskDue}>
           <input type="date" value={f.due_date} onChange={(e) => setF({...f, due_date: e.target.value})}
             style={inputStyle()} />
@@ -1566,7 +1566,7 @@ function TaskModal({ t, horses, onClose, onSave }) {
         </Field>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
         <Field label={t.timeStart}>
           <input type="time" value={f.start_time} onChange={(e) => setF({...f, start_time: e.target.value})}
             style={inputStyle()} />
@@ -1724,17 +1724,17 @@ function HealthModal({ t, category, horses, onClose, onSave }) {
         {HEALTH_CATS.map(([key, , color]) => (
           <button key={key} type="button" onClick={() => setCatSel(key)} className="ev-tap"
             style={{
-              padding: "8px 14px", borderRadius: 16, border: `1px solid ${catSel === key ? color : C.line}`,
+              padding: "12px 18px", borderRadius: 16, border: `1px solid ${catSel === key ? color : C.line}`,
               background: catSel === key ? color : C.field,
               color: catSel === key ? "#fff" : C.sub,
-              fontSize: 12, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+              fontSize: 14.5, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
             }}>
             {t[key]}
           </button>
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
         <Field label={t.selectHorse} required>
           <select value={f.horse_id} onChange={(e) => { setF({...f, horse_id: e.target.value}); setErr(false); }}
             style={inputStyle(err && !f.horse_id)}>
@@ -1748,7 +1748,7 @@ function HealthModal({ t, category, horses, onClose, onSave }) {
         </Field>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
         <Field label={t.performedBy}>
           <input value={f.performed_by} onChange={(e) => setF({...f, performed_by: e.target.value})}
             placeholder={t.performedBy} style={inputStyle()} />
@@ -2249,18 +2249,18 @@ function ModalShell({ t, onClose, accent, icon, title, children, footer }) {
       display: "flex", flexDirection: "column", background: C.bg }}>
       
       {/* Header (Fixed) */}
-      <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "20px 24px",
+      <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px",
         background: C.surface, borderBottom: `1px solid ${C.line}` }}>
-        <span style={{ width: 48, height: 48, borderRadius: 14, display: "grid", placeItems: "center",
+        <span style={{ width: 44, height: 44, borderRadius: 14, display: "grid", placeItems: "center",
           background: `${accent}1c`, color: accent }}>{icon}</span>
-        <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 26, fontWeight: 700, color: C.ink }}>{title}</h2>
-        <button onClick={onClose} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg, width: 44, height: 44 }}>
+        <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 24, fontWeight: 700, color: C.ink }}>{title}</h2>
+        <button onClick={onClose} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg, width: 40, height: 40 }}>
           <X size={24} />
         </button>
       </div>
 
       {/* Content (Scrollable) */}
-      <div className="ev-scroll" style={{ flex: 1, overflowY: "auto", padding: "32px 24px" }}>
+      <div className="ev-scroll" style={{ flex: 1, overflowY: "auto", padding: "24px 20px" }}>
         <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
           {children}
         </div>
@@ -2268,7 +2268,7 @@ function ModalShell({ t, onClose, accent, icon, title, children, footer }) {
 
       {/* Footer (Fixed) */}
       {footer && (
-        <div style={{ padding: "20px 24px", background: C.surface, borderTop: `1px solid ${C.line}` }}>
+        <div style={{ padding: "16px 20px", background: C.surface, borderTop: `1px solid ${C.line}` }}>
           <div style={{ maxWidth: 760, margin: "0 auto" }}>
             {footer}
           </div>
@@ -2403,9 +2403,9 @@ function PlaceholderScreen({ t, active }) {
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {field.opts.map(opt => (
                     <button key={opt} type="button" onClick={() => setF({...f, [field.n]: opt})} className="ev-tap"
-                      style={{ padding: "8px 14px", borderRadius: 16, border: `1px solid ${f[field.n] === opt ? color : C.line}`,
+                      style={{ padding: "12px 18px", borderRadius: 16, border: `1px solid ${f[field.n] === opt ? color : C.line}`,
                         background: f[field.n] === opt ? color : C.field, color: f[field.n] === opt ? "#fff" : C.sub,
-                        fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                        fontSize: 14.5, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
                       {t[opt] || opt}
                     </button>
                   ))}
@@ -2582,7 +2582,7 @@ function SupplyModal({ t, lang, onClose, onSave }) {
       </Field>
       {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.supplyItem} {t.required}</div>}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
         <Field label={t.qty}>
           <input value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })}
             placeholder={t.qtyHint} style={inputStyle()} />
