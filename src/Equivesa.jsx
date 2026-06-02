@@ -1046,7 +1046,7 @@ function Screen({ active, route, setRoute, t }) {
   if (active === "health") return <div style={wrap}><HealthScreen t={t} /></div>;
   if (active === "finance") return <div style={wrap}><FinanceScreen t={t} /></div>;
   if (active === "users") return <div style={wrap}><UsersScreen t={t} /></div>;
-  if (active === "feeding") return <div style={wrap}><FeedingScreen t={t} /></div>;
+  if (active === "feeding") return <div style={wrap}><FeedingScreen t={t} go={go} setRoute={setRoute} /></div>;
   if (active === "supplies") return <div style={wrap}><SuppliesScreen t={t} /></div>;
   return <div style={wrap}><GenericModuleScreen t={t} active={active} /></div>;
 }
@@ -2225,7 +2225,7 @@ function UserModal({ t, onClose }) {
 
 /* ---------- FEEDING ---------- */
 const SLOTS = ["morning", "noon", "evening", "night"];
-function FeedingScreen({ t }) {
+function FeedingScreen({ t, go, setRoute }) {
   const { horses, feed, addFeedItem, deleteFeedItem } = useStore();
   const [tab, setTab] = useState(0); // 0 feeding 1 order
   const [slot, setSlot] = useState("morning");
@@ -2236,7 +2236,7 @@ function FeedingScreen({ t }) {
     return (
       <div className="ev-card">
         <EmptyHero accent={C.amber} icon={<Carrot size={46} strokeWidth={1.6} />}
-          title={t.noFeed} sub={t.noFeedSub} cta={t.addHorse} onClick={() => {}} />
+          title={t.noFeed} sub={t.noFeedSub} cta={t.addHorse} onClick={() => { go("horses"); setRoute({ name: "add" }); }} />
       </div>
     );
   }
