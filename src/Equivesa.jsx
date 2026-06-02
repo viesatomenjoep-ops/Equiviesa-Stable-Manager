@@ -3,8 +3,9 @@ import {
   Menu, X, Bell, Plus, Search, ChevronRight, ChevronLeft, Check,
   Home, Calendar, CheckSquare, Heart, Carrot, MapPin, Contact,
   FileText, Users, Settings, HelpCircle, Receipt, BookOpen,
-  Package, Baby, ShoppingCart, Sparkles, Trash2, Camera, MoreHorizontal, Globe, Wallet, ArrowUpRight, ArrowDownRight, Paperclip, ChevronDown
+  Package, Baby, ShoppingCart, Sparkles, Trash2, Camera, MoreHorizontal, Globe, Wallet, ArrowUpRight, ArrowDownRight, Paperclip, ChevronDown, LogOut
 } from "lucide-react";
+import { supabase } from "./supabaseClient";
 
 /* ============================================================
    EQUIVESA — All-in stable manager
@@ -232,6 +233,50 @@ const SECTIONS = {
   finance: ["finance", "clients", "bookings", "invoices", "catalog"],
   breeding: ["mares", "embryos", "foals"],
 };
+
+function AuthScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    if (isLogin) {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) alert(error.message);
+    } else {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) alert(error.message);
+      else alert('Check je e-mail voor de bevestigingslink!');
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: C.bg, fontFamily: "'Montserrat', sans-serif" }}>
+      <form onSubmit={handleAuth} style={{ background: C.surface, padding: 32, borderRadius: 24, width: "100%", maxWidth: 360, boxShadow: "0 12px 34px rgba(31,45,58,.08)" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+          <img src="/logo.svg" alt="Logo" style={{ width: 48, height: 48 }} />
+        </div>
+        <h2 style={{ margin: "0 0 24px", textAlign: "center", fontSize: 24, fontWeight: 700 }}>{isLogin ? "Inloggen" : "Registreren"}</h2>
+        <input type="email" placeholder="E-mailadres" value={email} onChange={e => setEmail(e.target.value)}
+          style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid #E8EEEA", marginBottom: 12, fontSize: 16, fontFamily: "inherit" }} required />
+        <input type="password" placeholder="Wachtwoord" value={password} onChange={e => setPassword(e.target.value)}
+          style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid #E8EEEA", marginBottom: 24, fontSize: 16, fontFamily: "inherit" }} required />
+        <button type="submit" disabled={loading}
+          style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: C.mint, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer" }}>
+          {loading ? "Even geduld..." : (isLogin ? "Log in" : "Account aanmaken")}
+        </button>
+        <button type="button" onClick={() => setIsLogin(!isLogin)}
+          style={{ width: "100%", padding: "14px", marginTop: 8, background: "transparent", border: "none", color: C.sub, cursor: "pointer", fontSize: 14 }}>
+          {isLogin ? "Nog geen account? Registreer" : "Al een account? Log in"}
+        </button>
+      </form>
+    </div>
+  );
+}
 const ICONS = {
   horses: Home, calendar: Calendar, tasks: CheckSquare, health: Heart,
   feeding: Carrot, supplies: ShoppingCart, locations: MapPin, contacts: Contact, documents: FileText,
@@ -261,38 +306,112 @@ const HORSE_TINTS = [C.mint, C.sky, C.coral, C.amber, C.pink, C.lilac];
 
 function StoreProvider({ children }) {
   const [horses, setHorses] = useState([]);
-  const addHorse = (h) =>
-    setHorses((prev) => [
-      ...prev,
-      { id: Date.now(), tint: HORSE_TINTS[prev.length % HORSE_TINTS.length], archived: false, ...h },
-    ]);
-  const deleteHorse = (id) => setHorses((prev) => prev.filter((h) => h.id !== id));
+  const [txns, setTxns] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [feed, setFeed] = useState({});
+  const [supplies, setSupplies] = useState([]);
 
-  const [txns, setTxns] = useState([]); // {id, type:'income'|'expense', when, category, who, reference, description, amount, horseId}
-  const addTxn = (tx) => setTxns((prev) => [{ id: Date.now(), ...tx }, ...prev]);
-  const deleteTxn = (id) => setTxns((prev) => prev.filter((x) => x.id !== id));
+  React.useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        fetchHorses();
+        fetchTxns();
+        fetchSupplies();
+        fetchUsers();
+        fetchFeed();
+      } else {
+        setHorses([]); setTxns([]); setSupplies([]); setUsers([]); setFeed({});
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
-  const [users, setUsers] = useState([]); // {id, name, email, role, perms:[]}
-  const addUser = (u) => setUsers((prev) => [...prev, { id: Date.now(), ...u }]);
-  const deleteUser = (id) => setUsers((prev) => prev.filter((u) => u.id !== id));
+  const fetchHorses = async () => {
+    const { data } = await supabase.from('horses').select('*').order('created_at', { ascending: false });
+    if (data) setHorses(data.map(h => ({...h, tint: h.tint || HORSE_TINTS[Math.floor(Math.random() * HORSE_TINTS.length)]})));
+  };
+  const addHorse = async (h) => {
+    const { data } = await supabase.from('horses').insert([{...h, tint: HORSE_TINTS[horses.length % HORSE_TINTS.length]}]).select();
+    if (data) setHorses(prev => [data[0], ...prev]);
+  };
+  const deleteHorse = async (id) => {
+    await supabase.from('horses').delete().eq('id', id);
+    setHorses(prev => prev.filter(h => h.id !== id));
+  };
 
-  const [feed, setFeed] = useState({}); // { [horseId]: { morning:[{product,qty}], noon:[], evening:[], night:[] } }
-  const addFeedItem = (horseId, slot, item) => setFeed((prev) => {
-    const h = prev[horseId] || { morning: [], noon: [], evening: [], night: [] };
-    return { ...prev, [horseId]: { ...h, [slot]: [...(h[slot] || []), { id: Date.now(), ...item }] } };
-  });
-  const deleteFeedItem = (horseId, slot, itemId) => setFeed((prev) => {
-    const h = prev[horseId]; if (!h) return prev;
-    return { ...prev, [horseId]: { ...h, [slot]: h[slot].filter((i) => i.id !== itemId) } };
-  });
+  const fetchTxns = async () => {
+    const { data } = await supabase.from('transactions').select('*').order('when', { ascending: false });
+    if (data) setTxns(data);
+  };
+  const addTxn = async (tx) => {
+    const { data } = await supabase.from('transactions').insert([tx]).select();
+    if (data) setTxns(prev => [data[0], ...prev]);
+  };
+  const deleteTxn = async (id) => {
+    await supabase.from('transactions').delete().eq('id', id);
+    setTxns(prev => prev.filter(x => x.id !== id));
+  };
 
-  const [supplies, setSupplies] = useState([
-    { id: 1, item_name: "Strobalen", quantity: "20 stuks", requested_by: "Kyara", status: "pending", notes: "Graag voor het weekend leveren" },
-    { id: 2, item_name: "Vliegenspray", quantity: "4 flessen", requested_by: "Christina", status: "pending", notes: "De vliegen zijn erg actief op de wei" }
-  ]);
-  const addSupply = (item) => setSupplies((prev) => [{ id: Date.now(), status: "pending", ...item }, ...prev]);
-  const toggleSupplyStatus = (id) => setSupplies((prev) => prev.map((s) => s.id === id ? { ...s, status: s.status === "pending" ? "purchased" : "pending" } : s));
-  const deleteSupply = (id) => setSupplies((prev) => prev.filter((s) => s.id !== id));
+  const fetchUsers = async () => {
+    const { data } = await supabase.from('profiles').select('*');
+    if (data) setUsers(data);
+  };
+  const addUser = async (u) => {
+    const { data } = await supabase.from('profiles').insert([u]).select();
+    if (data) setUsers(prev => [data[0], ...prev]);
+  };
+  const deleteUser = async (id) => {
+    await supabase.from('profiles').delete().eq('id', id);
+    setUsers(prev => prev.filter(u => u.id !== id));
+  };
+
+  const fetchSupplies = async () => {
+    const { data } = await supabase.from('supplies_needed').select('*').order('created_at', { ascending: false });
+    if (data) setSupplies(data);
+  };
+  const addSupply = async (item) => {
+    const { data } = await supabase.from('supplies_needed').insert([{...item, status: 'pending'}]).select();
+    if (data) setSupplies(prev => [data[0], ...prev]);
+  };
+  const toggleSupplyStatus = async (id) => {
+    const s = supplies.find(x => x.id === id);
+    if (!s) return;
+    const newStatus = s.status === 'pending' ? 'purchased' : 'pending';
+    await supabase.from('supplies_needed').update({ status: newStatus }).eq('id', id);
+    setSupplies(prev => prev.map(x => x.id === id ? { ...x, status: newStatus } : x));
+  };
+  const deleteSupply = async (id) => {
+    await supabase.from('supplies_needed').delete().eq('id', id);
+    setSupplies(prev => prev.filter(s => s.id !== id));
+  };
+
+  const fetchFeed = async () => {
+    const { data } = await supabase.from('feed_schedules').select('*');
+    if (data) {
+      const newFeed = {};
+      data.forEach(item => {
+        if (!newFeed[item.horse_id]) newFeed[item.horse_id] = { morning: [], noon: [], evening: [], night: [] };
+        if (newFeed[item.horse_id][item.slot]) newFeed[item.horse_id][item.slot].push(item);
+      });
+      setFeed(newFeed);
+    }
+  };
+  const addFeedItem = async (horseId, slot, item) => {
+    const { data } = await supabase.from('feed_schedules').insert([{ horse_id: horseId, slot, product: item.product, qty: item.qty }]).select();
+    if (data && data[0]) {
+      setFeed(prev => {
+        const h = prev[horseId] || { morning: [], noon: [], evening: [], night: [] };
+        return { ...prev, [horseId]: { ...h, [slot]: [...(h[slot] || []), data[0]] } };
+      });
+    }
+  };
+  const deleteFeedItem = async (horseId, slot, itemId) => {
+    await supabase.from('feed_schedules').delete().eq('id', itemId);
+    setFeed(prev => {
+      const h = prev[horseId]; if (!h) return prev;
+      return { ...prev, [horseId]: { ...h, [slot]: h[slot].filter((i) => i.id !== itemId) } };
+    });
+  };
 
   return (
     <Store.Provider value={{ horses, addHorse, deleteHorse, txns, addTxn, deleteTxn,
@@ -312,11 +431,27 @@ export default function Equivesa() {
 
 function AppRoot() {
   const [lang, setLang] = useState("en");
-  const [mode, setMode] = useState(null); // null = chooser, 'groom', 'manager'
+  const [mode, setMode] = useState(null);
   const [active, setActive] = useState("horses");
   const [drawer, setDrawer] = useState(false);
-  const [route, setRoute] = useState({ name: "list" }); // list | add | detail
+  const [route, setRoute] = useState({ name: "list" });
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const t = I18N[lang];
+
+  React.useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (authLoading) return <div style={{ minHeight: "100vh", background: C.bg }} />;
+  if (!session) return <AuthScreen />;
 
   const go = (key) => {
     if (key === "menu") { setDrawer(true); return; }
