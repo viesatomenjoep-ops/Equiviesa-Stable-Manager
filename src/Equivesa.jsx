@@ -577,11 +577,31 @@ function getDownloadUrl(url) {
   return url;
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null, info: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, info) { console.error("Caught error:", error, info); this.setState({ info }); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 20, color: 'red', background: '#fee' }}>
+          <h2>Something went wrong.</h2>
+          <pre style={{ whiteSpace: 'pre-wrap' }}>{this.state.error?.toString()}</pre>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: 10 }}>{this.state.info?.componentStack}</pre>
+        </div>
+      );
+    }
+    return this.props.children; 
+  }
+}
+
 export default function Equivesa() {
   return (
-    <StoreProvider>
-      <AppRoot />
-    </StoreProvider>
+    <ErrorBoundary>
+      <StoreProvider>
+        <AppRoot />
+      </StoreProvider>
+    </ErrorBoundary>
   );
 }
 
@@ -1040,7 +1060,7 @@ function HorseEditWrapper({ t, id, setRoute }) {
   return <HorseForm t={t} initialData={h} onDone={() => setRoute({ name: "detail", id })} />;
 }
 
-function Screen({ active, route, setRoute, t }) {
+function Screen({ active, route, setRoute, t, go }) {
   const wrap = { width: "100%", margin: "0 auto", padding: "22px 18px" };
   if (active === "horses") {
     if (route.name === "add") return <div style={wrap}><HorseForm t={t} onDone={() => setRoute({ name: "list" })} /></div>;
