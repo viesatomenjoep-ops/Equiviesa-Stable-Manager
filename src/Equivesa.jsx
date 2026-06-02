@@ -2562,11 +2562,22 @@ function GenericModuleScreen({ t, active }) {
               <span style={{ width: 42, height: 42, borderRadius: 12, display: "grid", placeItems: "center",
                 background: `${color}1c`, color: color, flexShrink: 0 }}><Icon size={20} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 17, fontWeight: 600 }}>{x.name || x.reference || x.stallion_name || t[active]}</div>
+                <div style={{ fontSize: 17, fontWeight: 600 }}>{x.name || x.reference || x.stallion_name || x.title || t[active]}</div>
                 <div style={{ fontSize: 15, color: C.sub, marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
-                  {Object.keys(x).filter(k => k !== 'id' && k !== 'created_at' && k !== 'name' && x[k]).map(k => (
-                    <span key={k}><strong>{t[k] || k}:</strong> {String(x[k])}</span>
-                  ))}
+                  {Object.keys(x).filter(k => k !== 'id' && k !== 'created_at' && k !== 'name' && k !== 'reference' && k !== 'stallion_name' && k !== 'title' && x[k]).map(k => {
+                    const isUrl = String(x[k]).startsWith('http');
+                    return (
+                      <span key={k}>
+                        <strong>{t[k] || k}:</strong>{' '}
+                        {isUrl ? (
+                          <span style={{ display: "inline-flex", gap: 10 }}>
+                            <a href={x[k]} target="_blank" rel="noreferrer" style={{ color: color, textDecoration: "none", fontWeight: 600 }}>{t.viewFile || "View"}</a>
+                            <a href={getDownloadUrl(x[k])} target="_blank" rel="noreferrer" style={{ color: C.sub, textDecoration: "none", fontWeight: 600 }}>{t.downloadFile || "Download"}</a>
+                          </span>
+                        ) : String(x[k])}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
