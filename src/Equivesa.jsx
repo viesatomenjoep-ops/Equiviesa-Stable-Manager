@@ -752,14 +752,14 @@ function PinModal({ t, target, onClose, onOk }) {
   return (
     <ModalShell t={t} onClose={onClose} accent={accent}
       icon={target === "groom" ? <Carrot size={22} /> : <Sparkles size={22} />}
-      title={target === "groom" ? t.groom : t.manager}>
+      title={target === "groom" ? t.groom : t.manager}
+      footer={<ModalFooter t={t} onClose={onClose} onSave={check} accent={accent} saveLabel={t.enter} saveIcon={<Check size={20} />} />}>
       <p style={{ color: C.sub, fontSize: 14.5, margin: "0 0 16px" }}>{t.pinHint}</p>
       <input value={pin} onChange={(e) => { setPin(e.target.value); setErr(false); }}
         onKeyDown={(e) => e.key === "Enter" && check()}
         type="password" inputMode="numeric" placeholder="••••" autoFocus
         style={{ ...inputStyle(err), textAlign: "center", fontSize: 26, letterSpacing: 8, fontWeight: 700, color: accent }} />
       {err && <div style={{ color: C.coral, fontSize: 13, marginTop: 8 }}>{t.wrongPin}</div>}
-      <ModalFooter t={t} onClose={onClose} onSave={check} accent={accent} saveLabel={t.enter} saveIcon={<Check size={20} />} />
     </ModalShell>
   );
 }
@@ -1090,6 +1090,8 @@ function HorseCard({ h, t, onClick }) {
   );
 }
 
+/* ---------- Horses: add form ---------- */
+const SEX_OPTS = ["sexMare", "sexStallion", "sexGelding"];
 const HORSE_COLORS = ["Bay", "Black", "Chestnut", "Grey", "Roan", "Palomino"];
 function HorseForm({ t, onDone }) {
   const { addHorse } = useStore();
@@ -1130,7 +1132,8 @@ function HorseForm({ t, onDone }) {
   };
 
   return (
-    <ModalShell t={t} onClose={onDone} accent={C.mint} icon={<Home size={22} />} title={t.addHorse}>
+    <ModalShell t={t} onClose={onDone} accent={C.mint} icon={<Home size={22} />} title={t.addHorse}
+      footer={<ModalFooter t={t} onClose={onDone} onSave={submit} accent={C.mint} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
       {/* photo upload placeholder */}
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
         <label style={{
@@ -1202,8 +1205,6 @@ function HorseForm({ t, onDone }) {
         <Field label={t.feiid}><input value={f.feiid} onChange={(e) => setF({...f, feiid: e.target.value})} placeholder="FEI ID" style={inputStyle()} /></Field>
         <Field label={t.location}><input value={f.location} onChange={(e) => setF({...f, location: e.target.value})} placeholder={t.select} style={inputStyle()} /></Field>
       </div>
-
-      <ModalFooter t={t} onClose={onDone} onSave={submit} accent={C.mint} saveLabel={t.save} saveIcon={<Check size={20} />} />
     </ModalShell>
   );
 }
@@ -1503,7 +1504,8 @@ function TaskModal({ t, horses, onClose, onSave }) {
   };
 
   return (
-    <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<CheckSquare size={22} />} title={t.addTask}>
+    <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<CheckSquare size={22} />} title={t.addTask}
+      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.add} saveIcon={<Plus size={20} />} />}>
       <Field label={t.taskTitle} required>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
           {(t.taskCommon || []).map(s => (
@@ -1553,8 +1555,6 @@ function TaskModal({ t, horses, onClose, onSave }) {
             style={inputStyle()} />
         </Field>
       </div>
-
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.add} saveIcon={<Plus size={20} />} />
     </ModalShell>
   );
 }
@@ -1696,7 +1696,8 @@ function HealthModal({ t, category, horses, onClose, onSave }) {
   };
 
   return (
-    <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<Heart size={22} />} title={t.addRecord}>
+    <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<Heart size={22} />} title={t.addRecord}
+      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.add} saveIcon={<Plus size={20} />} />}>
       {/* Category pills */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
         {HEALTH_CATS.map(([key, , color]) => (
@@ -1743,8 +1744,6 @@ function HealthModal({ t, category, horses, onClose, onSave }) {
       </Field>
 
       {err && <div style={{ color: C.coral, fontSize: 13, marginBottom: 10 }}>{t.selectHorse} & {t.recordDate} {t.required}</div>}
-
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.add} saveIcon={<Plus size={20} />} />
     </ModalShell>
   );
 }
@@ -1852,42 +1851,55 @@ function TxnModal({ type, t, onClose }) {
   const next = () => { if (!f.category) { setErr(true); return; } setStep(2); };
   const save = () => { addTxn({ type, ...f, horseId: f.horseId ? Number(f.horseId) : null }); onClose(); };
 
+  const footer = (
+    <div style={{ display: "flex", gap: 12 }}>
+      {step === 2 && (
+        <button onClick={() => setStep(1)} className="ev-tap" style={{
+          padding: "18px", borderRadius: 16, border: `1px solid ${C.line}`, background: C.surface,
+          color: C.ink, fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{t.back}</button>
+      )}
+      <button onClick={onClose} className="ev-tap" style={{
+        flex: step === 1 ? 1 : "none", padding: "18px", borderRadius: 16, border: `1px solid ${C.line}`, background: C.surface,
+        color: C.ink, fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{t.cancel}</button>
+      {step === 1 ? (
+        <button onClick={next} className="ev-tap" style={{
+          flex: 2, padding: "18px", borderRadius: 16, border: "none", background: accent, color: "#fff",
+          fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: `0 8px 22px ${accent}55` }}>
+          {t.next} <ChevronRight size={20} />
+        </button>
+      ) : (
+        <button onClick={save} className="ev-tap" style={{
+          flex: 2, padding: "18px", borderRadius: 16, border: "none", background: accent, color: "#fff",
+          fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: `0 8px 22px ${accent}55` }}>
+          <Check size={20} /> {t.finish}
+        </button>
+      )}
+    </div>
+  );
+
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 60, animation: "evFade .2s ease",
-      display: "grid", placeItems: "center", padding: 16 }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(31,45,58,.45)" }} />
-      <div className="ev-scroll" style={{ position: "relative", width: "100%", maxWidth: 560, maxHeight: "90vh",
-        overflowY: "auto", background: C.surface, borderRadius: 24, padding: 24,
-        animation: "evUp .25s ease both", boxShadow: "0 24px 60px rgba(0,0,0,.25)" }}>
+    <ModalShell t={t} onClose={onClose} accent={accent}
+      icon={inc ? <ArrowUpRight size={22} /> : <ArrowDownRight size={22} />}
+      title={inc ? t.newIncome : t.newExpense}
+      footer={footer}>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 22 }}>
-          <span style={{ width: 44, height: 44, borderRadius: 13, display: "grid", placeItems: "center",
-            background: `${accent}1c`, color: accent }}>
-            {inc ? <ArrowUpRight size={22} /> : <ArrowDownRight size={22} />}
-          </span>
-          <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 23, fontWeight: 700 }}>
-            {inc ? t.newIncome : t.newExpense}
-          </h2>
-          <button onClick={onClose} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
-            <X size={22} />
-          </button>
-        </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
+        {[[1, t.reference], [2, t.amount]].map(([n, label], i) => (
+          <React.Fragment key={n}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 28, height: 28, borderRadius: "50%", display: "grid", placeItems: "center",
+                fontSize: 13, fontWeight: 700, background: step >= n ? accent : C.bg,
+                color: step >= n ? "#fff" : C.sub }}>{n}</span>
+              <span style={{ fontSize: 15, fontWeight: step === n ? 700 : 500, color: step === n ? C.ink : C.sub }}>{label}</span>
+            </div>
+            {i === 0 && <div style={{ flex: 1, height: 2, background: C.line }} />}
+          </React.Fragment>
+        ))}
+      </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-          {[[1, t.reference], [2, t.amount]].map(([n, label], i) => (
-            <React.Fragment key={n}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ width: 28, height: 28, borderRadius: "50%", display: "grid", placeItems: "center",
-                  fontSize: 13, fontWeight: 700, background: step >= n ? accent : C.bg,
-                  color: step >= n ? "#fff" : C.sub }}>{n}</span>
-                <span style={{ fontSize: 15, fontWeight: step === n ? 700 : 500, color: step === n ? C.ink : C.sub }}>{label}</span>
-              </div>
-              {i === 0 && <div style={{ flex: 1, height: 2, background: C.line }} />}
-            </React.Fragment>
-          ))}
-        </div>
-
-        {step === 1 ? (
+      {step === 1 ? (
           <div>
             <Field label={t.fWhen} required>
               <input value={f.when} onChange={set("when")} style={inputStyle()} />
@@ -1903,7 +1915,7 @@ function TxnModal({ type, t, onClose }) {
             <Field label={t.fHorse}>
               <select value={f.horseId} onChange={set("horseId")}
                 style={{ ...inputStyle(), color: f.horseId ? C.ink : C.sub, appearance: "none" }}>
-                <option value="">{t.allHorses}</option>
+                <option value="">{t.allHorsesShort}</option>
                 {horses.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
               </select>
             </Field>
@@ -1940,32 +1952,7 @@ function TxnModal({ type, t, onClose }) {
             </div>
           </div>
         )}
-
-        <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
-          {step === 2 && (
-            <button onClick={() => setStep(1)} className="ev-tap" style={{
-              padding: "15px 22px", borderRadius: 14, border: `1px solid ${C.line}`, background: C.surface,
-              color: C.ink, fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{t.back}</button>
-          )}
-          <button onClick={onClose} className="ev-tap" style={{
-            flex: step === 1 ? 1 : "none", padding: "15px 22px", borderRadius: 14, border: `1px solid ${C.line}`,
-            background: C.surface, color: C.ink, fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{t.cancel}</button>
-          {step === 1 ? (
-            <button onClick={next} className="ev-tap" style={{ flex: 2, padding: "15px", borderRadius: 14, border: "none",
-              background: accent, color: "#fff", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 8px 22px ${accent}55` }}>
-              {t.next} <ChevronRight size={20} />
-            </button>
-          ) : (
-            <button onClick={save} className="ev-tap" style={{ flex: 2, padding: "15px", borderRadius: 14, border: "none",
-              background: accent, color: "#fff", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 8px 22px ${accent}55` }}>
-              <Check size={20} /> {t.finish}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }
 
@@ -2053,7 +2040,8 @@ function UserModal({ t, onClose }) {
 
   return (
     <ModalShell t={t} onClose={onClose} accent={C.sky}
-      icon={<Users size={22} />} title={t.addUser}>
+      icon={<Users size={22} />} title={t.addUser}
+      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.sky} saveLabel={t.invite} saveIcon={<Check size={20} />} />}>
       <Field label={t.name} required>
         <input value={f.name} onChange={(e) => { setF({ ...f, name: e.target.value }); setErr(false); }}
           style={inputStyle(err && !f.name.trim())} />
@@ -2087,7 +2075,6 @@ function UserModal({ t, onClose }) {
           );
         })}
       </div>
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.sky} saveLabel={t.invite} saveIcon={<Check size={20} />} />
     </ModalShell>
   );
 }
@@ -2221,7 +2208,7 @@ function FeedModal({ t, slot, onClose, onSave }) {
   const save = () => { if (!f.product.trim()) { setErr(true); return; } onSave(f); };
   return (
     <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<Carrot size={22} />}
-      title={`${t.addProduct} · ${t[slot]}`}>
+      title={`${t.addProduct} · ${t[slot]}`} footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.finish} saveIcon={<Check size={20} />} />}>
       <Field label={t.product} required>
         <input value={f.product} onChange={(e) => { setF({ ...f, product: e.target.value }); setErr(false); }}
           autoFocus style={inputStyle(err)} />
@@ -2230,44 +2217,56 @@ function FeedModal({ t, slot, onClose, onSave }) {
         <input value={f.qty} onChange={(e) => setF({ ...f, qty: e.target.value })}
           placeholder="2 kg" style={inputStyle()} />
       </Field>
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.finish} saveIcon={<Check size={20} />} />
     </ModalShell>
   );
 }
 
 /* ---------- reusable modal shell ---------- */
-function ModalShell({ t, onClose, accent, icon, title, children }) {
+function ModalShell({ t, onClose, accent, icon, title, children, footer }) {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 60, animation: "evFade .2s ease",
-      display: "grid", placeItems: "center", padding: 16 }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(31,45,58,.45)" }} />
-      <div className="ev-scroll" style={{ position: "relative", width: "100%", maxWidth: 560, maxHeight: "90vh",
-        overflowY: "auto", background: C.surface, borderRadius: 24, padding: 24,
-        animation: "evUp .25s ease both", boxShadow: "0 24px 60px rgba(0,0,0,.25)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 22 }}>
-          <span style={{ width: 44, height: 44, borderRadius: 13, display: "grid", placeItems: "center",
-            background: `${accent}1c`, color: accent }}>{icon}</span>
-          <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 23, fontWeight: 700 }}>{title}</h2>
-          <button onClick={onClose} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
-            <X size={22} />
-          </button>
-        </div>
-        {children}
+    <div style={{ position: "fixed", inset: 0, zIndex: 100, animation: "evFade .25s ease",
+      display: "flex", flexDirection: "column", background: C.bg }}>
+      
+      {/* Header (Fixed) */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "20px 24px",
+        background: C.surface, borderBottom: `1px solid ${C.line}` }}>
+        <span style={{ width: 48, height: 48, borderRadius: 14, display: "grid", placeItems: "center",
+          background: `${accent}1c`, color: accent }}>{icon}</span>
+        <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 26, fontWeight: 700, color: C.ink }}>{title}</h2>
+        <button onClick={onClose} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg, width: 44, height: 44 }}>
+          <X size={24} />
+        </button>
       </div>
+
+      {/* Content (Scrollable) */}
+      <div className="ev-scroll" style={{ flex: 1, overflowY: "auto", padding: "32px 24px" }}>
+        <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+          {children}
+        </div>
+      </div>
+
+      {/* Footer (Fixed) */}
+      {footer && (
+        <div style={{ padding: "20px 24px", background: C.surface, borderTop: `1px solid ${C.line}` }}>
+          <div style={{ maxWidth: 760, margin: "0 auto" }}>
+            {footer}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function ModalFooter({ t, onClose, onSave, accent, saveLabel, saveIcon }) {
   return (
-    <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
+    <div style={{ display: "flex", gap: 12 }}>
       <button onClick={onClose} className="ev-tap" style={{
-        flex: 1, padding: "15px", borderRadius: 14, border: `1px solid ${C.line}`, background: C.surface,
-        color: C.ink, fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{t.cancel}</button>
+        flex: 1, padding: "18px", borderRadius: 16, border: `1px solid ${C.line}`, background: C.surface,
+        color: C.ink, fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{t.cancel}</button>
       <button onClick={onSave} className="ev-tap" style={{
-        flex: 2, padding: "15px", borderRadius: 14, border: "none", background: accent, color: "#fff",
-        fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 8px 22px ${accent}55` }}>
+        flex: 2, padding: "18px", borderRadius: 16, border: "none", background: accent, color: "#fff",
+        fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: `0 8px 22px ${accent}55` }}>
         {saveIcon} {saveLabel}
       </button>
     </div>
@@ -2422,7 +2421,8 @@ function SupplyModal({ t, lang, onClose, onSave }) {
   };
 
   return (
-    <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<ShoppingCart size={22} />} title={t.addSupply}>
+    <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<ShoppingCart size={22} />} title={t.addSupply}
+      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.add} saveIcon={<Plus size={20} />} />}>
       <Field label={t.supplyItem} required>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
           {suggestions.map(s => (
@@ -2458,8 +2458,6 @@ function SupplyModal({ t, lang, onClose, onSave }) {
         <textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })}
           rows={2} style={{ ...inputStyle(), resize: "none" }} placeholder={t.notesHint} />
       </Field>
-
-      <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.add} saveIcon={<Plus size={20} />} />
     </ModalShell>
   );
 }
