@@ -1012,7 +1012,7 @@ function HorseEditWrapper({ t, id, setRoute }) {
 }
 
 function Screen({ active, route, setRoute, t }) {
-  const wrap = { maxWidth: 920, margin: "0 auto", padding: "22px 18px" };
+  const wrap = { width: "100%", margin: "0 auto", padding: "22px 18px" };
   if (active === "horses") {
     if (route.name === "add") return <div style={wrap}><HorseForm t={t} onDone={() => setRoute({ name: "list" })} /></div>;
     if (route.name === "edit") return <div style={wrap}><HorseEditWrapper t={t} id={route.id} setRoute={setRoute} /></div>;
@@ -2296,14 +2296,14 @@ function ModalShell({ t, onClose, accent, icon, title, children, footer }) {
 
       {/* Content (Scrollable) */}
       <div className="ev-scroll" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
-        <div style={{ padding: "24px 20px", maxWidth: 760, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
+        <div style={{ padding: "24px 20px", width: "100%", display: "flex", flexDirection: "column", gap: 20, flex: 1 }}>
           {children}
         </div>
         
         {/* Footer (Pushed to bottom of scroll area) */}
         {footer && (
           <div style={{ padding: "16px 20px", background: C.surface, borderTop: `1px solid ${C.line}`, width: "100%", marginTop: "auto" }}>
-            <div style={{ maxWidth: 760, margin: "0 auto" }}>
+            <div style={{ width: "100%" }}>
               {footer}
             </div>
           </div>
@@ -2427,18 +2427,20 @@ function GenericModuleScreen({ t, active }) {
               <span style={{ width: 42, height: 42, borderRadius: 12, display: "grid", placeItems: "center",
                 background: `${color}1c`, color: color, flexShrink: 0 }}><Icon size={20} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 600 }}>{x.name || x.reference || x.stallion_name || t[active]}</div>
-                <div style={{ fontSize: 13, color: C.sub, marginTop: 4 }}>
-                  {Object.keys(x).filter(k => k !== 'id' && k !== 'created_at' && k !== 'name' && x[k]).map(k => String(x[k])).join(" · ")}
+                <div style={{ fontSize: 17, fontWeight: 600 }}>{x.name || x.reference || x.stallion_name || t[active]}</div>
+                <div style={{ fontSize: 15, color: C.sub, marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+                  {Object.keys(x).filter(k => k !== 'id' && k !== 'created_at' && k !== 'name' && x[k]).map(k => (
+                    <span key={k}><strong>{t[k] || k}:</strong> {String(x[k])}</span>
+                  ))}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 <button onClick={() => { setEditObj(x); setF(x); }} className="ev-tap" style={{
                   border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
-                  <Edit2 size={17} />
+                  <Edit2 size={20} />
                 </button>
                 <button onClick={() => del(x.id)} className="ev-tap" style={{ border: "none", background: "transparent",
-                  cursor: "pointer", color: C.sub, padding: 6 }}><Trash2 size={17} /></button>
+                  cursor: "pointer", color: C.sub, padding: 6 }}><Trash2 size={20} /></button>
               </div>
             </div>
           ))}
@@ -2455,16 +2457,20 @@ function GenericModuleScreen({ t, active }) {
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {field.opts.map(opt => (
                     <button key={opt} type="button" onClick={() => setF({...f, [field.n]: opt})} className="ev-tap"
-                      style={{ padding: "12px 18px", borderRadius: 16, border: `1px solid ${f[field.n] === opt ? color : C.line}`,
-                        background: f[field.n] === opt ? color : C.field, color: f[field.n] === opt ? "#fff" : C.sub,
-                        fontSize: 14.5, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                      style={{ padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f[field.n] === opt ? color : C.line}`,
+                        background: f[field.n] === opt ? color : C.surface,
+                        color: f[field.n] === opt ? "#fff" : C.sub,
+                        fontSize: 16, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
                       {t[opt] || opt}
                     </button>
                   ))}
                 </div>
+              ) : field.t === "checkbox" ? (
+                <input type="checkbox" checked={!!f[field.n]} onChange={(e) => setF({...f, [field.n]: e.target.checked})} />
+              ) : field.t === "textarea" || field.n === "notes" || field.n === "description" ? (
+                <textarea value={f[field.n] || ""} onChange={(e) => setF({...f, [field.n]: e.target.value})} style={{ ...inputStyle(err && field.r && !f[field.n]), minHeight: 120, resize: "vertical" }} />
               ) : (
-                <input type={field.t || "text"} value={f[field.n] || ""} onChange={(e) => { setF({...f, [field.n]: field.t === 'checkbox' ? e.target.checked : e.target.value}); setErr(false); }}
-                  style={inputStyle(err && field.r && !f[field.n])} />
+                <input type={field.t || "text"} value={f[field.n] || ""} onChange={(e) => setF({...f, [field.n]: e.target.value})} style={inputStyle(err && field.r && !f[field.n])} />
               )}
             </Field>
           ))}
