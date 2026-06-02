@@ -333,11 +333,11 @@ function AppRoot() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, color: C.ink, fontFamily: "'Nunito', system-ui, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, color: C.ink, fontFamily: "'Montserrat', system-ui, sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Nunito:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
-        .ev-display { font-family: 'Playfair Display', serif; }
+        .ev-display { font-family: 'Montserrat', sans-serif; letter-spacing: -0.5px; }
         .ev-tap { transition: transform .12s ease, background .15s ease, box-shadow .15s ease; }
         .ev-tap:active { transform: scale(.97); }
         .ev-card { animation: evUp .4s ease both; }
@@ -808,7 +808,7 @@ function HorseAvatar({ h, size = 52 }) {
       width: size, height: size, borderRadius: "32%", flexShrink: 0,
       background: `linear-gradient(135deg, ${h.tint}, ${h.tint}99)`,
       display: "grid", placeItems: "center", color: "#fff",
-      fontWeight: 700, fontSize: size * 0.42, fontFamily: "'Playfair Display',serif",
+      fontWeight: 700, fontSize: size * 0.42, fontFamily: "'Montserrat',sans-serif",
     }}>{h.name.charAt(0).toUpperCase()}</span>
   );
 }
@@ -1244,7 +1244,7 @@ function TxnModal({ type, t, onClose }) {
             <Field label={t.fAmountLabel} required>
               <input type="number" inputMode="decimal" value={f.amount} onChange={set("amount")}
                 placeholder="0,00" autoFocus
-                style={{ ...inputStyle(), fontSize: 28, fontWeight: 700, fontFamily: "'Playfair Display',serif",
+                style={{ ...inputStyle(), fontSize: 28, fontWeight: 700, fontFamily: "'Montserrat',sans-serif",
                   color: accent, textAlign: "center", padding: "22px 16px" }} />
             </Field>
             <div style={{ background: C.field, borderRadius: 14, padding: 16, marginTop: 8 }}>
