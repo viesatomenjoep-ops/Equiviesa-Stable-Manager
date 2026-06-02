@@ -1,16 +1,38 @@
 <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Stable door structure with E integrated -->
-  <rect x="40" y="50" width="120" height="120" fill="#000000" rx="8"/>
+  <style>
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .rotating {
+      animation: rotate 8s linear infinite;
+      transform-origin: 100px 100px;
+    }
+  </style>
 
-  <!-- Letter E as stable door slats (white) -->
-  <rect x="60" y="70" width="80" height="12" fill="#FFFFFF"/>
-  <rect x="60" y="70" width="12" height="80" fill="#FFFFFF"/>
-  <rect x="60" y="104" width="60" height="12" fill="#FFFFFF"/>
-  <rect x="60" y="138" width="80" height="12" fill="#FFFFFF"/>
+  <!-- Outer circle boundary -->
+  <circle cx="100" cy="100" r="85" stroke="#000000" stroke-width="4" fill="none"/>
 
-  <!-- Stable roof/triangle top -->
-  <path d="M30 50 L100 20 L170 50 Z" fill="#000000"/>
+  <!-- Rotating arms group -->
+  <g class="rotating">
+    <!-- Arm 1 (top) -->
+    <line x1="100" y1="100" x2="100" y2="25" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="100" cy="25" r="8" fill="#000000"/>
 
-  <!-- Door handle/latch detail -->
-  <circle cx="130" cy="110" r="4" fill="#FFFFFF"/>
+    <!-- Arm 2 (right) -->
+    <line x1="100" y1="100" x2="175" y2="100" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="175" cy="100" r="8" fill="#000000"/>
+
+    <!-- Arm 3 (bottom) -->
+    <line x1="100" y1="100" x2="100" y2="175" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="100" cy="175" r="8" fill="#000000"/>
+
+    <!-- Arm 4 (left) -->
+    <line x1="100" y1="100" x2="25" y2="100" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="25" cy="100" r="8" fill="#000000"/>
+  </g>
+
+  <!-- Center hub -->
+  <circle cx="100" cy="100" r="12" fill="#000000"/>
+  <circle cx="100" cy="100" r="6" fill="#FFFFFF"/>
 </svg>
