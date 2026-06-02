@@ -2332,7 +2332,7 @@ function ModalFooter({ t, onClose, onSave, accent, saveLabel, saveIcon }) {
 const GENERIC_CONFIG = {
   locations: { table: "locations", fields: [{n:"name",l:"Name",r:true}, {n:"type",l:"Type",r:true}, {n:"capacity",l:"Capacity",t:"number"}, {n:"notes",l:"Notes"}] },
   contacts: { table: "contacts", fields: [{n:"name",l:"Name",r:true}, {n:"email",l:"Email"}, {n:"phone",l:"Phone"}, {n:"role",l:"Role",opts:["owner","client","vet","farrier","rider","supplier","other"]}, {n:"notes",l:"Notes"}] },
-  documents: { table: "documents", fields: [{n:"name",l:"Name",r:true}, {n:"file_type",l:"Type"}, {n:"url",l:"URL (Cloudinary)",r:true}] },
+  documents: { table: "documents", fields: [{n:"name",l:"Name",r:true}, {n:"url",l:"File",t:"file",r:true}, {n:"file_type",l:"Type"}] },
   clients: { table: "contacts", defaultVals: { role: "client" }, fields: [{n:"name",l:"Name",r:true}, {n:"email",l:"Email"}, {n:"phone",l:"Phone"}, {n:"notes",l:"Notes"}] },
   bookings: { table: "bookings", fields: [{n:"date",l:"Date",t:"date",r:true}, {n:"status",l:"Status"}, {n:"notes",l:"Notes"}] },
   invoices: { table: "invoices", fields: [{n:"reference",l:"Reference",r:true}, {n:"date",l:"Date",t:"date",r:true}, {n:"amount",l:"Amount",t:"number",r:true}, {n:"status",l:"Status"}] },
@@ -2352,6 +2352,33 @@ function GenericModuleScreen({ t, active }) {
   const [editObj, setEditObj] = useState(null);
   const [f, setF] = useState(conf ? (conf.defaultVals || {}) : {});
   const [err, setErr] = useState(false);
+  const [uploadingField, setUploadingField] = useState(null);
+
+  const handleUpload = async (e, fieldName) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingField(fieldName);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "equivesa_uploads");
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "daj1lyfgk";
+
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        setF(prev => ({ ...prev, [fieldName]: data.secure_url, file_type: data.format || file.name.split('.').pop() }));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed.");
+    } finally {
+      setUploadingField(null);
+    }
+  };
 
   React.useEffect(() => {
     if (!conf) return;
@@ -2467,6 +2494,12 @@ function GenericModuleScreen({ t, active }) {
                 </div>
               ) : field.t === "checkbox" ? (
                 <input type="checkbox" checked={!!f[field.n]} onChange={(e) => setF({...f, [field.n]: e.target.checked})} />
+              ) : field.t === "file" ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <input type="file" onChange={(e) => handleUpload(e, field.n)} accept="*/*" style={{ ...inputStyle(), padding: "12px" }} />
+                  {uploadingField === field.n && <span style={{ fontSize: 13, color: C.sub }}>Uploading...</span>}
+                  {f[field.n] && !uploadingField && <a href={f[field.n]} target="_blank" rel="noreferrer" style={{ fontSize: 14, color: color, fontWeight: 600 }}>View File</a>}
+                </div>
               ) : field.t === "textarea" || field.n === "notes" || field.n === "description" ? (
                 <textarea value={f[field.n] || ""} onChange={(e) => setF({...f, [field.n]: e.target.value})} style={{ ...inputStyle(err && field.r && !f[field.n]), minHeight: 120, resize: "vertical" }} />
               ) : (
