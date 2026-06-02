@@ -91,6 +91,8 @@ const I18N = {
     authNoAccount: "Nog geen account? Registreer",
     authHasAccount: "Al een account? Log in",
     authCheckEmail: "Check je e-mail voor de bevestigingslink!",
+    qtyHint: "bijv. 5 zakken, 2 balen", reqByHint: "bijv. je eigen naam",
+    notes: "Opmerkingen", notesHint: "Optionele details...",
   },
   en: {
     code: "EN",
@@ -163,6 +165,8 @@ const I18N = {
     authNoAccount: "No account yet? Register",
     authHasAccount: "Already have an account? Log in",
     authCheckEmail: "Check your email for the confirmation link!",
+    qtyHint: "e.g. 5 bags, 2 bales", reqByHint: "e.g. your name",
+    notes: "Notes", notesHint: "Optional details...",
   },
   es: {
     code: "ES",
@@ -235,6 +239,8 @@ const I18N = {
     authNoAccount: "¿Aún no tienes cuenta? Regístrate",
     authHasAccount: "¿Ya tienes cuenta? Inicia sesión",
     authCheckEmail: "¡Revisa tu correo para el enlace de confirmación!",
+    qtyHint: "ej. 5 sacos, 2 pacas", reqByHint: "ej. tu nombre",
+    notes: "Notas", notesHint: "Detalles opcionales...",
   },
 };
 
@@ -1909,15 +1915,23 @@ function SuppliesScreen({ t }) {
       )}
 
       {modal && (
-        <SupplyModal t={t} onClose={() => setModal(false)} onSave={(item) => { addSupply(item); setModal(false); }} />
+        <SupplyModal t={t} lang={t.code.toLowerCase()} onClose={() => setModal(false)} onSave={(item) => { addSupply(item); setModal(false); }} />
       )}
     </div>
   );
 }
 
-function SupplyModal({ t, onClose, onSave }) {
+function SupplyModal({ t, lang, onClose, onSave }) {
   const [f, setF] = useState({ item_name: "", quantity: "", requested_by: "", notes: "" });
   const [err, setErr] = useState(false);
+
+  const COMMON = {
+    nl: ["Hooi", "Stro", "Houtkrullen", "Vlas", "Biks", "Muesli", "Slobber"],
+    en: ["Hay", "Straw", "Shavings", "Flax", "Pellets", "Muesli", "Mash"],
+    es: ["Heno", "Paja", "Virutas", "Lino", "Pellets", "Muesli", "Papilla"],
+  };
+  const suggestions = COMMON[lang] || COMMON.en;
+
   const save = () => {
     if (!f.item_name.trim()) { setErr(true); return; }
     onSave(f);
@@ -1926,24 +1940,39 @@ function SupplyModal({ t, onClose, onSave }) {
   return (
     <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<ShoppingCart size={22} />} title={t.addSupply}>
       <Field label={t.supplyItem} required>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+          {suggestions.map(s => (
+            <button key={s} type="button" onClick={() => { setF({...f, item_name: s}); setErr(false); }}
+              className="ev-tap"
+              style={{
+                padding: "8px 14px", borderRadius: 16, border: `1px solid ${f.item_name === s ? C.coral : C.line}`,
+                background: f.item_name === s ? C.coral : C.field,
+                color: f.item_name === s ? "#fff" : C.sub,
+                fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+              }}>
+              {s}
+            </button>
+          ))}
+        </div>
         <input value={f.item_name} onChange={(e) => { setF({ ...f, item_name: e.target.value }); setErr(false); }}
-          placeholder={t.supplyItem} autoFocus style={inputStyle(err)} />
+          placeholder={t.supplyItem} style={inputStyle(err)} />
       </Field>
-      {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.supplyItem} is verplicht</div>}
+      {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.supplyItem} {t.required}</div>}
 
-      <Field label={t.qty}>
-        <input value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })}
-          placeholder="bijv. 5 zakken, 2 stuks" style={inputStyle()} />
-      </Field>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.qty}>
+          <input value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })}
+            placeholder={t.qtyHint} style={inputStyle()} />
+        </Field>
+        <Field label={t.requestedBy}>
+          <input value={f.requested_by} onChange={(e) => setF({ ...f, requested_by: e.target.value })}
+            placeholder={t.reqByHint} style={inputStyle()} />
+        </Field>
+      </div>
 
-      <Field label={t.requestedBy}>
-        <input value={f.requested_by} onChange={(e) => setF({ ...f, requested_by: e.target.value })}
-          placeholder="bijv. Kyara, Christina" style={inputStyle()} />
-      </Field>
-
-      <Field label="Opmerkingen">
+      <Field label={t.notes}>
         <textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })}
-          rows={2} style={{ ...inputStyle(), resize: "none" }} placeholder="Optionele details..." />
+          rows={2} style={{ ...inputStyle(), resize: "none" }} placeholder={t.notesHint} />
       </Field>
 
       <ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.add} saveIcon={<Plus size={20} />} />
