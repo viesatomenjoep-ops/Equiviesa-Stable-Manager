@@ -57,6 +57,7 @@ const I18N = {
     fWhen: "Wanneer", fCategory: "Categorie", fWho: "Wie", fReference: "Referentie",
     fDescription: "Omschrijving", fAttachments: "Bijlagen", fHorse: "Paard", upload: "Uploaden",
     fAmountLabel: "Bedrag (€)", chooseType: "Wat wil je toevoegen?",
+    chooseFile: "Bestand kiezen", noFileChosen: "Geen bestand gekozen",
     catConcours: "Concours", catSold: "Verkocht", catBoard: "Pension", catVet: "Dierenarts",
     catFarrier: "Hoefsmid", catFeed: "Voer", catOther: "Overig",
     noContact: "Geen contact", allHorses: "Algemeen (geen paard)", thisMonth: "Deze maand",
@@ -144,6 +145,7 @@ const I18N = {
     fWhen: "When", fCategory: "Category", fWho: "Who", fReference: "Reference",
     fDescription: "Description", fAttachments: "Attachments", fHorse: "Horse", upload: "Upload",
     fAmountLabel: "Amount (€)", chooseType: "What do you want to add?",
+    chooseFile: "Choose file", noFileChosen: "No file chosen",
     catConcours: "Competition", catSold: "Sold", catBoard: "Boarding", catVet: "Vet",
     catFarrier: "Farrier", catFeed: "Feed", catOther: "Other",
     noContact: "No contact", allHorses: "General (no horse)", thisMonth: "This month",
@@ -228,6 +230,7 @@ const I18N = {
     fWhen: "Cuándo", fCategory: "Categoría", fWho: "Quién", fReference: "Referencia",
     fDescription: "Descripción", fAttachments: "Adjuntos", fHorse: "Caballo", upload: "Subir",
     fAmountLabel: "Importe (€)", chooseType: "¿Qué quieres añadir?",
+    chooseFile: "Elegir archivo", noFileChosen: "Ningún archivo elegido",
     catConcours: "Concurso", catSold: "Vendido", catBoard: "Pensión", catVet: "Veterinario",
     catFarrier: "Herrador", catFeed: "Pienso", catOther: "Otro",
     noContact: "Sin contacto", allHorses: "General (sin caballo)", thisMonth: "Este mes",
@@ -655,7 +658,7 @@ function ModeGate({ t, onPick, lang, setLang }) {
         <LangMenu lang={lang} setLang={setLang} t={t} />
       </div>
       <div style={{ flex: 1, display: "grid", placeItems: "center", padding: "20px 18px 60px", background: C.bg }}>
-        <div style={{ width: "100%", maxWidth: 560, textAlign: "center" }}>
+        <div style={{ width: "100%", textAlign: "center" }}>
           <h1 className="ev-display" style={{ fontSize: 34, fontWeight: 700, margin: "0 0 8px", letterSpacing: -0.6, color: C.ink }}>
             {t.chooseMode}
           </h1>
@@ -1279,7 +1282,7 @@ function HorseDetail({ t, id, setRoute }) {
   const del = () => { deleteHorse(id); setRoute({ name: "list" }); };
 
   return (
-    <div className="ev-card" style={{ maxWidth: 620, margin: "0 auto" }}>
+    <div className="ev-card" style={{ width: "100%", margin: "0 auto" }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 24, position: "relative" }}>
         <button onClick={() => setRoute({ name: "edit", id })} className="ev-tap" style={{
           position: "absolute", top: 0, right: 0, border: `1px solid ${C.line}`, background: C.surface, color: C.ink,
@@ -2496,9 +2499,15 @@ function GenericModuleScreen({ t, active }) {
                 <input type="checkbox" checked={!!f[field.n]} onChange={(e) => setF({...f, [field.n]: e.target.checked})} />
               ) : field.t === "file" ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <input type="file" onChange={(e) => handleUpload(e, field.n)} accept="*/*" style={{ ...inputStyle(), padding: "12px" }} />
-                  {uploadingField === field.n && <span style={{ fontSize: 13, color: C.sub }}>Uploading...</span>}
-                  {f[field.n] && !uploadingField && <a href={f[field.n]} target="_blank" rel="noreferrer" style={{ fontSize: 14, color: color, fontWeight: 600 }}>View File</a>}
+                  <label className="ev-tap" style={{ display: "inline-flex", alignItems: "center", gap: 12, cursor: "pointer", ...inputStyle() }}>
+                    <span style={{ background: C.line, padding: "8px 14px", borderRadius: 10, fontSize: 15, fontWeight: 600 }}>{t.chooseFile}</span>
+                    <span style={{ color: f[field.n] ? C.ink : C.sub, fontSize: 15, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {f[field.n] ? (f[field.n].split('/').pop().substring(0, 20) + "...") : t.noFileChosen}
+                    </span>
+                    <input type="file" onChange={(e) => handleUpload(e, field.n)} accept="*/*" style={{ display: "none" }} />
+                  </label>
+                  {uploadingField === field.n && <span style={{ fontSize: 14, color: C.sub, fontWeight: 600 }}>Uploading...</span>}
+                  {f[field.n] && !uploadingField && <a href={f[field.n]} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: color, fontWeight: 700 }}>View Uploaded File</a>}
                 </div>
               ) : field.t === "textarea" || field.n === "notes" || field.n === "description" ? (
                 <textarea value={f[field.n] || ""} onChange={(e) => setF({...f, [field.n]: e.target.value})} style={{ ...inputStyle(err && field.r && !f[field.n]), minHeight: 120, resize: "vertical" }} />
