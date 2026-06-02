@@ -936,13 +936,18 @@ function HorsesList({ t, setRoute }) {
 }
 
 function HorseAvatar({ h, size = 52 }) {
+  if (h.photo_url) {
+    return (
+      <img src={h.photo_url} alt={h.name} style={{ width: size, height: size, borderRadius: "32%", objectFit: "cover", flexShrink: 0 }} />
+    );
+  }
   return (
     <span style={{
       width: size, height: size, borderRadius: "32%", flexShrink: 0,
       background: `linear-gradient(135deg, ${h.tint}, ${h.tint}99)`,
       display: "grid", placeItems: "center", color: "#fff",
       fontWeight: 700, fontSize: size * 0.42, fontFamily: "'Montserrat',sans-serif",
-    }}>{h.name.charAt(0).toUpperCase()}</span>
+    }}>{(h.name || "?").charAt(0).toUpperCase()}</span>
   );
 }
 
@@ -969,9 +974,36 @@ function HorseCard({ h, t, onClick }) {
 const SEX_OPTS = ["sexMare", "sexStallion", "sexGelding"];
 function HorseForm({ t, onDone }) {
   const { addHorse } = useStore();
-  const [f, setF] = useState({ name: "", studbook: "", sex: "", color: "", birthdate: "", ueln: "", chip: "", feiid: "", location: "" });
+  const [f, setF] = useState({ name: "", studbook: "", sex: "", color: "", birthdate: "", ueln: "", chip: "", feiid: "", location: "", photo_url: "" });
   const [err, setErr] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+
+  const handleUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "equivesa_uploads");
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "daj1lyfgk";
+
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        setF(prev => ({ ...prev, photo_url: data.secure_url }));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const submit = () => {
     if (!f.name.trim()) { setErr(true); return; }
@@ -981,15 +1013,22 @@ function HorseForm({ t, onDone }) {
 
   return (
     <div className="ev-card" style={{ maxWidth: 560, margin: "0 auto" }}>
-      {/* photo placeholder */}
+      {/* photo upload placeholder */}
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
-        <button className="ev-tap" style={{
+        <label style={{
           width: 96, height: 96, borderRadius: "30%", border: `2px dashed ${C.line}`,
           background: C.field, cursor: "pointer", display: "grid", placeItems: "center",
-          color: C.sub, gap: 4,
+          color: C.sub, gap: 4, overflow: "hidden", position: "relative"
         }}>
-          <Camera size={26} />
-        </button>
+          {f.photo_url ? (
+            <img src={f.photo_url} alt="Horse" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : uploading ? (
+            <span style={{ fontSize: 12 }}>Up...</span>
+          ) : (
+            <Camera size={26} />
+          )}
+          <input type="file" accept="image/*" onChange={handleUpload} style={{ display: "none" }} />
+        </label>
       </div>
 
       <Field label={t.name} required>
