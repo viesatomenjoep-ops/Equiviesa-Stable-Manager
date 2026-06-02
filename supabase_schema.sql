@@ -37,6 +37,9 @@ create table public.horses (
     tint text not null default '#2FB6A0',
     archived boolean not null default false,
     photo_url text, -- Store Cloudinary URL here
+    breed text,      -- e.g. KWPN, Holsteiner, Selle Français
+    discipline text, -- e.g. Jumping, Dressage, Eventing
+    horse_type text, -- e.g. Horse, Pony, Sport Horse
     
     -- Breeding lineage reference (Self-referential relations)
     sire_id uuid references public.horses(id) on delete set null,
@@ -99,6 +102,8 @@ create table public.tasks (
     title text not null,
     description text,
     due_date date,
+    start_time time, -- e.g. 08:00
+    end_time time,   -- e.g. 10:00
     is_completed boolean not null default false,
     category text not null check (category in ('horse', 'general')),
     horse_id uuid references public.horses(id) on delete cascade,

@@ -605,8 +605,8 @@ function AppRoot() {
 }
 
 /* ---------- groom config: only the daily-essential modules ---------- */
-const GROOM_KEYS = ["feeding", "tasks", "health", "supplies", "horses"];
-const GROOM_BOTTOM = ["feeding", "tasks", "health", "supplies", "horses"];
+const GROOM_KEYS = ["calendar", "feeding", "tasks", "health", "supplies", "horses"];
+const GROOM_BOTTOM = ["calendar", "feeding", "tasks", "health", "horses"];
 const MODE_PIN = { manager: "1111", groom: "2222" };
 
 /* ---------- Mode chooser (first screen) ---------- */
@@ -614,17 +614,18 @@ function ModeGate({ t, onPick, lang, setLang }) {
   const [pending, setPending] = useState(null); // 'groom' | 'manager' awaiting PIN
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column",
-      background: `radial-gradient(120% 80% at 50% -10%, ${C.mintSoft}, ${C.bg})` }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 22px" }}>
+      background: C.surface }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 22px",
+        borderBottom: `1px solid ${C.line}` }}>
         <Brand />
         <LangMenu lang={lang} setLang={setLang} t={t} />
       </div>
-      <div style={{ flex: 1, display: "grid", placeItems: "center", padding: "20px 18px 60px" }}>
+      <div style={{ flex: 1, display: "grid", placeItems: "center", padding: "20px 18px 60px", background: C.bg }}>
         <div style={{ width: "100%", maxWidth: 560, textAlign: "center" }}>
-          <h1 className="ev-display ev-card" style={{ fontSize: 38, fontWeight: 700, margin: "0 0 8px", letterSpacing: -0.6 }}>
+          <h1 className="ev-display" style={{ fontSize: 34, fontWeight: 700, margin: "0 0 8px", letterSpacing: -0.6, color: C.ink }}>
             {t.chooseMode}
           </h1>
-          <p className="ev-card" style={{ color: C.sub, fontSize: 16, margin: "0 0 32px" }}>{t.chooseModeSub}</p>
+          <p style={{ color: C.sub, fontSize: 16, margin: "0 0 32px" }}>{t.chooseModeSub}</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
             <ModeCard t={t} onClick={() => setPending("groom")} color={C.amber} icon={<Carrot size={34} />}
               title={t.groom} desc={t.groomDesc} />
@@ -643,7 +644,7 @@ function ModeGate({ t, onPick, lang, setLang }) {
 }
 function ModeCard({ t, onClick, color, icon, title, desc }) {
   return (
-    <button onClick={onClick} className="ev-tap ev-card" style={{
+    <button onClick={onClick} className="ev-tap" style={{
       display: "flex", alignItems: "center", gap: 18, width: "100%", textAlign: "left",
       background: C.surface, border: `1px solid ${C.line}`, borderRadius: 22, padding: "22px 22px",
       cursor: "pointer", fontFamily: "inherit", boxShadow: "0 8px 26px rgba(31,45,58,.06)",
@@ -1074,9 +1075,34 @@ function HorseCard({ h, t, onClick }) {
 
 /* ---------- Horses: add form ---------- */
 const SEX_OPTS = ["sexMare", "sexStallion", "sexGelding"];
+const BREEDS = [
+  "KWPN", "Holsteiner", "Hannoveraner", "Oldenburger", "Selle Français", "BWP", "Westfalen",
+  "Trakehner", "Irish Sport Horse", "Thoroughbred", "Arabian", "Friesian", "Lusitano",
+  "Andalusian (PRE)", "Quarter Horse", "Warmblood", "Welsh Pony", "Haflinger", "Connemara",
+  "Shetland Pony", "New Forest", "Icelandic", "Lipizzaner", "Appaloosa", "Paint Horse",
+  "Morgan", "Clydesdale", "Shire", "Knabstrupper", "Fjord", "Dartmoor Pony", "Other",
+];
+const DISCIPLINES = [
+  "Show Jumping", "Dressage", "Eventing", "Hunter", "Equitation", "Reining", "Western Pleasure",
+  "Endurance", "Driving", "Polo", "Vaulting", "Para-Dressage", "Cross Country", "Show Hack",
+  "Trail Riding", "Pleasure", "Breeding", "Liberty", "Working Equitation", "Mounted Games", "Other",
+];
+const HORSE_TYPES = [
+  "Sport Horse", "Pony", "Warmblood", "Coldblood", "Thoroughbred", "Draft Horse",
+  "Miniature Horse", "Gaited Horse", "Stock Horse", "Baroque Horse", "Other",
+];
+const COLORS_LIST = [
+  "Bay", "Chestnut", "Black", "Grey", "Palomino", "Buckskin", "Dun", "Roan",
+  "Pinto", "Appaloosa", "Cremello", "Dapple Grey", "Liver Chestnut", "Dark Bay",
+  "Flaxen", "Tobiano", "Overo", "Sabino", "Other",
+];
+
 function HorseForm({ t, onDone }) {
   const { addHorse } = useStore();
-  const [f, setF] = useState({ name: "", studbook: "", sex: "", color: "", birthdate: "", ueln: "", chip: "", feiid: "", location: "", photo_url: "" });
+  const [f, setF] = useState({
+    name: "", studbook: "", sex: "", color: "", birthdate: "", ueln: "", chip: "",
+    feiid: "", location: "", photo_url: "", breed: "", discipline: "", horse_type: ""
+  });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
@@ -1089,22 +1115,12 @@ function HorseForm({ t, onDone }) {
     formData.append("file", file);
     formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "equivesa_uploads");
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "daj1lyfgk";
-
     try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: formData });
       const data = await res.json();
-      if (data.secure_url) {
-        setF(prev => ({ ...prev, photo_url: data.secure_url }));
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Upload failed.");
-    } finally {
-      setUploading(false);
-    }
+      if (data.secure_url) setF(prev => ({ ...prev, photo_url: data.secure_url }));
+    } catch (err) { console.error(err); alert("Upload failed."); }
+    finally { setUploading(false); }
   };
 
   const submit = () => {
@@ -1114,25 +1130,36 @@ function HorseForm({ t, onDone }) {
   };
 
   return (
-    <div className="ev-card" style={{ maxWidth: 560, margin: "0 auto" }}>
-      {/* photo upload placeholder */}
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+    <div className="ev-card" style={{ maxWidth: 640, margin: "0 auto" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+        <button onClick={onDone} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
+          <ChevronLeft size={22} />
+        </button>
+        <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 22, fontWeight: 700 }}>{t.addHorse}</h2>
+      </div>
+
+      {/* Photo upload */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
         <label style={{
-          width: 96, height: 96, borderRadius: "30%", border: `2px dashed ${C.line}`,
-          background: C.field, cursor: "pointer", display: "grid", placeItems: "center",
-          color: C.sub, gap: 4, overflow: "hidden", position: "relative"
+          width: 110, height: 110, borderRadius: "30%", border: `2px dashed ${C.line}`,
+          background: C.field, cursor: "pointer", display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", gap: 6,
+          color: C.sub, overflow: "hidden", position: "relative",
+          transition: "border-color .2s",
         }}>
           {f.photo_url ? (
-            <img src={f.photo_url} alt="Horse" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={f.photo_url} alt="Horse" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
           ) : uploading ? (
-            <span style={{ fontSize: 12 }}>Up...</span>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Uploading...</span>
           ) : (
-            <Camera size={26} />
+            <><Camera size={28} /><span style={{ fontSize: 11, fontWeight: 600 }}>{t.photo}</span></>
           )}
           <input type="file" accept="image/*" onChange={handleUpload} style={{ display: "none" }} />
         </label>
       </div>
 
+      {/* Name - required */}
       <Field label={t.name} required>
         <input value={f.name} onChange={(e) => { set("name")(e); setErr(false); }}
           placeholder={t.name + " *"} style={inputStyle(err)} />
@@ -1141,21 +1168,72 @@ function HorseForm({ t, onDone }) {
 
       <Divider label={t.optional} />
 
-      <Field label={t.studbook}><input value={f.studbook} onChange={set("studbook")} placeholder={t.select} style={inputStyle()} /></Field>
-      <Field label={t.sex}>
-        <select value={f.sex} onChange={set("sex")} style={{ ...inputStyle(), color: f.sex ? C.ink : C.sub, appearance: "none" }}>
-          <option value="">{t.select}</option>
-          {SEX_OPTS.map((s) => <option key={s} value={s}>{t[s]}</option>)}
-        </select>
-      </Field>
-      <Field label={t.color}><input value={f.color} onChange={set("color")} placeholder={t.select} style={inputStyle()} /></Field>
-      <Field label={t.birthdate}><input type="date" value={f.birthdate} onChange={set("birthdate")} style={inputStyle()} /></Field>
-      <Field label={t.ueln}><input value={f.ueln} onChange={set("ueln")} placeholder="UELN" style={inputStyle()} /></Field>
-      <Field label={t.chip}><input value={f.chip} onChange={set("chip")} placeholder={t.chip} style={inputStyle()} /></Field>
-      <Field label={t.feiid}><input value={f.feiid} onChange={set("feiid")} placeholder="FEI ID" style={inputStyle()} /></Field>
-      <Field label={t.location}><input value={f.location} onChange={set("location")} placeholder={t.select} style={inputStyle()} /></Field>
+      {/* Sex & Type - side by side */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.sex}>
+          <select value={f.sex} onChange={set("sex")} style={{ ...inputStyle(), color: f.sex ? C.ink : C.sub }}>
+            <option value="">{t.select}</option>
+            {SEX_OPTS.map((s) => <option key={s} value={s}>{t[s]}</option>)}
+          </select>
+        </Field>
+        <Field label="Type">
+          <select value={f.horse_type} onChange={set("horse_type")} style={{ ...inputStyle(), color: f.horse_type ? C.ink : C.sub }}>
+            <option value="">{t.select}</option>
+            {HORSE_TYPES.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+        </Field>
+      </div>
 
-      <div style={{ display: "flex", gap: 12, marginTop: 22 }}>
+      {/* Breed & Discipline - side by side */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label="Breed">
+          <select value={f.breed} onChange={set("breed")} style={{ ...inputStyle(), color: f.breed ? C.ink : C.sub }}>
+            <option value="">{t.select}</option>
+            {BREEDS.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+        </Field>
+        <Field label="Discipline">
+          <select value={f.discipline} onChange={set("discipline")} style={{ ...inputStyle(), color: f.discipline ? C.ink : C.sub }}>
+            <option value="">{t.select}</option>
+            {DISCIPLINES.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </Field>
+      </div>
+
+      {/* Color & Studbook - side by side */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.color}>
+          <select value={f.color} onChange={set("color")} style={{ ...inputStyle(), color: f.color ? C.ink : C.sub }}>
+            <option value="">{t.select}</option>
+            {COLORS_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </Field>
+        <Field label={t.studbook}>
+          <input value={f.studbook} onChange={set("studbook")} placeholder={t.studbook} style={inputStyle()} />
+        </Field>
+      </div>
+
+      {/* Birthdate & Location - side by side */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.birthdate}>
+          <input type="date" value={f.birthdate} onChange={set("birthdate")} style={inputStyle()} />
+        </Field>
+        <Field label={t.location}>
+          <input value={f.location} onChange={set("location")} placeholder={t.location} style={inputStyle()} />
+        </Field>
+      </div>
+
+      <Divider label="ID" />
+
+      {/* UELN & Chip - side by side */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.ueln}><input value={f.ueln} onChange={set("ueln")} placeholder="UELN" style={inputStyle()} /></Field>
+        <Field label={t.chip}><input value={f.chip} onChange={set("chip")} placeholder={t.chip} style={inputStyle()} /></Field>
+      </div>
+      <Field label={t.feiid}><input value={f.feiid} onChange={set("feiid")} placeholder="FEI ID" style={inputStyle()} /></Field>
+
+      {/* Action buttons */}
+      <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
         <button onClick={onDone} className="ev-tap" style={{
           flex: 1, padding: "15px", borderRadius: 14, border: `1px solid ${C.line}`,
           background: C.surface, color: C.ink, fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
@@ -1387,7 +1465,7 @@ function TasksScreen({ t }) {
 
   return (
     <div className="ev-card">
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginBottom: 16 }}>
         <div style={{ display: "inline-flex", gap: 2, background: C.bg, borderRadius: 12, padding: 3 }}>
           {[t.open, t.completedTasks].map((label, i) => (
             <button key={i} onClick={() => setTab(i)} className="ev-tap" style={{
@@ -1398,10 +1476,11 @@ function TasksScreen({ t }) {
             }}>{label}</button>
           ))}
         </div>
+        <div style={{ flex: 1 }} />
         <button onClick={() => setModal(true)} className="ev-tap" style={{
-          marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, border: "none", cursor: "pointer", fontFamily: "inherit",
+          display: "flex", alignItems: "center", gap: 8, border: "none", cursor: "pointer", fontFamily: "inherit",
           background: C.amber, color: "#fff", fontSize: 15, fontWeight: 600, padding: "11px 18px", borderRadius: 13,
-          boxShadow: `0 6px 16px ${C.amber}66` }}>
+          boxShadow: `0 6px 16px ${C.amber}66`, whiteSpace: "nowrap" }}>
           <Plus size={19} /> {t.addTask}
         </button>
       </div>
