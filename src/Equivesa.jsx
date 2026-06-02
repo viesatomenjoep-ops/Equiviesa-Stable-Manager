@@ -403,18 +403,19 @@ function StoreProvider({ children }) {
   const addHorse = async (h) => {
     const cleanH = cleanObj({ ...h, tint: HORSE_TINTS[horses.length % HORSE_TINTS.length] });
     const { data, error } = await supabase.from('horses').insert([cleanH]).select();
-    if (error) console.error("Error adding horse:", error);
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
     if (data) setHorses(prev => [data[0], ...prev]);
   };
   const editHorse = async (id, h) => {
     const cleanH = cleanObj(h);
     const { data, error } = await supabase.from('horses').update(cleanH).eq('id', id).select();
-    if (error) console.error("Error editing horse:", error);
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
     if (data) setHorses(prev => prev.map(x => x.id === id ? data[0] : x));
   };
   const deleteHorse = async (id) => {
-    await supabase.from('horses').delete().eq('id', id);
-    setHorses(prev => prev.filter(h => h.id !== id));
+    const { error } = await supabase.from('horses').delete().eq('id', id);
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
+    else setHorses(prev => prev.filter(h => h.id !== id));
   };
 
   const fetchTxns = async () => {
@@ -423,12 +424,13 @@ function StoreProvider({ children }) {
   };
   const addTxn = async (tx) => {
     const { data, error } = await supabase.from('transactions').insert([cleanObj(tx)]).select();
-    if (error) console.error("Error adding txn:", error);
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
     if (data) setTxns(prev => [data[0], ...prev]);
   };
   const deleteTxn = async (id) => {
-    await supabase.from('transactions').delete().eq('id', id);
-    setTxns(prev => prev.filter(x => x.id !== id));
+    const { error } = await supabase.from('transactions').delete().eq('id', id);
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
+    else setTxns(prev => prev.filter(x => x.id !== id));
   };
 
   const fetchUsers = async () => {
@@ -437,12 +439,13 @@ function StoreProvider({ children }) {
   };
   const addUser = async (u) => {
     const { data, error } = await supabase.from('profiles').insert([cleanObj(u)]).select();
-    if (error) console.error("Error adding user:", error);
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
     if (data) setUsers(prev => [data[0], ...prev]);
   };
   const deleteUser = async (id) => {
-    await supabase.from('profiles').delete().eq('id', id);
-    setUsers(prev => prev.filter(u => u.id !== id));
+    const { error } = await supabase.from('profiles').delete().eq('id', id);
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
+    else setUsers(prev => prev.filter(u => u.id !== id));
   };
 
   const fetchSupplies = async () => {
@@ -451,19 +454,21 @@ function StoreProvider({ children }) {
   };
   const addSupply = async (item) => {
     const { data, error } = await supabase.from('supplies_needed').insert([cleanObj({...item, status: 'pending'})]).select();
-    if (error) console.error("Error adding supply:", error);
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
     if (data) setSupplies(prev => [data[0], ...prev]);
   };
   const toggleSupplyStatus = async (id) => {
     const s = supplies.find(x => x.id === id);
     if (!s) return;
     const newStatus = s.status === 'pending' ? 'purchased' : 'pending';
-    await supabase.from('supplies_needed').update({ status: newStatus }).eq('id', id);
-    setSupplies(prev => prev.map(x => x.id === id ? { ...x, status: newStatus } : x));
+    const { error } = await supabase.from('supplies_needed').update({ status: newStatus }).eq('id', id);
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
+    else setSupplies(prev => prev.map(x => x.id === id ? { ...x, status: newStatus } : x));
   };
   const deleteSupply = async (id) => {
-    await supabase.from('supplies_needed').delete().eq('id', id);
-    setSupplies(prev => prev.filter(s => s.id !== id));
+    const { error } = await supabase.from('supplies_needed').delete().eq('id', id);
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
+    else setSupplies(prev => prev.filter(s => s.id !== id));
   };
 
   const fetchFeed = async () => {
@@ -597,7 +602,7 @@ function AppRoot() {
   }, []);
 
   if (authLoading) return <div style={{ minHeight: "100vh", background: C.bg }} />;
-  if (!session) return <AuthScreen t={t} lang={lang} setLang={setLang} />;
+  // Authentication screen has been bypassed per user request
 
   const go = (key) => {
     if (key === "menu") { setDrawer(true); return; }
@@ -627,6 +632,7 @@ function AppRoot() {
         @keyframes evRotate { from {transform: rotate(0deg);} to {transform: rotate(360deg);} }
         input, select { font-family: inherit; }
         .ev-scroll::-webkit-scrollbar { width: 0; height: 0; }
+        body.modal-open .ev-bottom { display: none !important; }
       `}</style>
 
       {mode === null ? (
@@ -1199,11 +1205,11 @@ function HorseForm({ t, initialData, onDone }) {
       {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.nameRequired}</div>}
 
       <Field label={t.sex}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
           {SEX_OPTS.map((s) => (
             <button key={s} type="button" onClick={() => setF({...f, sex: s})} className="ev-tap"
               style={{
-                padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f.sex === s ? C.mint : C.line}`,
+                flexShrink: 0, padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f.sex === s ? C.mint : C.line}`,
                 background: f.sex === s ? C.mint : C.surface, color: f.sex === s ? "#fff" : C.sub,
                 fontSize: 16, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
               }}>
@@ -1219,11 +1225,11 @@ function HorseForm({ t, initialData, onDone }) {
       </div>
 
       <Field label={t.color}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+        <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
           {HORSE_COLORS.map((c) => (
             <button key={c} type="button" onClick={() => setF({...f, color: c})} className="ev-tap"
               style={{
-                padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f.color === c ? C.mint : C.line}`,
+                flexShrink: 0, padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f.color === c ? C.mint : C.line}`,
                 background: f.color === c ? C.mint : C.surface, color: f.color === c ? "#fff" : C.sub,
                 fontSize: 16, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
               }}>
@@ -1561,12 +1567,12 @@ function TaskModal({ t, initialData, horses, onClose, onSave }) {
     <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<CheckSquare size={22} />} title={initialData ? t.editTask || "Edit Task" : t.addTask}
       footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
       <Field label={t.taskTitle} required>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+        <div style={{ display: "flex", overflowX: "auto", gap: 8, marginBottom: 12, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
           {(t.taskCommon || []).map(s => (
             <button key={s} type="button" onClick={() => { setF({...f, title: s}); setErr(false); }}
               className="ev-tap"
               style={{
-                padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.title === s ? C.amber : C.line}`,
+                flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.title === s ? C.amber : C.line}`,
                 background: f.title === s ? C.amber : C.surface,
                 color: f.title === s ? "#fff" : C.sub,
                 fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
@@ -2330,6 +2336,11 @@ function FeedModal({ t, slot, onClose, onSave }) {
 
 /* ---------- reusable modal shell ---------- */
 function ModalShell({ t, onClose, accent, icon, title, children, footer }) {
+  React.useEffect(() => {
+    document.body.classList.add('modal-open');
+    return () => document.body.classList.remove('modal-open');
+  }, []);
+
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 100, animation: "evFade .25s ease",
       display: "flex", flexDirection: "column", background: C.bg }}>
@@ -2350,16 +2361,14 @@ function ModalShell({ t, onClose, accent, icon, title, children, footer }) {
         <div style={{ padding: "24px 20px", width: "100%", display: "flex", flexDirection: "column", gap: 20, flex: 1 }}>
           {children}
         </div>
-        
-        {/* Footer (Pushed to bottom of scroll area) */}
-        {footer && (
-          <div style={{ padding: "16px 20px", background: C.surface, borderTop: `1px solid ${C.line}`, width: "100%", marginTop: "auto" }}>
-            <div style={{ width: "100%" }}>
-              {footer}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Footer (Fixed at bottom) */}
+      {footer && (
+        <div style={{ padding: "16px 20px", background: C.surface, borderTop: `1px solid ${C.line}`, width: "100%", flexShrink: 0 }}>
+          {footer}
+        </div>
+      )}
     </div>
   );
 }
@@ -2716,12 +2725,12 @@ function SupplyModal({ t, lang, onClose, onSave }) {
     <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<ShoppingCart size={22} />} title={t.addSupply}
       footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.add} saveIcon={<Plus size={20} />} />}>
       <Field label={t.supplyItem} required>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+        <div style={{ display: "flex", overflowX: "auto", gap: 8, marginBottom: 12, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
           {suggestions.map(s => (
             <button key={s} type="button" onClick={() => { setF({...f, item_name: s}); setErr(false); }}
               className="ev-tap"
               style={{
-                padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.item_name === s ? C.coral : C.line}`,
+                flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.item_name === s ? C.coral : C.line}`,
                 background: f.item_name === s ? C.coral : C.surface,
                 color: f.item_name === s ? "#fff" : C.sub,
                 fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
@@ -2731,7 +2740,7 @@ function SupplyModal({ t, lang, onClose, onSave }) {
           ))}
         </div>
         <input value={f.item_name} onChange={(e) => { setF({ ...f, item_name: e.target.value }); setErr(false); }}
-          placeholder={t.supplyItem} style={inputStyle(err)} />
+          placeholder="Other custom supply item..." style={inputStyle(err)} />
       </Field>
       {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.supplyItem} {t.required}</div>}
 
