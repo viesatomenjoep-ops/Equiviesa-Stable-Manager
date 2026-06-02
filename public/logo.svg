@@ -1,11 +1,6 @@
 <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
   <style>
-    @keyframes rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
     .rotating {
-      animation: rotate 8s linear infinite;
       transform-origin: 100px 100px;
     }
   </style>
