@@ -561,9 +561,62 @@ function StoreProvider({ children }) {
   // Fetch locations, contacts, documents on auth
   React.useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) { fetchLocations(); fetchContacts(); fetchDocuments(); }
+      if (session) { fetchLocations(); fetchContacts(); fetchDocuments(); fetchClients(); fetchBookings(); fetchInvoices(); fetchCompanySettings(); fetchCatalog(); fetchMares(); fetchEmbryos(); fetchFoals(); }
     });
   }, []);
+
+  /* --- Clients CRUD --- */
+  const [clients, setClients] = useState([]);
+  const fetchClients = async () => { const { data } = await supabase.from('clients').select('*').order('name'); if (data) setClients(data); };
+  const addClient = async (c) => { const { data } = await supabase.from('clients').insert([c]).select(); if (data) setClients(p => [data[0], ...p]); };
+  const deleteClient = async (id) => { await supabase.from('clients').delete().eq('id', id); setClients(p => p.filter(x => x.id !== id)); };
+
+  /* --- Bookings CRUD --- */
+  const [bookings, setBookings] = useState([]);
+  const fetchBookings = async () => { const { data } = await supabase.from('bookings').select('*').order('booking_date', { ascending: false }); if (data) setBookings(data); };
+  const addBooking = async (b) => { const { data } = await supabase.from('bookings').insert([b]).select(); if (data) setBookings(p => [data[0], ...p]); };
+  const deleteBooking = async (id) => { await supabase.from('bookings').delete().eq('id', id); setBookings(p => p.filter(x => x.id !== id)); };
+  const updateBooking = async (id, updates) => { const { data } = await supabase.from('bookings').update(updates).eq('id', id).select(); if (data) setBookings(p => p.map(x => x.id === id ? data[0] : x)); };
+
+  /* --- Invoices CRUD --- */
+  const [invoices, setInvoices] = useState([]);
+  const fetchInvoices = async () => { const { data } = await supabase.from('invoices').select('*').order('created_at', { ascending: false }); if (data) setInvoices(data); };
+  const addInvoice = async (inv) => { const { data } = await supabase.from('invoices').insert([inv]).select(); if (data) setInvoices(p => [data[0], ...p]); };
+  const updateInvoice = async (id, updates) => { const { data } = await supabase.from('invoices').update(updates).eq('id', id).select(); if (data) setInvoices(p => p.map(x => x.id === id ? data[0] : x)); };
+  const deleteInvoice = async (id) => { await supabase.from('invoices').delete().eq('id', id); setInvoices(p => p.filter(x => x.id !== id)); };
+
+  /* --- Company Settings --- */
+  const [companySettings, setCompanySettings] = useState(null);
+  const fetchCompanySettings = async () => { const { data } = await supabase.from('company_settings').select('*').limit(1); if (data && data[0]) setCompanySettings(data[0]); };
+  const saveCompanySettings = async (s) => {
+    if (companySettings?.id) { const { data } = await supabase.from('company_settings').update(s).eq('id', companySettings.id).select(); if (data) setCompanySettings(data[0]); }
+    else { const { data } = await supabase.from('company_settings').insert([s]).select(); if (data) setCompanySettings(data[0]); }
+  };
+
+  /* --- Catalog CRUD --- */
+  const [catalog, setCatalog] = useState([]);
+  const fetchCatalog = async () => { const { data } = await supabase.from('catalog').select('*').order('created_at', { ascending: false }); if (data) setCatalog(data); };
+  const addCatalogItem = async (item) => { const { data } = await supabase.from('catalog').insert([item]).select(); if (data) setCatalog(p => [data[0], ...p]); };
+  const updateCatalogItem = async (id, updates) => { const { data } = await supabase.from('catalog').update(updates).eq('id', id).select(); if (data) setCatalog(p => p.map(x => x.id === id ? data[0] : x)); };
+  const deleteCatalogItem = async (id) => { await supabase.from('catalog').delete().eq('id', id); setCatalog(p => p.filter(x => x.id !== id)); };
+
+  /* --- Mares Breeding CRUD --- */
+  const [maresBreeding, setMaresBreeding] = useState([]);
+  const fetchMares = async () => { const { data } = await supabase.from('mares_breeding').select('*').order('created_at', { ascending: false }); if (data) setMaresBreeding(data); };
+  const addMareBreeding = async (m) => { const { data } = await supabase.from('mares_breeding').insert([m]).select(); if (data) setMaresBreeding(p => [data[0], ...p]); };
+  const deleteMareBreeding = async (id) => { await supabase.from('mares_breeding').delete().eq('id', id); setMaresBreeding(p => p.filter(x => x.id !== id)); };
+
+  /* --- Embryos CRUD --- */
+  const [embryos, setEmbryos] = useState([]);
+  const fetchEmbryos = async () => { const { data } = await supabase.from('embryos').select('*').order('created_at', { ascending: false }); if (data) setEmbryos(data); };
+  const addEmbryo = async (e) => { const { data } = await supabase.from('embryos').insert([e]).select(); if (data) setEmbryos(p => [data[0], ...p]); };
+  const deleteEmbryo = async (id) => { await supabase.from('embryos').delete().eq('id', id); setEmbryos(p => p.filter(x => x.id !== id)); };
+
+  /* --- Foals CRUD --- */
+  const [foals, setFoals] = useState([]);
+  const fetchFoals = async () => { const { data } = await supabase.from('foals').select('*').order('birth_date', { ascending: false }); if (data) setFoals(data); };
+  const addFoal = async (f) => { const { data } = await supabase.from('foals').insert([f]).select(); if (data) setFoals(p => [data[0], ...p]); };
+  const deleteFoal = async (id) => { await supabase.from('foals').delete().eq('id', id); setFoals(p => p.filter(x => x.id !== id)); };
 
   return (
     <Store.Provider value={{ horses, addHorse, deleteHorse, txns, addTxn, deleteTxn,
@@ -573,7 +626,15 @@ function StoreProvider({ children }) {
       healthRecords, addHealthRecord, toggleHealthRecord, deleteHealthRecord,
       locations, addLocation, deleteLocation,
       contacts, addContact, deleteContact,
-      documents, addDocument, deleteDocument }}>{children}</Store.Provider>
+      documents, addDocument, deleteDocument,
+      clients, addClient, deleteClient,
+      bookings, addBooking, updateBooking, deleteBooking,
+      invoices, addInvoice, updateInvoice, deleteInvoice,
+      companySettings, saveCompanySettings,
+      catalog, addCatalogItem, updateCatalogItem, deleteCatalogItem,
+      maresBreeding, addMareBreeding, deleteMareBreeding,
+      embryos, addEmbryo, deleteEmbryo,
+      foals, addFoal, deleteFoal }}>{children}</Store.Provider>
   );
 }
 
@@ -635,6 +696,11 @@ function AppRoot() {
         .ev-card { animation: evUp .4s ease both; }
         @keyframes evUp { from { opacity:0; transform: translateY(12px);} to {opacity:1; transform:none;} }
         @keyframes evFade { from {opacity:0;} to {opacity:1;} }
+        @media (max-width: 520px) {
+          .ev-modal-grid { grid-template-columns: 1fr !important; }
+          .ev-modal-panel { max-height: 100vh !important; border-radius: 0 !important; padding: 18px !important; }
+          .ev-modal-wrap { padding: 0 !important; align-items: flex-end !important; }
+        }
         input, select { font-family: inherit; }
         .ev-scroll::-webkit-scrollbar { width: 0; height: 0; }
       `}</style>
@@ -1037,7 +1103,7 @@ function Screen({ active, route, setRoute, t }) {
   if (active === "health") return <div style={wrap}><HealthScreen t={t} /></div>;
   if (active === "finance") return <div style={wrap}><FinanceScreen t={t} /></div>;
   if (active === "users") return <div style={wrap}><UsersScreen t={t} /></div>;
-  if (active === "feeding") return <div style={wrap}><FeedingScreen t={t} /></div>;
+  if (active === "feeding") return <div style={wrap}><FeedingScreen t={t} setRoute={setRoute} /></div>;
   if (active === "supplies") return <div style={wrap}><SuppliesScreen t={t} /></div>;
   return <div style={wrap}><PlaceholderScreen t={t} active={active} /></div>;
 }
@@ -1315,9 +1381,11 @@ function Field({ label, required, children }) {
   );
 }
 const inputStyle = (err) => ({
-  width: "100%", padding: "15px 16px", borderRadius: 14, fontSize: 16,
+  width: "100%", padding: "14px 16px", borderRadius: 14, fontSize: 16,
   border: `1.5px solid ${err ? C.coral : "transparent"}`, background: C.field,
-  color: C.ink, outline: "none",
+  color: C.ink, outline: "none", boxSizing: "border-box",
+  WebkitAppearance: "none", MozAppearance: "none", appearance: "none",
+  fontFamily: "inherit", minHeight: 50,
 });
 function Divider({ label }) {
   return (
@@ -2177,7 +2245,7 @@ function UserModal({ t, onClose }) {
 
 /* ---------- FEEDING ---------- */
 const SLOTS = ["morning", "noon", "evening", "night"];
-function FeedingScreen({ t }) {
+function FeedingScreen({ t, setRoute }) {
   const { horses, feed, addFeedItem, deleteFeedItem } = useStore();
   const [tab, setTab] = useState(0); // 0 feeding 1 order
   const [slot, setSlot] = useState("morning");
@@ -2188,7 +2256,8 @@ function FeedingScreen({ t }) {
     return (
       <div className="ev-card">
         <EmptyHero accent={C.amber} icon={<Carrot size={46} strokeWidth={1.6} />}
-          title={t.noFeed} sub={t.noFeedSub} cta={t.addHorse} onClick={() => {}} />
+          title={t.noFeed} sub={t.noFeedSub} cta={t.addHorse}
+          onClick={() => setRoute && setRoute({ name: "add" })} />
       </div>
     );
   }
@@ -2298,6 +2367,12 @@ function OrderTab({ t }) {
   );
 }
 
+const FEED_PRODUCTS = [
+  "Hay", "Haylage", "Alfalfa", "Oats", "Barley", "Beet Pulp", "Chaff",
+  "Pellets", "Muesli", "Oil", "Supplements", "Electrolytes", "Salt Lick",
+  "Bran", "Rice Bran", "Linseed", "Carrots", "Apples", "Balancer", "Other",
+];
+
 function FeedModal({ t, slot, onClose, onSave }) {
   const [f, setF] = useState({ product: "", qty: "" });
   const [err, setErr] = useState(false);
@@ -2306,8 +2381,22 @@ function FeedModal({ t, slot, onClose, onSave }) {
     <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<Carrot size={22} />}
       title={`${t.addProduct} · ${t[slot]}`}>
       <Field label={t.product} required>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+          {FEED_PRODUCTS.map(p => (
+            <button key={p} type="button" onClick={() => { setF({...f, product: p}); setErr(false); }}
+              className="ev-tap"
+              style={{
+                padding: "8px 14px", borderRadius: 16, border: `1px solid ${f.product === p ? C.amber : C.line}`,
+                background: f.product === p ? C.amber : C.field,
+                color: f.product === p ? "#fff" : C.sub,
+                fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+              }}>
+              {p}
+            </button>
+          ))}
+        </div>
         <input value={f.product} onChange={(e) => { setF({ ...f, product: e.target.value }); setErr(false); }}
-          autoFocus style={inputStyle(err)} />
+          placeholder={t.product} style={inputStyle(err)} />
       </Field>
       <Field label={t.qty}>
         <input value={f.qty} onChange={(e) => setF({ ...f, qty: e.target.value })}
@@ -2321,17 +2410,18 @@ function FeedModal({ t, slot, onClose, onSave }) {
 /* ---------- reusable modal shell ---------- */
 function ModalShell({ t, onClose, accent, icon, title, children }) {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 60, animation: "evFade .2s ease",
-      display: "grid", placeItems: "center", padding: 16 }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(31,45,58,.45)" }} />
-      <div className="ev-scroll" style={{ position: "relative", width: "100%", maxWidth: 560, maxHeight: "90vh",
-        overflowY: "auto", background: C.surface, borderRadius: 24, padding: 24,
-        animation: "evUp .25s ease both", boxShadow: "0 24px 60px rgba(0,0,0,.25)" }}>
+    <div className="ev-modal-wrap" style={{ position: "fixed", inset: 0, zIndex: 60, animation: "evFade .2s ease",
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 16, overflowY: "auto" }}>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(31,45,58,.45)", zIndex: 0 }} />
+      <div className="ev-scroll ev-modal-panel" style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 560,
+        maxHeight: "92vh", overflowY: "auto", background: C.surface, borderRadius: 24, padding: 24,
+        animation: "evUp .25s ease both", boxShadow: "0 24px 60px rgba(0,0,0,.25)",
+        WebkitOverflowScrolling: "touch" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 22 }}>
           <span style={{ width: 44, height: 44, borderRadius: 13, display: "grid", placeItems: "center",
-            background: `${accent}1c`, color: accent }}>{icon}</span>
-          <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 23, fontWeight: 700 }}>{title}</h2>
-          <button onClick={onClose} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
+            background: `${accent}1c`, color: accent, flexShrink: 0 }}>{icon}</span>
+          <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 21, fontWeight: 700, minWidth: 0 }}>{title}</h2>
+          <button onClick={onClose} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg, flexShrink: 0 }}>
             <X size={22} />
           </button>
         </div>
@@ -2343,12 +2433,12 @@ function ModalShell({ t, onClose, accent, icon, title, children }) {
 
 function ModalFooter({ t, onClose, onSave, accent, saveLabel, saveIcon }) {
   return (
-    <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 24 }}>
       <button onClick={onClose} className="ev-tap" style={{
-        flex: 1, padding: "15px", borderRadius: 14, border: `1px solid ${C.line}`, background: C.surface,
+        flex: "1 1 120px", padding: "15px", borderRadius: 14, border: `1px solid ${C.line}`, background: C.surface,
         color: C.ink, fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{t.cancel}</button>
       <button onClick={onSave} className="ev-tap" style={{
-        flex: 2, padding: "15px", borderRadius: 14, border: "none", background: accent, color: "#fff",
+        flex: "2 1 180px", padding: "15px", borderRadius: 14, border: "none", background: accent, color: "#fff",
         fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
         display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 8px 22px ${accent}55` }}>
         {saveIcon} {saveLabel}
