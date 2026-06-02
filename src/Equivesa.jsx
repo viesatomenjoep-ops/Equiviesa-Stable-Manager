@@ -279,8 +279,8 @@ const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 /* ---------- palette (fresh & light) ---------- */
 const C = {
-  bg: "#E9EFEA", surface: "#FFFFFF", ink: "#1F2D3A", sub: "#64748B",
-  line: "#CBD5E1", field: "#F1F5F9",
+  bg: "#FFFFFF", surface: "#FFFFFF", ink: "#1F2D3A", sub: "#64748B",
+  line: "#94A3B8", field: "#FFFFFF",
   mint: "#2FB6A0", mintSoft: "#E3F5F0",
   sky: "#5B9BD5", coral: "#FF8A6B", amber: "#F2B441", pink: "#E86A9A", lilac: "#8E7CE0",
 };
@@ -1250,7 +1250,7 @@ function Field({ label, required, children }) {
 }
 const inputStyle = (err) => ({
   width: "100%", padding: "15px 16px", borderRadius: 14, fontSize: 16,
-  border: `1.5px solid ${err ? C.coral : "transparent"}`, background: C.field,
+  border: `1.5px solid ${err ? C.coral : C.line}`, background: C.field,
   color: C.ink, outline: "none",
 });
 function Divider({ label }) {
@@ -1603,9 +1603,10 @@ function TaskModal({ t, initialData, horses, onClose, onSave }) {
 
 /* ---------- Health ---------- */
 function HealthScreen({ t }) {
-  const { healthRecords, addHealthRecord, toggleHealthRecord, deleteHealthRecord, horses } = useStore();
+  const { healthRecords, addHealthRecord, editHealthRecord, toggleHealthRecord, deleteHealthRecord, horses } = useStore();
   const [activeCat, setActiveCat] = useState(null); // null = overview, string = category subpage
   const [modal, setModal] = useState(null); // null or category string
+  const [editRecord, setEditRecord] = useState(null);
 
   // Count per category
   const counts = useMemo(() => {
