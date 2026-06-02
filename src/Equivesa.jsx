@@ -486,7 +486,7 @@ function StoreProvider({ children }) {
   };
   const addFeedItem = async (horseId, slot, item) => {
     const { data, error } = await supabase.from('feed_schedules').insert([cleanObj({ horse_id: horseId, slot, product: item.product, qty: item.qty })]).select();
-    if (error) console.error("Error adding feed:", error);
+    if (error) { console.error("Error adding feed:", error); alert("Database Error: " + error.message); }
     if (data && data[0]) {
       setFeed(prev => {
         const h = prev[horseId] || { morning: [], noon: [], evening: [], night: [] };
@@ -495,7 +495,8 @@ function StoreProvider({ children }) {
     }
   };
   const deleteFeedItem = async (horseId, slot, itemId) => {
-    await supabase.from('feed_schedules').delete().eq('id', itemId);
+    const { error } = await supabase.from('feed_schedules').delete().eq('id', itemId);
+    if (error) { console.error("Error deleting feed:", error); alert("Database Error: " + error.message); }
     setFeed(prev => {
       const h = prev[horseId]; if (!h) return prev;
       return { ...prev, [horseId]: { ...h, [slot]: h[slot].filter((i) => i.id !== itemId) } };
@@ -509,24 +510,26 @@ function StoreProvider({ children }) {
   };
   const addTask = async (t) => {
     const { data, error } = await supabase.from('tasks').insert([cleanObj(t)]).select();
-    if (error) console.error("Error adding task:", error);
+    if (error) { console.error("Error adding task:", error); alert("Database Error: " + error.message); }
     if (data) setTasks(prev => [data[0], ...prev]);
   };
   const editTask = async (id, t) => {
     const { data, error } = await supabase.from('tasks').update(cleanObj(t)).eq('id', id).select();
-    if (error) console.error("Error editing task:", error);
+    if (error) { console.error("Error editing task:", error); alert("Database Error: " + error.message); }
     if (data) setTasks(prev => prev.map(x => x.id === id ? data[0] : x));
   };
   const toggleTask = async (id) => {
     const t = tasks.find(x => x.id === id);
     if (!t) return;
     const done = !t.is_completed;
-    await supabase.from('tasks').update({ is_completed: done }).eq('id', id);
-    setTasks(prev => prev.map(x => x.id === id ? { ...x, is_completed: done } : x));
+    const { error } = await supabase.from('tasks').update({ is_completed: done }).eq('id', id);
+    if (error) { console.error("Error toggling task:", error); alert("Database Error: " + error.message); }
+    else setTasks(prev => prev.map(x => x.id === id ? { ...x, is_completed: done } : x));
   };
   const deleteTask = async (id) => {
-    await supabase.from('tasks').delete().eq('id', id);
-    setTasks(prev => prev.filter(x => x.id !== id));
+    const { error } = await supabase.from('tasks').delete().eq('id', id);
+    if (error) { console.error("Error deleting task:", error); alert("Database Error: " + error.message); }
+    else setTasks(prev => prev.filter(x => x.id !== id));
   };
 
   /* --- Health Records CRUD --- */
@@ -536,12 +539,12 @@ function StoreProvider({ children }) {
   };
   const addHealthRecord = async (rec) => {
     const { data, error } = await supabase.from('health_records').insert([cleanObj(rec)]).select();
-    if (error) console.error("Error adding health record:", error);
+    if (error) { console.error("Error adding health record:", error); alert("Database Error: " + error.message); }
     if (data) setHealthRecords(prev => [data[0], ...prev]);
   };
   const editHealthRecord = async (id, rec) => {
     const { data, error } = await supabase.from('health_records').update(cleanObj(rec)).eq('id', id).select();
-    if (error) console.error("Error editing health record:", error);
+    if (error) { console.error("Error editing health record:", error); alert("Database Error: " + error.message); }
     if (data) setHealthRecords(prev => prev.map(x => x.id === id ? data[0] : x));
   };
   const toggleHealthRecord = async (id) => {
@@ -1599,11 +1602,18 @@ function TaskModal({ t, initialData, horses, onClose, onSave }) {
             style={inputStyle()} />
         </Field>
         <Field label={t.taskHorse}>
-          <select value={f.horse_id || ""} onChange={(e) => setF({...f, horse_id: e.target.value || null, category: e.target.value ? "horse" : "general"})}
-            style={inputStyle()}>
-            <option value="">{t.general}</option>
-            {horses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-          </select>
+          <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+            <button type="button" onClick={() => setF({...f, horse_id: null, category: "general"})} className="ev-tap"
+              style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${!f.horse_id ? C.amber : C.line}`, background: !f.horse_id ? C.amber : C.surface, color: !f.horse_id ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+              {t.general}
+            </button>
+            {horses.map(h => (
+              <button key={h.id} type="button" onClick={() => setF({...f, horse_id: h.id, category: "horse"})} className="ev-tap"
+                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.horse_id === h.id ? C.amber : C.line}`, background: f.horse_id === h.id ? C.amber : C.surface, color: f.horse_id === h.id ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                {h.name}
+              </button>
+            ))}
+          </div>
         </Field>
       </div>
 
@@ -1790,11 +1800,15 @@ function HealthModal({ t, category, initialData, horses, onClose, onSave }) {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Field label={t.selectHorse} required>
-          <select value={f.horse_id} onChange={(e) => { setF({...f, horse_id: e.target.value}); setErr(false); }}
-            style={inputStyle(err && !f.horse_id)}>
-            <option value="">{t.selectHorse}...</option>
-            {horses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-          </select>
+          <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+            {horses.map(h => (
+              <button key={h.id} type="button" onClick={() => { setF({...f, horse_id: h.id}); setErr(false); }} className="ev-tap"
+                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.horse_id === h.id ? C.coral : C.line}`, background: f.horse_id === h.id ? C.coral : C.surface, color: f.horse_id === h.id ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                {h.name}
+              </button>
+            ))}
+          </div>
+          {err && !f.horse_id && <div style={{ color: C.coral, fontSize: 13, marginTop: 4 }}>{t.selectHorse} {t.required}</div>}
         </Field>
         <Field label={t.recordDate} required>
           <input type="date" value={f.scheduled_date} onChange={(e) => { setF({...f, scheduled_date: e.target.value}); setErr(false); }}
@@ -2007,19 +2021,30 @@ function TxnModal({ type, t, onClose }) {
               <input value={f.when} onChange={set("when")} style={inputStyle()} />
             </Field>
             <Field label={t.fCategory} required>
-              <select value={f.category} onChange={(e) => { set("category")(e); setErr(false); }}
-                style={{ ...inputStyle(err), color: f.category ? C.ink : C.sub, appearance: "none" }}>
-                <option value="">{t.select}</option>
-                {FIN_CATS.map((c) => <option key={c} value={c}>{t[c]}</option>)}
-              </select>
+              <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+                {FIN_CATS.map((c) => (
+                  <button key={c} type="button" onClick={() => { set("category")({ target: { value: c } }); setErr(false); }} className="ev-tap"
+                    style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.category === c ? accent : C.line}`, background: f.category === c ? accent : C.surface, color: f.category === c ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                    {t[c]}
+                  </button>
+                ))}
+              </div>
             </Field>
-            {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.fCategory} *</div>}
+            {err && !f.category && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.fCategory} *</div>}
+            
             <Field label={t.fHorse}>
-              <select value={f.horseId} onChange={set("horseId")}
-                style={{ ...inputStyle(), color: f.horseId ? C.ink : C.sub, appearance: "none" }}>
-                <option value="">{t.allHorsesShort}</option>
-                {horses.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-              </select>
+              <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+                <button type="button" onClick={() => set("horseId")({ target: { value: "" } })} className="ev-tap"
+                  style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${!f.horseId ? accent : C.line}`, background: !f.horseId ? accent : C.surface, color: !f.horseId ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                  {t.allHorsesShort}
+                </button>
+                {horses.map(h => (
+                  <button key={h.id} type="button" onClick={() => set("horseId")({ target: { value: h.id } })} className="ev-tap"
+                    style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.horseId === String(h.id) ? accent : C.line}`, background: f.horseId === String(h.id) ? accent : C.surface, color: f.horseId === String(h.id) ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                    {h.name}
+                  </button>
+                ))}
+              </div>
             </Field>
             <Field label={t.fWho}><input value={f.who} onChange={set("who")} placeholder={t.noContact} style={inputStyle()} /></Field>
             <Field label={t.fReference}>
@@ -2166,10 +2191,14 @@ function UserModal({ t, onClose }) {
           placeholder="naam@mail.com" style={inputStyle(err && !f.email.trim())} />
       </Field>
       <Field label={t.role}>
-        <select value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })}
-          style={{ ...inputStyle(), appearance: "none" }}>
-          {ROLE_KEYS.map((r) => <option key={r} value={r}>{t[r]}</option>)}
-        </select>
+        <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+          {ROLE_KEYS.map((r) => (
+            <button key={r} type="button" onClick={() => setF({ ...f, role: r })} className="ev-tap"
+              style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.role === r ? C.sky : C.line}`, background: f.role === r ? C.sky : C.surface, color: f.role === r ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+              {t[r]}
+            </button>
+          ))}
+        </div>
       </Field>
       <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
         <label style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.sub }}>{t.permissions}</label>
@@ -2256,7 +2285,13 @@ function FeedingScreen({ t }) {
                     </button>
                   </div>
                   {items.length === 0 ? (
-                    <div style={{ color: C.sub, fontSize: 13.5, fontStyle: "italic" }}>{t.noFeedHorse}</div>
+                    <button onClick={() => setAddFor(h.id)} className="ev-tap" style={{ 
+                      display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: 14,
+                      border: `1.5px dashed ${C.amber}`, background: `${C.amber}11`, color: C.amber,
+                      fontSize: 14.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit"
+                    }}>
+                      <Plus size={18} strokeWidth={2.5} /> {t.add} {t.feedingTab}
+                    </button>
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                       {items.map((it) => (
