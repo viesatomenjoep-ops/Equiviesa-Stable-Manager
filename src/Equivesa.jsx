@@ -787,7 +787,14 @@ function PinModal({ t, target, onClose, onOk }) {
   const [pin, setPin] = useState("");
   const [err, setErr] = useState(false);
   const accent = target === "groom" ? C.amber : C.mint;
-  const check = () => { if (pin === MODE_PIN[target]) onOk(); else setErr(true); };
+  const check = () => { 
+    if (pin.trim() === MODE_PIN[target]) {
+      onOk(); 
+    } else {
+      setErr(true);
+      alert(t.wrongPin);
+    }
+  };
   return (
     <ModalShell t={t} onClose={onClose} accent={accent}
       icon={target === "groom" ? <Carrot size={22} /> : <Sparkles size={22} />}
@@ -1210,7 +1217,7 @@ function HorseForm({ t, initialData, onDone }) {
       {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.nameRequired}</div>}
 
       <Field label={t.sex}>
-        <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
           {SEX_OPTS.map((s) => (
             <button key={s} type="button" onClick={() => setF({...f, sex: s})} className="ev-tap"
               style={{
@@ -1230,7 +1237,7 @@ function HorseForm({ t, initialData, onDone }) {
       </div>
 
       <Field label={t.color}>
-        <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
           {HORSE_COLORS.map((c) => (
             <button key={c} type="button" onClick={() => setF({...f, color: c})} className="ev-tap"
               style={{
@@ -1572,12 +1579,12 @@ function TaskModal({ t, initialData, horses, onClose, onSave }) {
     <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<CheckSquare size={22} />} title={initialData ? t.editTask || "Edit Task" : t.addTask}
       footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
       <Field label={t.taskTitle} required>
-        <div style={{ display: "flex", overflowX: "auto", gap: 8, marginBottom: 12, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
           {(t.taskCommon || []).map(s => (
             <button key={s} type="button" onClick={() => { setF({...f, title: s}); setErr(false); }}
               className="ev-tap"
               style={{
-                flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.title === s ? C.amber : C.line}`,
+                padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.title === s ? C.amber : C.line}`,
                 background: f.title === s ? C.amber : C.surface,
                 color: f.title === s ? "#fff" : C.sub,
                 fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
@@ -1602,7 +1609,7 @@ function TaskModal({ t, initialData, horses, onClose, onSave }) {
             style={inputStyle()} />
         </Field>
         <Field label={t.taskHorse}>
-          <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
             <button type="button" onClick={() => setF({...f, horse_id: null, category: "general"})} className="ev-tap"
               style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${!f.horse_id ? C.amber : C.line}`, background: !f.horse_id ? C.amber : C.surface, color: !f.horse_id ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
               {t.general}
@@ -1800,7 +1807,7 @@ function HealthModal({ t, category, initialData, horses, onClose, onSave }) {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Field label={t.selectHorse} required>
-          <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
             {horses.map(h => (
               <button key={h.id} type="button" onClick={() => { setF({...f, horse_id: h.id}); setErr(false); }} className="ev-tap"
                 style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.horse_id === h.id ? C.coral : C.line}`, background: f.horse_id === h.id ? C.coral : C.surface, color: f.horse_id === h.id ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
@@ -2021,7 +2028,7 @@ function TxnModal({ type, t, onClose }) {
               <input value={f.when} onChange={set("when")} style={inputStyle()} />
             </Field>
             <Field label={t.fCategory} required>
-              <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
                 {FIN_CATS.map((c) => (
                   <button key={c} type="button" onClick={() => { set("category")({ target: { value: c } }); setErr(false); }} className="ev-tap"
                     style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.category === c ? accent : C.line}`, background: f.category === c ? accent : C.surface, color: f.category === c ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
@@ -2033,7 +2040,7 @@ function TxnModal({ type, t, onClose }) {
             {err && !f.category && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.fCategory} *</div>}
             
             <Field label={t.fHorse}>
-              <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
                 <button type="button" onClick={() => set("horseId")({ target: { value: "" } })} className="ev-tap"
                   style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${!f.horseId ? accent : C.line}`, background: !f.horseId ? accent : C.surface, color: !f.horseId ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
                   {t.allHorsesShort}
@@ -2191,7 +2198,7 @@ function UserModal({ t, onClose }) {
           placeholder="naam@mail.com" style={inputStyle(err && !f.email.trim())} />
       </Field>
       <Field label={t.role}>
-        <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
           {ROLE_KEYS.map((r) => (
             <button key={r} type="button" onClick={() => setF({ ...f, role: r })} className="ev-tap"
               style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.role === r ? C.sky : C.line}`, background: f.role === r ? C.sky : C.surface, color: f.role === r ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
@@ -2205,7 +2212,7 @@ function UserModal({ t, onClose }) {
         <button onClick={toggleAll} className="ev-tap" style={{ border: "none", background: "transparent",
           cursor: "pointer", color: C.mint, fontWeight: 600, fontSize: 13, fontFamily: "inherit" }}>{t.selectAll}</button>
       </div>
-      <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
         {PERM_KEYS.map((p) => {
           const on = f.perms.includes(p);
           return (
@@ -2582,7 +2589,7 @@ function GenericModuleScreen({ t, active }) {
           {conf.fields.map(field => (
             <Field key={field.n} label={t[field.n] || field.n} required={field.r}>
               {field.opts ? (
-                <div style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
                   {field.opts.map(opt => (
                     <button key={opt} type="button" onClick={() => setF({...f, [field.n]: opt})} className="ev-tap"
                       style={{ flexShrink: 0, padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f[field.n] === opt ? color : C.line}`,
@@ -2766,7 +2773,7 @@ function SupplyModal({ t, lang, onClose, onSave }) {
     <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<ShoppingCart size={22} />} title={t.addSupply}
       footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.add} saveIcon={<Plus size={20} />} />}>
       <Field label={t.supplyItem} required>
-        <div style={{ display: "flex", overflowX: "auto", gap: 8, marginBottom: 12, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
           {suggestions.map(s => (
             <button key={s} type="button" onClick={() => { setF({...f, item_name: s}); setErr(false); }}
               className="ev-tap"
