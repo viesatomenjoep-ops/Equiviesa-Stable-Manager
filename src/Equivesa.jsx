@@ -1249,9 +1249,10 @@ function Field({ label, required, children }) {
   );
 }
 const inputStyle = (err) => ({
-  width: "100%", padding: "15px 16px", borderRadius: 14, fontSize: 16,
-  border: `1.5px solid ${err ? C.coral : C.line}`, background: C.field,
-  color: C.ink, outline: "none",
+  width: "100%", padding: "18px 20px", borderRadius: 16, fontSize: 17,
+  border: `1.5px solid ${err ? C.coral : C.line}`, background: C.surface,
+  color: C.ink, outline: "none", transition: "border-color .2s",
+  boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)", boxSizing: "border-box"
 });
 function Divider({ label }) {
   return (
@@ -1554,10 +1555,10 @@ function TaskModal({ t, initialData, horses, onClose, onSave }) {
             <button key={s} type="button" onClick={() => { setF({...f, title: s}); setErr(false); }}
               className="ev-tap"
               style={{
-                padding: "12px 18px", borderRadius: 16, border: `1px solid ${f.title === s ? C.amber : C.line}`,
-                background: f.title === s ? C.amber : C.field,
+                padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.title === s ? C.amber : C.line}`,
+                background: f.title === s ? C.amber : C.surface,
                 color: f.title === s ? "#fff" : C.sub,
-                fontSize: 14.5, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+                fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
               }}>
               {s}
             </button>
@@ -2344,7 +2345,7 @@ const GENERIC_CONFIG = {
 function GenericModuleScreen({ t, active }) {
   const conf = GENERIC_CONFIG[active];
   const color = ACCENT[active] || C.mint;
-  const Icon = MODULE_ICONS[active] || Sparkles;
+  const Icon = ICONS[active] || Sparkles;
   
   const [data, setData] = useState([]);
   const [modal, setModal] = useState(false);
@@ -2619,10 +2620,10 @@ function SupplyModal({ t, lang, onClose, onSave }) {
             <button key={s} type="button" onClick={() => { setF({...f, item_name: s}); setErr(false); }}
               className="ev-tap"
               style={{
-                padding: "8px 14px", borderRadius: 16, border: `1px solid ${f.item_name === s ? C.coral : C.line}`,
-                background: f.item_name === s ? C.coral : C.field,
+                padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.item_name === s ? C.coral : C.line}`,
+                background: f.item_name === s ? C.coral : C.surface,
                 color: f.item_name === s ? "#fff" : C.sub,
-                fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+                fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
               }}>
               {s}
             </button>
