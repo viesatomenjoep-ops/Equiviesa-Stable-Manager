@@ -311,7 +311,7 @@ export default function Equivesa() {
 }
 
 function AppRoot() {
-  const [lang, setLang] = useState("nl");
+  const [lang, setLang] = useState("en");
   const [mode, setMode] = useState(null); // null = chooser, 'groom', 'manager'
   const [active, setActive] = useState("horses");
   const [drawer, setDrawer] = useState(false);
@@ -511,11 +511,7 @@ function PinModal({ t, target, onClose, onOk }) {
 function Brand() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 6px" }}>
-      <div style={{
-        width: 38, height: 38, borderRadius: 12, background: `linear-gradient(135deg, ${C.mint}, ${C.sky})`,
-        display: "grid", placeItems: "center", color: "#fff", fontWeight: 700, fontSize: 20,
-        fontFamily: "'Fraunces',serif", boxShadow: "0 4px 14px rgba(47,182,160,.35)",
-      }}>E</div>
+      <img src="/logo.svg" alt="Equiviesa Logo" style={{ width: 38, height: 38, objectFit: "contain" }} />
       <div className="ev-display" style={{ fontSize: 21, fontWeight: 700, letterSpacing: -0.3 }}>Equiviesa</div>
     </div>
   );
@@ -590,7 +586,7 @@ function LangPicker({ lang, setLang, block }) {
   return (
     <div style={{ display: "flex", gap: 2, background: C.bg, borderRadius: 11, padding: 3,
       width: block ? "100%" : "auto", justifyContent: "center" }}>
-      {["nl", "en", "es"].map((l) => (
+      {["en", "nl", "es"].map((l) => (
         <button key={l} onClick={() => setLang(l)} className="ev-tap" style={{
           border: "none", cursor: "pointer", borderRadius: 9, padding: "6px 12px",
           fontSize: 13, fontWeight: 600, fontFamily: "inherit", flex: block ? 1 : "none",
@@ -604,7 +600,7 @@ function LangPicker({ lang, setLang, block }) {
 
 function LangMenu({ lang, setLang, t }) {
   const [open, setOpen] = useState(false);
-  const langs = [["nl","Nederlands"],["en","English"],["es","Español"]];
+  const langs = [["en","English"],["nl","Nederlands"],["es","Español"]];
   return (
     <div style={{ position: "relative" }}>
       <button onClick={() => setOpen((o) => !o)} className="ev-tap" aria-label={t.language}

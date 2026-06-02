@@ -1,0 +1,16 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Stable door structure with E integrated -->
+  <rect x="40" y="50" width="120" height="120" fill="#000000" rx="8"/>
+
+  <!-- Letter E as stable door slats (white) -->
+  <rect x="60" y="70" width="80" height="12" fill="#FFFFFF"/>
+  <rect x="60" y="70" width="12" height="80" fill="#FFFFFF"/>
+  <rect x="60" y="104" width="60" height="12" fill="#FFFFFF"/>
+  <rect x="60" y="138" width="80" height="12" fill="#FFFFFF"/>
+
+  <!-- Stable roof/triangle top -->
+  <path d="M30 50 L100 20 L170 50 Z" fill="#000000"/>
+
+  <!-- Door handle/latch detail -->
+  <circle cx="130" cy="110" r="4" fill="#FFFFFF"/>
+</svg>
