@@ -137,16 +137,22 @@ create index health_records_horse_category_idx on public.health_records (horse_i
 alter table public.health_records enable row level security;
 
 -- 7. DOCUMENTS
--- General documents library (Horse passports, certificates, contracts, vet papers)
+-- General documents library (Horse passports, certificates, contracts, vet papers, sales media)
 create table public.documents (
     id uuid default gen_random_uuid() primary key,
     created_at timestamptz default now() not null,
     name text not null,
-    url text not null, -- Cloudinary Document Link
-    file_type text, -- pdf, docx, jpeg
+    url text not null, -- Cloudinary Document/Media Link
+    file_type text, -- pdf, docx, jpeg, png, mp4, mov
+    category text not null default 'other' check (category in ('passport', 'vaccination', 'vet_report', 'xray', 'insurance', 'contract', 'invoice', 'registration', 'pedigree', 'sales_photo', 'sales_video', 'competition', 'training', 'farrier_report', 'dental_report', 'transport', 'feed_plan', 'other')),
+    description text,
+    file_size integer, -- bytes
     horse_id uuid references public.horses(id) on delete cascade,
     uploaded_by uuid references public.profiles(id) on delete set null
 );
+
+create index documents_horse_idx on public.documents (horse_id);
+create index documents_category_idx on public.documents (category);
 
 -- Enable RLS for documents
 alter table public.documents enable row level security;
@@ -158,11 +164,21 @@ create table public.mares_breeding (
     created_at timestamptz default now() not null,
     mare_id uuid references public.horses(id) on delete cascade not null,
     stallion_name text not null,
+    stallion_studbook text,
     service_date date,
+    service_type text check (service_type in ('natural', 'fresh_ai', 'chilled_ai', 'frozen_ai', 'icsi')),
     expected_foal_date date,
-    status text not null check (status in ('inseminated', 'confirmed_pregnant', 'empty', 'aborted', 'foaled')),
+    scan_dates text[], -- array of scan dates
+    last_scan_result text,
+    vet_name text,
+    status text not null check (status in ('inseminated', 'confirmed_pregnant', 'empty', 'aborted', 'foaled', 'resorbed', 'twin_reduced')),
+    photo_urls text[], -- Cloudinary ultrasound photos
+    passport_url text, -- Cloudinary passport scan
+    cost numeric(12, 2),
     notes text
 );
+
+create index mares_breeding_mare_idx on public.mares_breeding (mare_id);
 
 -- Enable RLS for mares_breeding
 alter table public.mares_breeding enable row level security;
@@ -174,24 +190,101 @@ create table public.embryos (
     created_at timestamptz default now() not null,
     donor_mare_id uuid references public.horses(id) on delete cascade not null,
     stallion_name text not null,
+    stallion_studbook text,
     flush_date date not null,
+    grade text, -- embryo quality grade (1-4)
     recipient_mare_id uuid references public.horses(id) on delete set null,
-    status text not null check (status in ('frozen', 'transferred', 'pregnant', 'failed')),
+    recipient_mare_name text,
+    transfer_date date,
+    status text not null check (status in ('frozen', 'transferred', 'pregnant', 'failed', 'discarded', 'exported')),
+    storage_location text,
+    storage_tank text,
+    straw_number text,
+    vet_name text,
+    cost numeric(12, 2),
+    photo_urls text[], -- Cloudinary photos
     notes text
 );
+
+create index embryos_donor_idx on public.embryos (donor_mare_id);
 
 -- Enable RLS for embryos
 alter table public.embryos enable row level security;
 
--- 10. CONTACTS / CLIENTS
--- Stable contacts: owners, clients, veterinarians, farriers, riders
+-- 9b. FOALS
+-- Tracks born foals with birth details, registration, and growth
+create table public.foals (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    name text not null,
+    dam_id uuid references public.horses(id) on delete set null,
+    sire_name text,
+    birth_date date not null,
+    birth_time time,
+    sex text check (sex in ('sexMare', 'sexStallion', 'sexGelding')),
+    color text,
+    markings text,
+    birth_weight text,
+    birth_type text check (birth_type in ('normal', 'assisted', 'dystocia', 'caesarean')),
+    placenta_passed boolean,
+    vet_present boolean default false,
+    vet_name text,
+    igg_tested boolean default false,
+    igg_result text,
+    microchip text,
+    passport_number text,
+    registration_number text,
+    studbook text,
+    weaning_date date,
+    status text not null default 'healthy' check (status in ('healthy', 'under_observation', 'sick', 'deceased', 'sold', 'weaned')),
+    photo_urls text[], -- Cloudinary foal photos
+    passport_url text, -- Cloudinary passport
+    notes text
+);
+
+create index foals_dam_idx on public.foals (dam_id);
+create index foals_birth_idx on public.foals (birth_date);
+
+-- Enable RLS for foals
+alter table public.foals enable row level security;
+
+-- 10. LOCATIONS
+-- Physical locations (stables, paddocks, arenas, clinics, etc.)
+create table public.locations (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    name text not null,
+    location_type text not null check (location_type in ('stable', 'paddock', 'arena', 'clinic', 'field', 'pasture', 'trailer', 'showground', 'breeding_center', 'quarantine', 'other')),
+    address text,
+    city text,
+    province text,
+    country text,
+    continent text,
+    postal_code text,
+    latitude numeric(10, 7),
+    longitude numeric(10, 7),
+    photo_url text, -- Cloudinary photo
+    notes text,
+    capacity integer -- max number of horses
+);
+
+-- Enable RLS for locations
+alter table public.locations enable row level security;
+
+-- 11. CONTACTS / CLIENTS
+-- Stable contacts: owners, clients, veterinarians, farriers, riders, dealers, etc.
 create table public.contacts (
     id uuid default gen_random_uuid() primary key,
     created_at timestamptz default now() not null,
     name text not null,
+    company text,
     email text,
     phone text,
-    role text not null check (role in ('owner', 'client', 'vet', 'farrier', 'rider', 'supplier', 'other')),
+    role text not null check (role in ('owner', 'client', 'vet', 'farrier', 'rider', 'supplier', 'dealer', 'trainer', 'breeder', 'transporter', 'insurance', 'dentist', 'physiotherapist', 'osteopath', 'saddler', 'photographer', 'sponsor', 'federation', 'stable_hand', 'manager', 'private', 'other')),
+    address text,
+    city text,
+    country text,
+    website text,
     notes text
 );
 
@@ -215,6 +308,158 @@ create table public.supplies_needed (
 -- Enable RLS for supplies_needed
 alter table public.supplies_needed enable row level security;
 
+-- 13. CLIENTS
+-- Horse owners, boarders, lesson students, buyers/sellers
+create table public.clients (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    name text not null,
+    company text,
+    email text,
+    phone text,
+    client_type text not null check (client_type in ('horse_owner', 'boarder', 'lesson_student', 'buyer', 'seller', 'breeding_client', 'competition_rider', 'training_client', 'livery', 'half_lease', 'full_lease', 'investor', 'syndicate', 'other')),
+    address text,
+    city text,
+    country text,
+    billing_email text,
+    vat_number text,
+    horse_ids text[], -- array of horse UUIDs associated
+    notes text,
+    active boolean not null default true
+);
+
+create index clients_type_idx on public.clients (client_type);
+
+-- Enable RLS for clients
+alter table public.clients enable row level security;
+
+-- 14. BOOKINGS
+-- Arena bookings, lesson bookings, vet/farrier appointments, transport, etc.
+create table public.bookings (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    title text not null,
+    booking_type text not null check (booking_type in ('arena', 'lesson', 'training', 'vet_visit', 'farrier_visit', 'dentist_visit', 'transport', 'competition', 'clinic', 'viewing', 'trial_ride', 'photo_shoot', 'stable_visit', 'paddock', 'walker', 'solarium', 'wash_bay', 'other')),
+    booking_date date not null,
+    start_time time,
+    end_time time,
+    horse_id uuid references public.horses(id) on delete set null,
+    client_id uuid references public.clients(id) on delete set null,
+    contact_id uuid references public.contacts(id) on delete set null,
+    status text not null default 'pending' check (status in ('pending', 'confirmed', 'cancelled', 'completed', 'no_show')),
+    recurring boolean not null default false,
+    recurrence_rule text, -- e.g. 'weekly', 'biweekly', 'monthly'
+    location text,
+    price numeric(12, 2),
+    notes text,
+    calendar_url text -- generated Google/Outlook calendar link
+);
+
+create index bookings_date_idx on public.bookings (booking_date);
+create index bookings_type_idx on public.bookings (booking_type);
+create index bookings_status_idx on public.bookings (status);
+
+-- Enable RLS for bookings
+alter table public.bookings enable row level security;
+
+-- 15. COMPANY SETTINGS
+-- Stores the stable/company identity for invoices, branding, etc.
+create table public.company_settings (
+    id uuid default gen_random_uuid() primary key,
+    company_name text not null default 'Equiviesa Stable',
+    address text,
+    city text,
+    country text,
+    postal_code text,
+    phone text,
+    email text,
+    website text,
+    vat_number text,
+    chamber_of_commerce text,
+    iban text,
+    bank_name text,
+    logo_url text, -- Cloudinary logo
+    invoice_prefix text default 'INV',
+    invoice_next_number integer default 1,
+    currency text default 'EUR',
+    tax_rate numeric(5, 2) default 21.00, -- default VAT %
+    payment_terms text default 'Net 30',
+    footer_text text
+);
+
+-- Enable RLS for company_settings
+alter table public.company_settings enable row level security;
+
+-- 16. INVOICES
+-- Full invoice management with line items stored as JSONB
+create table public.invoices (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    invoice_number text not null unique,
+    client_id uuid references public.clients(id) on delete set null,
+    client_name text not null,
+    client_email text,
+    client_address text,
+    client_vat text,
+    invoice_date date not null default current_date,
+    due_date date not null,
+    status text not null default 'draft' check (status in ('draft', 'sent', 'paid', 'overdue', 'cancelled', 'partial')),
+    line_items jsonb not null default '[]'::jsonb,
+    -- line_items example: [{"description":"Board May 2026","qty":1,"unit_price":650,"amount":650}]
+    subtotal numeric(12, 2) not null default 0,
+    tax_rate numeric(5, 2) not null default 21.00,
+    tax_amount numeric(12, 2) not null default 0,
+    total numeric(12, 2) not null default 0,
+    notes text,
+    payment_date date,
+    payment_method text,
+    pdf_url text, -- Cloudinary uploaded PDF
+    horse_id uuid references public.horses(id) on delete set null,
+    created_by uuid references public.profiles(id) on delete set null
+);
+
+create index invoices_status_idx on public.invoices (status);
+create index invoices_client_idx on public.invoices (client_id);
+create index invoices_date_idx on public.invoices (invoice_date);
+
+-- Enable RLS for invoices
+alter table public.invoices enable row level security;
+
+-- 17. CATALOG / SALES LISTINGS
+-- Horse sales catalog, advertisements, listings
+create table public.catalog (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    horse_id uuid references public.horses(id) on delete cascade not null,
+    title text not null,
+    listing_type text not null check (listing_type in ('for_sale', 'for_lease', 'stud_service', 'broodmare', 'auction', 'free_lease', 'half_lease', 'retirement', 'adoption', 'other')),
+    price numeric(12, 2),
+    price_on_request boolean not null default false,
+    currency text default 'EUR',
+    description text,
+    highlights text, -- key selling points
+    level text, -- competition level
+    achievements text, -- competition results
+    vet_checked boolean not null default false,
+    xray_available boolean not null default false,
+    video_urls text[], -- array of Cloudinary video URLs
+    photo_urls text[], -- array of Cloudinary photo URLs
+    contact_name text,
+    contact_phone text,
+    contact_email text,
+    location text,
+    status text not null default 'active' check (status in ('active', 'sold', 'reserved', 'withdrawn', 'expired')),
+    featured boolean not null default false,
+    views_count integer default 0,
+    published_at timestamptz
+);
+
+create index catalog_status_idx on public.catalog (status);
+create index catalog_horse_idx on public.catalog (horse_id);
+create index catalog_type_idx on public.catalog (listing_type);
+
+-- Enable RLS for catalog
+alter table public.catalog enable row level security;
 
 -- ============================================================
 -- Row-Level Security (RLS) Basic Policies
@@ -233,6 +478,13 @@ create policy "Allow authenticated CRUD" on public.mares_breeding for all using 
 create policy "Allow authenticated CRUD" on public.embryos for all using (auth.role() = 'authenticated');
 create policy "Allow authenticated CRUD" on public.contacts for all using (auth.role() = 'authenticated');
 create policy "Allow authenticated CRUD" on public.supplies_needed for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.locations for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.clients for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.bookings for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.company_settings for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.invoices for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.catalog for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.foals for all using (auth.role() = 'authenticated');
 
 
 -- ============================================================

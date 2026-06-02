@@ -513,12 +513,67 @@ function StoreProvider({ children }) {
     setHealthRecords(prev => prev.filter(x => x.id !== id));
   };
 
+  /* --- Locations CRUD --- */
+  const [locations, setLocations] = useState([]);
+  const fetchLocations = async () => {
+    const { data } = await supabase.from('locations').select('*').order('name');
+    if (data) setLocations(data);
+  };
+  const addLocation = async (loc) => {
+    const { data } = await supabase.from('locations').insert([loc]).select();
+    if (data) setLocations(prev => [data[0], ...prev]);
+  };
+  const deleteLocation = async (id) => {
+    await supabase.from('locations').delete().eq('id', id);
+    setLocations(prev => prev.filter(x => x.id !== id));
+  };
+
+  /* --- Contacts CRUD --- */
+  const [contacts, setContacts] = useState([]);
+  const fetchContacts = async () => {
+    const { data } = await supabase.from('contacts').select('*').order('name');
+    if (data) setContacts(data);
+  };
+  const addContact = async (c) => {
+    const { data } = await supabase.from('contacts').insert([c]).select();
+    if (data) setContacts(prev => [data[0], ...prev]);
+  };
+  const deleteContact = async (id) => {
+    await supabase.from('contacts').delete().eq('id', id);
+    setContacts(prev => prev.filter(x => x.id !== id));
+  };
+
+  /* --- Documents CRUD --- */
+  const [documents, setDocuments] = useState([]);
+  const fetchDocuments = async () => {
+    const { data } = await supabase.from('documents').select('*').order('created_at', { ascending: false });
+    if (data) setDocuments(data);
+  };
+  const addDocument = async (doc) => {
+    const { data } = await supabase.from('documents').insert([doc]).select();
+    if (data) setDocuments(prev => [data[0], ...prev]);
+  };
+  const deleteDocument = async (id) => {
+    await supabase.from('documents').delete().eq('id', id);
+    setDocuments(prev => prev.filter(x => x.id !== id));
+  };
+
+  // Fetch locations, contacts, documents on auth
+  React.useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) { fetchLocations(); fetchContacts(); fetchDocuments(); }
+    });
+  }, []);
+
   return (
     <Store.Provider value={{ horses, addHorse, deleteHorse, txns, addTxn, deleteTxn,
       users, addUser, deleteUser, feed, addFeedItem, deleteFeedItem,
       supplies, addSupply, toggleSupplyStatus, deleteSupply,
       tasks, addTask, toggleTask, deleteTask,
-      healthRecords, addHealthRecord, toggleHealthRecord, deleteHealthRecord }}>{children}</Store.Provider>
+      healthRecords, addHealthRecord, toggleHealthRecord, deleteHealthRecord,
+      locations, addLocation, deleteLocation,
+      contacts, addContact, deleteContact,
+      documents, addDocument, deleteDocument }}>{children}</Store.Provider>
   );
 }
 
