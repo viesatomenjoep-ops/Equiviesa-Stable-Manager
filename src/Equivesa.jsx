@@ -671,8 +671,8 @@ function AppRoot() {
           display: flex; align-items: center; justify-content: center;
         }
         .ev-modal-content {
+          position: absolute; inset: 0;
           background: #f8fafc; display: flex; flex-direction: column;
-          width: 100%; height: 100%;
         }
       `}</style>
 
