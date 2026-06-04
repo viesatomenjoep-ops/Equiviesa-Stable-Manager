@@ -881,7 +881,7 @@ function ModeGate({ t, onPick, lang, setLang }) {
         <LangMenu lang={lang} setLang={setLang} t={t} />
       </div>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 18px" }}>
-        <div style={{ width: "100%", maxWidth: 400, textAlign: "center" }}>
+        <div style={{ width: "100%", maxWidth: 400, textAlign: "center", transform: "translateY(-6vh)" }}>
           <h1 className="ev-display" style={{ fontSize: 34, fontWeight: 800, margin: "0 0 8px", letterSpacing: -0.6, color: C.ink }}>
             {t.chooseMode}
           </h1>
