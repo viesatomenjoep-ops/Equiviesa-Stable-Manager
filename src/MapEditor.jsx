@@ -11,9 +11,11 @@ const C = {
 export function MapEditor({ locationId }) {
   const { stalls, addStall, editStall, deleteStall, horses } = useStore();
   const locationStalls = stalls.filter(s => s.location_id === locationId);
-  const [selected, setSelected] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
   const [dragging, setDragging] = useState(null);
   
+  const selected = stalls.find(s => s.id === selectedId);
+
   const handleAdd = () => {
     addStall({
       location_id: locationId,
@@ -39,7 +41,7 @@ export function MapEditor({ locationId }) {
       currentX: stall.grid_x,
       currentY: stall.grid_y
     });
-    setSelected(stall);
+    setSelectedId(stall.id);
   };
 
   const handlePointerMove = (e, stall) => {
@@ -83,7 +85,7 @@ export function MapEditor({ locationId }) {
           const horse = horses.find(h => h.id === stall.horse_id);
           return (
             <div key={stall.id}
-              onClick={() => setSelected(stall)}
+              onClick={() => setSelectedId(stall.id)}
               onPointerDown={(e) => handlePointerDown(e, stall)}
               onPointerMove={(e) => handlePointerMove(e, stall)}
               onPointerUp={(e) => handlePointerUp(e, stall)}
@@ -113,7 +115,7 @@ export function MapEditor({ locationId }) {
         <div style={{ marginTop: 16, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <h4 style={{ margin: 0 }}>Edit {selected.name}</h4>
-            <button type="button" onClick={() => setSelected(null)} style={{ border: "none", background: "transparent", cursor: "pointer" }}><X size={18} color={C.sub} /></button>
+            <button type="button" onClick={() => setSelectedId(null)} style={{ border: "none", background: "transparent", cursor: "pointer" }}><X size={18} color={C.sub} /></button>
           </div>
           
           <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
@@ -138,7 +140,7 @@ export function MapEditor({ locationId }) {
               <button type="button" onClick={() => editStall(selected.id, { height: Math.max(1, selected.height - 1) })} style={btn}>H-</button>
               <button type="button" onClick={() => editStall(selected.id, { height: selected.height + 1 })} style={btn}>H+</button>
             </div>
-            <button type="button" onClick={() => { if(window.confirm("Weet je zeker dat je dit wilt verwijderen? / Are you sure?")) { deleteStall(selected.id); setSelected(null); } }} style={{ marginLeft: "auto", border: "none", background: "transparent", color: C.coral, cursor: "pointer", padding: 8 }}><Trash2 size={18} /></button>
+            <button type="button" onClick={() => { if(window.confirm("Weet je zeker dat je dit wilt verwijderen? / Are you sure?")) { deleteStall(selected.id); setSelectedId(null); } }} style={{ marginLeft: "auto", border: "none", background: "transparent", color: C.coral, cursor: "pointer", padding: 8 }}><Trash2 size={18} /></button>
           </div>
         </div>
       )}
