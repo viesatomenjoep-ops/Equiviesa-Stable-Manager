@@ -4,8 +4,15 @@
 -- Gegenereerd: 2026-06-04
 -- ==========================================
 
--- Enable UUID extension
-create extension if not exists "uuid-ossp";
+-- UUID extension (veilig: faalt nooit, ook zonder superuser-rechten)
+-- Supabase heeft gen_random_uuid() ingebouwd — dit is een extra veiligheidsnet
+do $$ begin
+  create extension if not exists "uuid-ossp";
+exception when others then
+  -- Extensie bestaat al of geen rechten — beide zijn prima, we gaan door
+  null;
+end $$;
+
 
 -- ============================================================
 -- 1. PROFILES / USERS

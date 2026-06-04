@@ -951,7 +951,9 @@ function LangPicker({ lang, setLang, block }) {
           display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
           transition: "all .15s",
         }}>
-          <span style={{ fontSize: 16 }}>{FLAGS[l]}</span>
+          <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontSize: 20, lineHeight: 1, display: "block", transform: "scale(1.1)" }}>{FLAGS[l]}</span>
+          </div>
           <span style={{ fontSize: 12 }}>{I18N[l].code}</span>
         </button>
       ))}
@@ -978,7 +980,9 @@ function LangMenu({ lang, setLang, t }) {
           fontFamily: "inherit", transition: "all .15s",
           boxShadow: open ? `0 0 0 3px ${C.mint}22` : "none",
         }}>
-        <span style={{ fontSize: 18 }}>{current?.flag}</span>
+        <div style={{ width: 22, height: 22, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <span style={{ fontSize: 18, lineHeight: 1, display: "block", transform: "scale(1.1)" }}>{current?.flag}</span>
+        </div>
         <span style={{ fontSize: 13, fontWeight: 700 }}>{current?.code.toUpperCase()}</span>
         <ChevronDown size={14} color={C.sub} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
       </button>
@@ -997,7 +1001,9 @@ function LangMenu({ lang, setLang, t }) {
                 fontWeight: lang === l ? 700 : 500, color: C.ink, textAlign: "left",
                 transition: "background .1s",
               }}>
-                <span style={{ fontSize: 20 }}>{flag}</span>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <span style={{ fontSize: 22, lineHeight: 1, display: "block", transform: "scale(1.1)" }}>{flag}</span>
+                </div>
                 <span style={{ flex: 1 }}>{label}</span>
                 {lang === l && <Check size={16} color={C.mint} />}
               </button>
