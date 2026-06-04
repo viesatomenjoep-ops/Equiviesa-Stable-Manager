@@ -875,13 +875,13 @@ const MODE_PIN = { manager: "1111", groom: "2222" };
 function ModeGate({ t, onPick, lang, setLang }) {
   const [pending, setPending] = useState(null); // 'groom' | 'manager' awaiting PIN
   return (
-    <div style={{ height: "100dvh", minHeight: "100vh", overflow: "hidden", display: "flex", flexDirection: "column", background: C.surface }}>
+    <div style={{ position: "fixed", inset: 0, overflow: "hidden", display: "flex", flexDirection: "column", background: C.surface, zIndex: 100 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 22px" }}>
         <Brand />
         <LangMenu lang={lang} setLang={setLang} t={t} />
       </div>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 18px" }}>
-        <div style={{ width: "100%", maxWidth: 400, textAlign: "center", transform: "translateY(-6vh)" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", padding: "12vh 18px 0" }}>
+        <div style={{ width: "100%", maxWidth: 400, textAlign: "center" }}>
           <h1 className="ev-display" style={{ fontSize: 34, fontWeight: 800, margin: "0 0 8px", letterSpacing: -0.6, color: C.ink }}>
             {t.chooseMode}
           </h1>
