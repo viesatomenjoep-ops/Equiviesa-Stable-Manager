@@ -1523,7 +1523,8 @@ function CalendarScreen({ t }) {
   // ---- Check upcoming events & notify ----
   React.useEffect(() => {
     requestNotificationPermission();
-    if (Notification.permission !== 'granted') return;
+    // iOS Safari heeft geen Notification API — altijd checken voor gebruik
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
 
     const todayEvents = events[todayStr] || [];
     const upcoming = todayEvents.filter(ev => !ev.done);
@@ -1538,6 +1539,8 @@ function CalendarScreen({ t }) {
   }, [todayStr]);
 
   const enableNotifications = async () => {
+    // iOS Safari ondersteunt geen Notification API
+    if (typeof Notification === 'undefined') return;
     const perm = await Notification.requestPermission();
     setNotifEnabled(perm === 'granted');
     if (perm === 'granted') sendNotification('✅ Notificaties ingeschakeld', 'Je krijgt meldingen voor geplande activiteiten.');
