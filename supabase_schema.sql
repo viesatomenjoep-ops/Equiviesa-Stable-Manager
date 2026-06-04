@@ -610,7 +610,63 @@ create trigger on_auth_user_created
   for each row execute procedure public.handle_new_user();
 
 -- ============================================================
--- KLAAR ✓
--- Alle tabellen zijn aangemaakt of bijgewerkt.
--- Alle policies zijn opnieuw aangemaakt zonder conflicten.
+-- 21. CALENDAR EVENTS (custom/handmatige events)
+-- Aanvullend op tasks & health — voor eigen geplande momenten
+-- ============================================================
+create table if not exists public.calendar_events (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    title text not null,
+    event_type text not null default 'general' check (event_type in (
+        'general', 'competition', 'vet_visit', 'farrier_visit', 'transport',
+        'training', 'lesson', 'meeting', 'holiday', 'reminder', 'other'
+    )),
+    event_date date not null,
+    start_time time,
+    end_time time,
+    all_day boolean not null default false,
+    horse_id uuid references public.horses(id) on delete set null,
+    assigned_to_staff uuid references public.staff_members(id) on delete set null,
+    location text,
+    color text default '#2FB6A0',
+    notes text,
+    is_recurring boolean not null default false,
+    recurrence_rule text,
+    notification_sent boolean not null default false,
+    created_by uuid references public.profiles(id) on delete set null
+);
+create index if not exists calendar_events_date_idx on public.calendar_events (event_date);
+create index if not exists calendar_events_type_idx on public.calendar_events (event_type);
+alter table public.calendar_events enable row level security;
+drop policy if exists "Allow authenticated CRUD" on public.calendar_events;
+create policy "Allow authenticated CRUD" on public.calendar_events for all using (auth.role() = 'authenticated');
+
+-- ============================================================
+-- VIEW: Medewerkers gekoppeld aan hun taken (handig voor Staff-portaal)
+-- ============================================================
+create or replace view public.staff_task_overview as
+select
+    s.id as staff_id,
+    s.name as staff_name,
+    s.role as staff_role,
+    s.photo_url,
+    s.available,
+    t.id as task_id,
+    t.title as task_title,
+    t.due_date,
+    t.start_time,
+    t.is_completed,
+    t.category,
+    h.name as horse_name
+from public.staff_members s
+left join public.profiles p on p.email = s.email
+left join public.tasks t on t.assigned_to = p.id
+left join public.horses h on h.id = t.horse_id;
+
+-- ============================================================
+-- KLAAR ✓  —  Versie 2  —  Gegenereerd: 2026-06-04
+-- Alle tabellen aangemaakt of bijgewerkt (IF NOT EXISTS).
+-- Alle policies drop + create (geen conflicten).
+-- Nieuwe tabellen: staff_members, calendar_events
+-- Nieuwe view: staff_task_overview
 -- ============================================================
