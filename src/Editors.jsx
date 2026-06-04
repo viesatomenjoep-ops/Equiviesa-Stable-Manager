@@ -116,25 +116,56 @@ export function ContactEditor({ t, initialData, onClose, onSave, onDelete }) {
   const [f, setF] = useState(initialData || { name: "", company: "", email: "", phone: "", role: "other", website: "", notes: "", photo_url: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const ROLES = ["owner", "vet", "farrier", "rider", "supplier", "trainer", "other"];
+  const ROLES = [
+    { id: "owner", emoji: "👑" },
+    { id: "vet", emoji: "🩺" },
+    { id: "farrier", emoji: "🔨" },
+    { id: "rider", emoji: "🏇" },
+    { id: "supplier", emoji: "📦" },
+    { id: "trainer", emoji: "🎓" },
+    { id: "other", emoji: "👤" }
+  ];
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Contact"} icon={ContactIcon} color={C.sky} onClose={onClose} onSave={() => f.name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
       <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={ContactIcon} />
-      <Field label={t.name || "Name"} required><input value={f.name} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }} placeholder="Full Name" style={inputStyle(err)} /></Field>
+      
       <Field label={t.role || "Role"}>
-        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8 }}>
-          {ROLES.map(r => (
-            <button key={r} type="button" onClick={() => setF({...f, role: r})} className="ev-tap" style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.role === r ? C.sky : C.line}`, background: f.role === r ? C.sky : C.surface, color: f.role === r ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontWeight: 600 }}>{t[`role_${r}`] || r}</button>
-          ))}
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
+          {ROLES.map(r => {
+            const isSel = f.role === r.id;
+            return (
+              <button key={r.id} type="button" onClick={() => setF({...f, role: r.id})} className="ev-tap"
+                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${isSel ? C.sky : C.line}`, background: isSel ? C.sky : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+                <span style={{ fontSize: 20 }}>{r.emoji}</span>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>{t[`role_${r.id}`] || r.id.charAt(0).toUpperCase() + r.id.slice(1)}</span>
+              </button>
+            );
+          })}
         </div>
       </Field>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label={t.phone || "Phone"}><input value={f.phone || ""} onChange={(e) => setF({...f, phone: e.target.value})} placeholder="+31 6..." style={inputStyle()} /></Field>
-        <Field label={t.email || "Email"}><input value={f.email || ""} onChange={(e) => setF({...f, email: e.target.value})} placeholder="mail@..." style={inputStyle()} /></Field>
+
+      <Field label={t.name || "Name"} required>
+        <input value={f.name} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }} placeholder="e.g. John Doe" style={inputStyle(err)} />
+      </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <Field label={t.company || "Company"}>
+          <input value={f.company || ""} onChange={(e) => setF({...f, company: e.target.value})} placeholder="Company Name" style={{...inputStyle(), background: C.surface}} />
+        </Field>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label={t.phone || "Phone"}>
+            <input value={f.phone || ""} onChange={(e) => setF({...f, phone: e.target.value})} placeholder="+31 6..." style={{...inputStyle(), background: C.surface}} />
+          </Field>
+          <Field label={t.email || "Email"}>
+            <input value={f.email || ""} onChange={(e) => setF({...f, email: e.target.value})} placeholder="mail@..." style={{...inputStyle(), background: C.surface}} />
+          </Field>
+        </div>
       </div>
-      <Field label={t.company || "Company"}><input value={f.company || ""} onChange={(e) => setF({...f, company: e.target.value})} placeholder="Company Name" style={inputStyle()} /></Field>
-      <Field label={t.notes || "Notes"}><textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical" }} placeholder="Additional information..." /></Field>
+
+      <Field label={t.notes || "Notes"}>
+        <textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical", background: C.field }} placeholder="Additional information..." />
+      </Field>
     </EditorLayout>
   );
 }
@@ -147,21 +178,46 @@ export function LocationEditor({ t, initialData, onClose, onSave, onDelete }) {
   const [f, setF] = useState(initialData || { name: "", location_type: "stable", capacity: "", notes: "", photo_url: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const TYPES = ["stable", "paddock", "arena", "pasture", "clinic", "other"];
+  const TYPES = [
+    { id: "stable", label: "Stable / Barn", emoji: "🏠" },
+    { id: "paddock", label: "Paddock", emoji: "🌳" },
+    { id: "arena", label: "Arena", emoji: "🏇" },
+    { id: "pasture", label: "Pasture", emoji: "🌾" },
+    { id: "clinic", label: "Clinic", emoji: "🏥" },
+    { id: "other", label: "Other", emoji: "📍" }
+  ];
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Location"} icon={MapPin} color={C.amber} onClose={onClose} onSave={() => f.name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
       <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={MapPin} />
-      <Field label={t.name || "Name"} required><input value={f.name} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }} placeholder="Main Barn" style={inputStyle(err)} /></Field>
+      
       <Field label="Location Type">
-        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8 }}>
-          {TYPES.map(r => (
-            <button key={r} type="button" onClick={() => setF({...f, location_type: r})} className="ev-tap" style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.location_type === r ? C.amber : C.line}`, background: f.location_type === r ? C.amber : C.surface, color: f.location_type === r ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontWeight: 600 }}>{r.toUpperCase()}</button>
-          ))}
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
+          {TYPES.map(cat => {
+            const isSel = f.location_type === cat.id;
+            return (
+              <button key={cat.id} type="button" onClick={() => setF({...f, location_type: cat.id})} className="ev-tap"
+                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${isSel ? C.amber : C.line}`, background: isSel ? C.amber : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+                <span style={{ fontSize: 20 }}>{cat.emoji}</span>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
       </Field>
-      <Field label="Capacity (Max Horses)"><input type="number" value={f.capacity || ""} onChange={(e) => setF({...f, capacity: e.target.value})} placeholder="e.g. 20" style={inputStyle()} /></Field>
-      <Field label={t.notes || "Notes"}><textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical" }} placeholder="Additional information..." /></Field>
+
+      <Field label={t.name || "Name"} required>
+        <input value={f.name} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }} placeholder="e.g. Main Barn..." style={inputStyle(err)} />
+      </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <Field label="Capacity (Max Horses)">
+          <input type="number" value={f.capacity || ""} onChange={(e) => setF({...f, capacity: e.target.value})} placeholder="e.g. 20" style={{...inputStyle(), background: C.surface}} />
+        </Field>
+        <Field label={t.notes || "Notes"}>
+          <textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical", background: C.surface }} placeholder="Additional information..." />
+        </Field>
+      </div>
       
       {initialData && initialData.id && (
         <MapEditor locationId={initialData.id} />
