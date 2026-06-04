@@ -1051,37 +1051,44 @@ function TopBar({ t, active, route, setRoute, onMenu, lang, setLang }) {
     <header style={{
       position: "sticky", top: 0, zIndex: 20, background: "rgba(255,255,255,.85)",
       backdropFilter: "blur(10px)", borderBottom: `1px solid ${C.line}`,
-      padding: "14px 18px", display: "flex", alignItems: "center", gap: 12,
+      padding: "14px 18px", display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12,
     }}>
-      {inSub ? (
-        <button onClick={() => setRoute({ name: "list" })} className="ev-tap" style={iconBtn}>
-          <ChevronLeft size={22} />
-        </button>
-      ) : (
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Brand />
+      {/* LEFT */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {inSub && (
+          <>
+            <button onClick={() => setRoute({ name: "list" })} className="ev-tap" style={iconBtn}>
+              <ChevronLeft size={22} />
+            </button>
+            <div style={{ width: 1, height: 24, background: C.line, margin: "0 4px" }} />
+            <h1 className="ev-display" style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.4 }}>
+              {route.name === "add" ? t.add : t.profile}
+            </h1>
+          </>
+        )}
+      </div>
+
+      {/* CENTER */}
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        {!inSub && <Brand />}
+      </div>
+
+      {/* RIGHT */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+        <button className="ev-tap" style={iconBtn}><Bell size={20} /></button>
+        {active === "horses" && route.name === "list" && (
+          <button onClick={() => setRoute({ name: "add" })} className="ev-tap"
+            style={{ ...iconBtn, background: C.mint, color: "#fff", boxShadow: "0 4px 12px rgba(47,182,160,.4)" }}>
+            <Plus size={22} />
+          </button>
+        )}
+        {!inSub && (
           <button onClick={onMenu} className="ev-tap ev-burger" style={{ ...iconBtn, display: "none" }}>
             <Menu size={22} />
           </button>
-        </div>
-      )}
+        )}
+      </div>
       <style>{`@media (max-width: 860px){ .ev-burger{ display:grid !important; } }`}</style>
-      {inSub && (
-        <>
-          <div style={{ width: 1, height: 24, background: C.line, margin: "0 4px" }} />
-          <h1 className="ev-display" style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.4 }}>
-            {route.name === "add" ? t.add : t.profile}
-          </h1>
-        </>
-      )}
-      <div style={{ flex: 1 }} />
-      <button className="ev-tap" style={iconBtn}><Bell size={20} /></button>
-      {active === "horses" && route.name === "list" && (
-        <button onClick={() => setRoute({ name: "add" })} className="ev-tap"
-          style={{ ...iconBtn, background: C.mint, color: "#fff", boxShadow: "0 4px 12px rgba(47,182,160,.4)" }}>
-          <Plus size={22} />
-        </button>
-      )}
     </header>
   );
 }

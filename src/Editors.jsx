@@ -133,7 +133,7 @@ export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon
   );
 }
 
-export function EditorLayout({ t, title, icon: Icon, color, onClose, onSave, onDelete, children }) {
+export function EditorLayout({ t, title, icon: Icon, color, onClose, onSave, saveLabel, saveIcon, onDelete, children }) {
   return (
     <div style={{ background: C.field, borderRadius: 24, boxShadow: "0 4px 32px rgba(0,0,0,0.08)", overflow: "hidden", display: "flex", flexDirection: "column", minHeight: "calc(100vh - 180px)", animation: "evFade .2s ease" }}>
       {/* Header */}
@@ -159,9 +159,11 @@ export function EditorLayout({ t, title, icon: Icon, color, onClose, onSave, onD
             <Trash2 size={20} />
           </button>
         )}
-        <button onClick={onSave} className="ev-tap" style={{ flex: 1, padding: "18px", borderRadius: 16, border: "none", background: color, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 8px 24px ${color}55` }}>
-          <Check size={20} strokeWidth={2.5} /> {t?.save || "Save"}
-        </button>
+        {onSave && (
+          <button onClick={onSave} className="ev-tap" style={{ flex: 1, padding: "18px", borderRadius: 16, border: "none", background: color, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 8px 24px ${color}55` }}>
+            {saveIcon ? saveIcon : <Check size={20} strokeWidth={2.5} />} {saveLabel || t?.save || "Save"}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -770,10 +772,71 @@ export function InvoiceEditor({ t, initialData, onClose, onSave, onDelete }) {
     { id: "partial", emoji: "🔄", label: "Partial" },
   ];
 
+  const [previewMode, setPreviewMode] = useState(!!initialData);
+
   // Auto-calc total incl. BTW
   const subtotalNum = parseFloat(f.subtotal) || 0;
   const taxAmt = parseFloat(((subtotalNum * (parseFloat(f.tax_rate) || 21)) / 100).toFixed(2));
   const totalNum = parseFloat((subtotalNum + taxAmt).toFixed(2));
+
+  if (previewMode) {
+    return (
+      <EditorLayout t={t} title={`Factuur ${f.invoice_number || ""}`} icon={Receipt} color={C.sky} onClose={onClose}
+        saveLabel={t.edit || "Bewerken"} saveIcon={<Receipt size={20} />}
+        onSave={() => setPreviewMode(false)}
+        onDelete={initialData ? onDelete : null}>
+         <div style={{ background: "#fff", padding: "32px 24px", borderRadius: 16, border: `1px solid ${C.line}`, color: C.ink }}>
+           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 30, borderBottom: `2px solid ${C.ink}`, paddingBottom: 20 }}>
+             <div>
+               <h1 style={{ margin: 0, fontSize: 28, color: C.ink }}>INVOICE / FACTUUR</h1>
+               <div style={{ color: C.sub, marginTop: 4 }}>{f.invoice_number}</div>
+             </div>
+             <div style={{ textAlign: "right" }}>
+               <div style={{ fontSize: 18, fontWeight: 800, color: C.ink }}>Equivesa Stable Manager</div>
+               <div style={{ color: C.sub, marginTop: 4, fontSize: 13 }}>Status: <strong style={{ textTransform: "uppercase" }}>{f.status}</strong></div>
+             </div>
+           </div>
+           
+           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40 }}>
+             <div>
+               <div style={{ fontSize: 12, fontWeight: 700, color: C.sub, textTransform: "uppercase", marginBottom: 4 }}>Billed To</div>
+               <div style={{ fontSize: 16, fontWeight: 600, color: C.ink }}>{f.client_name || "—"}</div>
+             </div>
+             <div style={{ textAlign: "right" }}>
+               <div style={{ fontSize: 12, fontWeight: 700, color: C.sub, textTransform: "uppercase", marginBottom: 4 }}>Dates</div>
+               <div style={{ fontSize: 14, color: C.ink }}>Issued: {f.invoice_date || "—"}</div>
+               <div style={{ fontSize: 14, color: C.ink }}>Due: {f.due_date || "—"}</div>
+             </div>
+           </div>
+
+           <div style={{ marginBottom: 40 }}>
+             <div style={{ fontSize: 12, fontWeight: 700, color: C.sub, textTransform: "uppercase", marginBottom: 12, borderBottom: `1px solid ${C.line}`, paddingBottom: 8 }}>Description</div>
+             <div style={{ fontSize: 15, color: C.ink, whiteSpace: "pre-wrap" }}>{f.notes || "Services rendered"}</div>
+           </div>
+
+           <div style={{ display: "flex", justifyContent: "flex-end" }}>
+             <div style={{ width: 250 }}>
+               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: C.sub }}>
+                 <span>Subtotal</span>
+                 <span>€ {parseFloat(f.subtotal || 0).toFixed(2)}</span>
+               </div>
+               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16, fontSize: 14, color: C.sub }}>
+                 <span>Tax ({f.tax_rate || 21}%)</span>
+                 <span>€ {taxAmt.toFixed(2)}</span>
+               </div>
+               <div style={{ display: "flex", justifyContent: "space-between", borderTop: `2px solid ${C.ink}`, paddingTop: 12, fontSize: 20, fontWeight: 800, color: C.sky }}>
+                 <span>Total</span>
+                 <span>€ {totalNum.toFixed(2)}</span>
+               </div>
+             </div>
+           </div>
+         </div>
+         <button onClick={() => window.print()} className="ev-tap" style={{ padding: "16px", borderRadius: 14, border: `1.5px solid ${C.sky}`, color: C.sky, background: "transparent", fontWeight: 700, fontSize: 15, cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
+           <Printer size={18} /> Opslaan als PDF / Print
+         </button>
+      </EditorLayout>
+    );
+  }
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Invoice"} icon={Receipt} color={C.sky} onClose={onClose}
