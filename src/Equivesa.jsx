@@ -237,7 +237,6 @@ const I18N = {
     // Feeding UI
     noFeedSchedule: "No feeding schedule", quickSetup: "⚡ Set up schedule for",
     addSlot: "Add feeding slot",
-    myDay: "My Day", myDaySub: "Your daily tasks. Tap to complete.",
     // Common feed product names
     feedHay: "Hay", feedConcentrate: "Concentrates", feedMuesli: "Muesli", feedWater: "Water",
     feedStraw: "Straw", feedBran: "Bran", feedCarrots: "Carrots", feedApples: "Apples",
@@ -2131,7 +2130,7 @@ function HealthScreenRouter({ t, route, setRoute }) {
   if (route.name === "edit") {
     return (
       <div style={wrap}>
-        <HealthEditor t={t} horses={horses} staffMembers={staffMembers} staffMembers={staffMembers} initialData={route.data}
+        <HealthEditor t={t} horses={horses} staffMembers={staffMembers} initialData={route.data}
           onClose={() => setRoute({ name: "list" })}
           onSave={async (rec) => { await editHealthRecord(route.data.id, rec); setRoute({ name: "list" }); }}
           onDelete={async () => { await deleteHealthRecord(route.data.id); setRoute({ name: "list" }); }} />
@@ -2288,7 +2287,7 @@ function HealthScreen({ t, setRoute }) {
           onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />
       )}
       {editRecord && (
-        <HealthEditor t={t} horses={horses} staffMembers={staffMembers} staffMembers={staffMembers} initialData={editRecord} onClose={() => setEditRecord(null)}
+        <HealthEditor t={t} horses={horses} staffMembers={staffMembers} initialData={editRecord} onClose={() => setEditRecord(null)}
           onSave={(rec) => { editHealthRecord(editRecord.id, rec); setEditRecord(null); }}
           onDelete={() => { deleteHealthRecord(editRecord.id); setEditRecord(null); }} />
       )}

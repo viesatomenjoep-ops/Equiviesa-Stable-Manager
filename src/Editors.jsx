@@ -664,9 +664,7 @@ export function HealthEditor({ t, initialData, horses, staffMembers, onClose, on
             <input type="number" step="0.01" value={f.cost || ""} onChange={(e) => setF({...f, cost: e.target.value})} placeholder="0.00" style={{...inputStyle(), background: C.surface}} />
           </Field>
         </div>
-        </div>
       </div>
-
       <Field label={t.notes || "Diagnosis / Treatment Details"}>
         <textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 140, resize: "vertical", background: C.field }} placeholder="Extra details..." />
       </Field>
