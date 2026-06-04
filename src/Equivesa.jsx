@@ -1151,7 +1151,7 @@ function Screen({ active, route, setRoute, t, go }) {
   }
   if (active === "calendar") return <div style={wrap}><CalendarScreen t={t} /></div>;
   if (active === "tasks") return <div style={wrap}><TasksScreen t={t} /></div>;
-  if (active === "health") return <div style={wrap}><HealthScreen t={t} /></div>;
+  if (active === "health") return <HealthScreenRouter t={t} route={route} setRoute={setRoute} />;
   if (active === "finance") return <div style={wrap}><FinanceScreen t={t} /></div>;
   if (active === "users") return <div style={wrap}><UsersScreen t={t} /></div>;
   if (active === "feeding") return <div style={wrap}><FeedingScreen t={t} go={go} setRoute={setRoute} /></div>;
@@ -1879,12 +1879,55 @@ function TasksScreen({ t }) {
   );
 }
 
+/* ---------- Health Router (full-page editor routing) ---------- */
+function HealthScreenRouter({ t, route, setRoute }) {
+  const { addHealthRecord, editHealthRecord, deleteHealthRecord, horses } = useStore();
+  const wrap = { width: "100%", margin: "0 auto", padding: "22px 18px" };
+
+  if (route.name === "add") {
+    return (
+      <div style={wrap}>
+        <HealthEditor t={t} horses={horses}
+          onClose={() => setRoute({ name: "list" })}
+          onSave={async (rec) => { await addHealthRecord(rec); setRoute({ name: "list" }); }} />
+      </div>
+    );
+  }
+  if (route.name === "edit") {
+    return (
+      <div style={wrap}>
+        <HealthEditor t={t} horses={horses} initialData={route.data}
+          onClose={() => setRoute({ name: "list" })}
+          onSave={async (rec) => { await editHealthRecord(route.data.id, rec); setRoute({ name: "list" }); }}
+          onDelete={async () => { await deleteHealthRecord(route.data.id); setRoute({ name: "list" }); }} />
+      </div>
+    );
+  }
+  return <div style={wrap}><HealthScreen t={t} setRoute={setRoute} /></div>;
+}
+
 /* ---------- Health ---------- */
-function HealthScreen({ t }) {
+function HealthScreen({ t, setRoute }) {
   const { healthRecords, addHealthRecord, editHealthRecord, toggleHealthRecord, deleteHealthRecord, horses } = useStore();
   const [activeCat, setActiveCat] = useState(null); // null = overview, string = category subpage
-  const [modal, setModal] = useState(null); // null or category string
+  const [modal, setModal] = useState(null); // keep for backward compat, but route takes priority
   const [editRecord, setEditRecord] = useState(null);
+
+  // If setRoute available, always use full-page editor
+  const openAdd = (cat) => {
+    if (setRoute) {
+      setRoute({ name: "add", data: { category: cat } });
+    } else {
+      setModal(cat);
+    }
+  };
+  const openEdit = (rec) => {
+    if (setRoute) {
+      setRoute({ name: "edit", data: rec });
+    } else {
+      setEditRecord(rec);
+    }
+  };
 
   // Count per category
   const counts = useMemo(() => {
@@ -1910,7 +1953,7 @@ function HealthScreen({ t }) {
           <span style={{ width: 44, height: 44, borderRadius: 13, display: "grid", placeItems: "center",
             background: `${catColor}1f`, color: catColor }}><CatIcon size={22} strokeWidth={2.1} /></span>
           <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 22, fontWeight: 700 }}>{t[activeCat]}</h2>
-          <button onClick={() => setModal(activeCat)} className="ev-tap" style={{
+          <button onClick={() => openAdd(activeCat)} className="ev-tap" style={{
             display: "flex", alignItems: "center", gap: 8, border: "none", cursor: "pointer", fontFamily: "inherit",
             background: catColor, color: "#fff", fontSize: 14, fontWeight: 600, padding: "10px 16px", borderRadius: 13,
             boxShadow: `0 6px 16px ${catColor}55` }}>
@@ -1920,7 +1963,7 @@ function HealthScreen({ t }) {
 
         {catRecords.length === 0 ? (
           <EmptyHero accent={catColor} icon={<CatIcon size={46} strokeWidth={1.6} />}
-            title={t.noRecords} sub={t.noRecordsSub} cta={t.addRecord} onClick={() => setModal(activeCat)} />
+            title={t.noRecords} sub={t.noRecordsSub} cta={t.addRecord} onClick={() => openAdd(activeCat)} />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {catRecords.map(hr => {
@@ -1954,7 +1997,7 @@ function HealthScreen({ t }) {
                     )}
                   </div>
                   <div style={{ display: "flex", gap: 6, opacity: hr.completed ? 0.5 : 1 }}>
-                    <button onClick={() => setEditRecord(hr)} className="ev-tap" style={{
+                    <button onClick={() => openEdit(hr)} className="ev-tap" style={{
                       border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
                       <Edit2 size={17} />
                     </button>
@@ -1967,16 +2010,6 @@ function HealthScreen({ t }) {
               );
             })}
           </div>
-        )}
-
-        {modal && (
-          <HealthEditor t={t} category={modal} horses={horses} onClose={() => setModal(null)}
-            onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />
-        )}
-        {editRecord && (
-          <HealthEditor t={t} horses={horses} initialData={editRecord} onClose={() => setEditRecord(null)}
-            onSave={(rec) => { editHealthRecord(editRecord.id, rec); setEditRecord(null); }}
-            onDelete={() => { deleteHealthRecord(editRecord.id); setEditRecord(null); }} />
         )}
       </div>
     );
