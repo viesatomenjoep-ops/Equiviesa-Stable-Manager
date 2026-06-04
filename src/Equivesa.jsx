@@ -802,15 +802,15 @@ export default function Equivesa() {
 /* ---------- Internal Notification Engine ---------- */
 function NotificationEngine() {
   const { tasks, setNotifications } = useStore();
-  const notified = useRef(new Set());
+  const notified = React.useRef(new Set());
 
-  useEffect(() => {
+  React.useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const interval = setInterval(() => {
       if (!('Notification' in window) || Notification.permission !== 'granted') return;
       const now = new Date();
