@@ -128,6 +128,7 @@ create table if not exists public.health_records (
     notes text,
     performed_by text, -- name of vet/farrier/groom
     cost numeric(12, 2), -- optional reference cost
+    photo_url text, -- optional photo of the health record
     transaction_id uuid references public.transactions(id) on delete set null -- links to finance txn if paid
 );
 

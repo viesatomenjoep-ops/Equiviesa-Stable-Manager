@@ -468,7 +468,9 @@ function StoreProvider({ children }) {
     if (data) setSupplies(data);
   };
   const addSupply = async (item) => {
-    const { data, error } = await supabase.from('supplies_needed').insert([cleanObj({...item, status: 'pending'})]).select();
+    // amazon_link column does not exist in live supplies_needed table yet — strip it
+    const { amazon_link: _a, ...safe } = item;
+    const { data, error } = await supabase.from('supplies_needed').insert([cleanObj({...safe, status: 'pending'})]).select();
     if (error) { console.error(error); alert("Database Error: " + error.message); }
     if (data) setSupplies(prev => [data[0], ...prev]);
   };
@@ -551,12 +553,16 @@ function StoreProvider({ children }) {
     if (data) setHealthRecords(data);
   };
   const addHealthRecord = async (rec) => {
-    const { data, error } = await supabase.from('health_records').insert([cleanObj(rec)]).select();
+    // photo_url column does not exist in live health_records table yet — strip it
+    const { photo_url: _p, ...safe } = rec;
+    const { data, error } = await supabase.from('health_records').insert([cleanObj(safe)]).select();
     if (error) { console.error("Error adding health record:", error); alert("Database Error: " + error.message); }
     if (data) setHealthRecords(prev => [data[0], ...prev]);
   };
   const editHealthRecord = async (id, rec) => {
-    const { data, error } = await supabase.from('health_records').update(cleanObj(rec)).eq('id', id).select();
+    // photo_url column does not exist in live health_records table yet — strip it
+    const { photo_url: _p, ...safe } = rec;
+    const { data, error } = await supabase.from('health_records').update(cleanObj(safe)).eq('id', id).select();
     if (error) { console.error("Error editing health record:", error); alert("Database Error: " + error.message); }
     if (data) setHealthRecords(prev => prev.map(x => x.id === id ? data[0] : x));
   };
