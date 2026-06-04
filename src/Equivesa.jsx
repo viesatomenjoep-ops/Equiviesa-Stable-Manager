@@ -484,6 +484,7 @@ function StoreProvider({ children }) {
   const [stalls, setStalls] = useState([]);
   const [staffMembers, setStaffMembers] = useState([]);
   const [temperatures, setTemperatures] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   const fetchTemperatures = async () => {
     const { data } = await supabase.from('horse_temperatures').select('*').order('measured_at', { ascending: false });
@@ -756,6 +757,7 @@ function StoreProvider({ children }) {
       stalls, addStall, editStall, deleteStall,
       staffMembers,
       temperatures, addTemperature, deleteTemperature,
+      notifications, setNotifications,
       healthRecords, addHealthRecord, editHealthRecord, toggleHealthRecord, deleteHealthRecord }}>{children}</Store.Provider>
   );
 }
@@ -795,6 +797,53 @@ export default function Equivesa() {
       </StoreProvider>
     </ErrorBoundary>
   );
+}
+
+/* ---------- Internal Notification Engine ---------- */
+function NotificationEngine() {
+  const { tasks, setNotifications } = useStore();
+  const notified = useRef(new Set());
+
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+      tasks.forEach(tk => {
+        if (!tk.is_completed && tk.due_date === todayStr && tk.start_time === timeStr) {
+          const key = `task-${tk.id}-${todayStr}-${timeStr}`;
+          if (!notified.current.has(key)) {
+            notified.current.add(key);
+            new Notification("Equivesa Task Reminder", {
+              body: tk.title,
+              icon: "/favicon.ico"
+            });
+            setNotifications(p => [{ id: Date.now(), text: `Reminder: ${tk.title}`, time: timeStr }, ...p]);
+            // Optional: play a subtle beep using Audio
+            try {
+              const ctx = new (window.AudioContext || window.webkitAudioContext)();
+              const osc = ctx.createOscillator();
+              osc.type = "sine"; osc.frequency.setValueAtTime(440, ctx.currentTime);
+              osc.connect(ctx.destination);
+              osc.start(); osc.stop(ctx.currentTime + 0.2);
+            } catch (e) {}
+          }
+        }
+      });
+    }, 15000); // Check every 15s
+
+    return () => clearInterval(interval);
+  }, [tasks]);
+
+  return null;
 }
 
 function AppRoot() {
@@ -837,6 +886,7 @@ function AppRoot() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.ink, fontFamily: "'Montserrat', system-ui, sans-serif" }}>
+      <NotificationEngine />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
@@ -1566,7 +1616,7 @@ function Divider({ label }) {
 
 /* ---------- Horses: detail ---------- */
 function HorseDetail({ t, id, setRoute }) {
-  const { horses, deleteHorse, stalls } = useStore();
+  const { horses, deleteHorse, stalls, temperatures } = useStore();
   const h = horses.find((x) => x.id === id);
   if (!h) { setRoute({ name: "list" }); return null; }
 
