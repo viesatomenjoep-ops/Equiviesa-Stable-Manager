@@ -82,6 +82,10 @@ const I18N = {
     noFeed: "Geen voerschema", noFeedSub: "Voeg paarden toe en stel hun voerschema per dagdeel in.",
     product: "Product", addProduct: "Product toevoegen",
     noFeedHorse: "Nog niets ingesteld voor dit dagdeel.",
+    noSchedule: "⚠️ Geen schema",
+    noScheduleBanner: "🥕 Geen voedingsschema — zet er snel één op!",
+    setupSchedule: (name) => `⚡ Schema instellen voor ${name}`,
+    settingUpSchedule: "Bezig...",
     // mode gate
     chooseMode: "Wie ben je?", chooseModeSub: "Kies je weergave. Je kunt dit later wisselen.",
     groom: "Groom", manager: "Manager",
@@ -170,6 +174,10 @@ const I18N = {
     noFeed: "No feeding schedule", noFeedSub: "Add horses and set up their feed per time of day.",
     product: "Product", addProduct: "Add product",
     noFeedHorse: "Nothing set for this time of day yet.",
+    noSchedule: "⚠️ No schedule",
+    noScheduleBanner: "🥕 No feeding schedule — set one up quickly!",
+    setupSchedule: (name) => `⚡ Set up schedule for ${name}`,
+    settingUpSchedule: "Setting up...",
     chooseMode: "Who are you?", chooseModeSub: "Choose your view. You can switch later.",
     groom: "Groom", manager: "Manager",
     groomDesc: "Daily work at the stable: feeding, tasks and care.",
@@ -256,7 +264,11 @@ const I18N = {
     horse: "Caballo", allHorsesShort: "Todos los caballos", addFeed: "Añadir comida",
     noFeed: "Sin plan de alimentación", noFeedSub: "Añade caballos y configura su comida por momento del día.",
     product: "Producto", addProduct: "Añadir producto",
-    noFeedHorse: "Aún no hay nada para este momento del día.",
+    noFeedHorse: "Nada configurado para este momento del día.",
+    noSchedule: "⚠️ Sin horario",
+    noScheduleBanner: "🥕 Sin horario de alimentación — ¡configura uno rápidamente!",
+    setupSchedule: (name) => `⚡ Configurar horario para ${name}`,
+    settingUpSchedule: "Configurando...",
     chooseMode: "¿Quién eres?", chooseModeSub: "Elige tu vista. Puedes cambiarla más tarde.",
     groom: "Mozo", manager: "Gerente",
     groomDesc: "Trabajo diario en la cuadra: comida, tareas y cuidados.",
@@ -2296,7 +2308,7 @@ function FeedingScreen({ t, go, setRoute }) {
                         {horseHasFeed
                           ? SLOTS.filter(s => (feed[h.id]?.[s] || []).length > 0)
                               .map(s => `${SLOT_EMOJIS[s]} ${t[s] || s}`).join("  ")
-                          : "⚠️ Geen schema"}
+                          : t.noSchedule}
                       </div>
                     </div>
                     <button onClick={() => setAddFor(h.id)} className="ev-tap" style={{
@@ -2310,7 +2322,7 @@ function FeedingScreen({ t, go, setRoute }) {
                   {!horseHasFeed && (
                     <div style={{ padding: "16px 18px", background: `${C.amber}08`, borderBottom: `1px solid ${C.amber}22` }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: C.amber, marginBottom: 10 }}>
-                        🥕 Geen voedingsschema — zet er snel één op!
+                        {t.noScheduleBanner}
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
                         {["morning", "noon", "evening"].map(sl => (
@@ -2334,7 +2346,7 @@ function FeedingScreen({ t, go, setRoute }) {
                           background: settingUp === h.id ? C.sub : C.amber, color: "#fff",
                           fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
                           display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                        {settingUp === h.id ? "Bezig..." : `⚡ Schema instellen voor ${h.name}`}
+                        {settingUp === h.id ? t.settingUpSchedule : t.setupSchedule(h.name)}
                       </button>
                     </div>
                   )}
