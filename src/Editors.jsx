@@ -230,20 +230,42 @@ export function DocumentEditor({ t, initialData, horses, onClose, onSave, onDele
   const [f, setF] = useState(initialData || { title: "", document_type: "passport", horse_id: "", file_url: "", notes: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const TYPES = ["passport", "contract", "vet_report", "invoice", "other"];
+  const TYPES = [
+    { id: "passport", label: "Passport", emoji: "🛂" },
+    { id: "contract", label: "Contract", emoji: "📝" },
+    { id: "vet_report", label: "Vet Report", emoji: "🩺" },
+    { id: "invoice", label: "Invoice", emoji: "🧾" },
+    { id: "other", label: "Other", emoji: "📁" }
+  ];
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Document"} icon={FileText} color={C.mint} onClose={onClose} onSave={() => f.title.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
       <PhotoUpload url={f.file_url} onChange={(url) => setF({...f, file_url: url})} uploading={uploading} setUploading={setUploading} icon={FileText} />
-      <Field label="Document Title" required><input value={f.title} onChange={(e) => { setF({...f, title: e.target.value}); setErr(false); }} placeholder="e.g. Purchase Contract" style={inputStyle(err)} /></Field>
+      
       <Field label="Document Type">
-        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8 }}>
-          {TYPES.map(r => (
-            <button key={r} type="button" onClick={() => setF({...f, document_type: r})} className="ev-tap" style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.document_type === r ? C.mint : C.line}`, background: f.document_type === r ? C.mint : C.surface, color: f.document_type === r ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontWeight: 600 }}>{r.replace("_", " ").toUpperCase()}</button>
-          ))}
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
+          {TYPES.map(cat => {
+            const isSel = f.document_type === cat.id;
+            return (
+              <button key={cat.id} type="button" onClick={() => setF({...f, document_type: cat.id})} className="ev-tap"
+                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${isSel ? C.mint : C.line}`, background: isSel ? C.mint : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+                <span style={{ fontSize: 20 }}>{cat.emoji}</span>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
       </Field>
-      <Field label={t.notes || "Notes"}><textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical" }} placeholder="Extra info..." /></Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <Field label="Document Title" required>
+          <input value={f.title} onChange={(e) => { setF({...f, title: e.target.value}); setErr(false); }} placeholder="e.g. Purchase Contract" style={{...inputStyle(err), background: C.surface}} />
+        </Field>
+      </div>
+
+      <Field label={t.notes || "Notes"}>
+        <textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical", background: C.field }} placeholder="Extra info..." />
+      </Field>
     </EditorLayout>
   );
 }
@@ -629,12 +651,25 @@ export function CatalogEditor({ t, initialData, onClose, onSave, onDelete }) {
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Catalog Item"} icon={Package} color={C.sky} onClose={onClose} onSave={() => f.name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
       <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
-      <Field label="Product Name" required><input value={f.name || ""} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }} placeholder="e.g. Leather Halter" style={inputStyle(err)} /></Field>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label="Price (€)"><input type="number" step="0.01" value={f.price || ""} onChange={(e) => setF({...f, price: e.target.value})} placeholder="0.00" style={inputStyle()} /></Field>
-        <Field label="Stock Level"><input type="number" value={f.stock || ""} onChange={(e) => setF({...f, stock: e.target.value})} placeholder="0" style={inputStyle()} /></Field>
+      
+      <Field label="Product Name" required>
+        <input value={f.name || ""} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }} placeholder="e.g. Leather Halter" style={inputStyle(err)} />
+      </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label="Price (€)">
+            <input type="number" step="0.01" value={f.price || ""} onChange={(e) => setF({...f, price: e.target.value})} placeholder="0.00" style={{...inputStyle(), background: C.surface, fontSize: 18, fontWeight: 700, color: C.sky}} />
+          </Field>
+          <Field label="Stock Level">
+            <input type="number" value={f.stock || ""} onChange={(e) => setF({...f, stock: e.target.value})} placeholder="0" style={{...inputStyle(), background: C.surface}} />
+          </Field>
+        </div>
       </div>
-      <Field label="Description"><textarea value={f.description || ""} onChange={(e) => setF({...f, description: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical" }} placeholder="Product details..." /></Field>
+
+      <Field label="Description">
+        <textarea value={f.description || ""} onChange={(e) => setF({...f, description: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical", background: C.field }} placeholder="Product details..." />
+      </Field>
     </EditorLayout>
   );
 }
