@@ -195,10 +195,33 @@ export function SupplyEditor({ t, initialData, lang, onClose, onSave, onDelete }
   const [f, setF] = useState(initialData || { item_name: "", quantity: "", requested_by: "", notes: "", photo_url: "", amazon_link: "", report_type: "supply" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const COMMON = {
+    nl: ["Hooi", "Stro", "Houtkrullen", "Vlas", "Biks", "Muesli", "Slobber", "Wortels", "Appels", "Liksteen", "Zalf", "Shampoo", "Tape", "Watten", "Vliegenspray", "Huidolie"],
+    en: ["Hay", "Straw", "Shavings", "Flax", "Pellets", "Muesli", "Mash", "Carrots", "Apples", "Salt block", "Ointment", "Shampoo", "Tape", "Cotton", "Fly spray", "Skin oil"],
+    es: ["Heno", "Paja", "Virutas", "Lino", "Pellets", "Muesli", "Papilla", "Zanahorias", "Manzanas", "Bloque de sal", "Pomada", "Champú", "Cinta", "Algodón", "Aerosol para moscas", "Aceite para la piel"]
+  };
+  const suggestions = COMMON[lang] || COMMON.en;
+
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.addSupply || "Add Supply Request"} icon={ShoppingCart} color={C.coral} onClose={onClose} onSave={() => f.item_name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
       <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
-      <Field label={t.supplyItem || "Item"} required><input value={f.item_name} onChange={(e) => { setF({...f, item_name: e.target.value}); setErr(false); }} placeholder="Custom item..." style={inputStyle(err)} /></Field>
+      
+      <Field label={t.supplyItem || "Item"} required>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+          {suggestions.map(s => (
+            <button key={s} type="button" onClick={() => { setF({...f, item_name: s}); setErr(false); }}
+              className="ev-tap"
+              style={{
+                flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.item_name === s ? C.coral : C.line}`,
+                background: f.item_name === s ? C.coral : C.surface, color: f.item_name === s ? "#fff" : C.sub,
+                fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+              }}>
+              {s}
+            </button>
+          ))}
+        </div>
+        <input value={f.item_name} onChange={(e) => { setF({...f, item_name: e.target.value}); setErr(false); }} placeholder="Or type custom item..." style={inputStyle(err)} />
+      </Field>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <Field label={t.qty || "Qty"}><input value={f.quantity || ""} onChange={(e) => setF({...f, quantity: e.target.value})} placeholder="Amount" style={inputStyle()} /></Field>
         <Field label={t.requestedBy || "Requested By"}><input value={f.requested_by || ""} onChange={(e) => setF({...f, requested_by: e.target.value})} placeholder="Name" style={inputStyle()} /></Field>
