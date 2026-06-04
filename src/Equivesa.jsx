@@ -1095,7 +1095,12 @@ function Screen({ active, route, setRoute, t, go }) {
   if (active === "users") return <div style={wrap}><UsersScreen t={t} /></div>;
   if (active === "feeding") return <div style={wrap}><FeedingScreen t={t} go={go} setRoute={setRoute} /></div>;
   if (active === "supplies") return <div style={wrap}><SuppliesScreen t={t} /></div>;
-  return <div style={wrap}><GenericModuleScreen t={t} active={active} /></div>;
+  
+  // Generic modules: route-based editor (same approach as HorseForm)
+  if (route.name === "add" || route.name === "edit") {
+    return <GenericEditorScreen active={active} route={route} setRoute={setRoute} t={t} />;
+  }
+  return <div style={wrap}><GenericModuleScreen t={t} active={active} setRoute={setRoute} /></div>;
 }
 
 /* ---------- Horses: list (data-driven) ---------- */
@@ -2118,74 +2123,174 @@ const GENERIC_CONFIG = {
   foals: { table: "horses", defaultVals: { archived: false }, fields: [{n:"name",l:"Name",r:true}, {n:"birthdate",l:"Birthdate",t:"date"}] }
 };
 
-function GenericModuleScreen({ t, active }) {
+/* ---------- Full-page editor for generic modules (renders at Screen level) ---------- */
+function GenericEditorScreen({ active, route, setRoute, t }) {
+  const conf = GENERIC_CONFIG[active];
+  const color = ACCENT[active] || C.mint;
+  const Icon = ICONS[active] || Sparkles;
+  const editObj = route.data || null;
+
+  const [data, setData] = React.useState(editObj || (conf ? (conf.defaultVals || {}) : {}));
+  const [err, setErr] = React.useState(false);
+  const [uploadingField, setUploadingField] = React.useState(null);
+
+  const goBack = () => setRoute({ name: "list" });
+
+  const save = async (customData) => {
+    let o;
+    if (customData) {
+      o = { ...customData };
+    } else {
+      if (conf) {
+        const missing = conf.fields.some(field => field.r && !data[field.n]);
+        if (missing) { setErr(true); return; }
+      }
+      o = { ...data };
+      Object.keys(o).forEach(k => { if (o[k] === "") o[k] = null; });
+    }
+    const table = conf?.table;
+    if (!table) { goBack(); return; }
+    delete o.id;
+    delete o.created_at;
+
+    if (editObj?.id) {
+      const { error } = await supabase.from(table).update(o).eq('id', editObj.id);
+      if (error) { alert("Database Error: " + error.message); return; }
+    } else {
+      const { error } = await supabase.from(table).insert([o]);
+      if (error) { alert("Database Error: " + error.message); return; }
+    }
+    goBack();
+  };
+
+  const del = async () => {
+    if (!editObj?.id || !conf?.table) return;
+    await supabase.from(conf.table).delete().eq('id', editObj.id);
+    goBack();
+  };
+
+  // Pick the specialized premium editor if available
+  const PremiumEditor = active === 'contacts' ? ContactEditor :
+                        active === 'clients' ? ClientEditor :
+                        active === 'locations' ? LocationEditor :
+                        active === 'documents' ? DocumentEditor :
+                        active === 'bookings' ? BookingEditor :
+                        active === 'invoices' ? InvoiceEditor :
+                        active === 'catalog' ? CatalogEditor :
+                        active === 'mares' ? MareEditor :
+                        active === 'embryos' ? EmbryoEditor :
+                        active === 'foals' ? FoalEditor : null;
+
+  const wrap = { width: "100%", margin: "0 auto", padding: "22px 18px" };
+
+  if (PremiumEditor) {
+    return (
+      <div style={wrap}>
+        <PremiumEditor
+          t={t}
+          initialData={editObj}
+          onSave={save}
+          onClose={goBack}
+          onDelete={editObj ? del : null}
+        />
+      </div>
+    );
+  }
+
+  // Fallback: generic field-based editor rendered as a full page (not modal)
+  if (!conf) return null;
+  return (
+    <div style={wrap}>
+      <div style={{ background: "#fff", borderRadius: 24, boxShadow: "0 4px 24px rgba(0,0,0,0.07)", overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "20px 24px", borderBottom: `1px solid ${C.line}`, background: "#fff" }}>
+          <span style={{ width: 48, height: 48, borderRadius: 16, display: "grid", placeItems: "center", background: `${color}1c`, color: color }}>
+            <Icon size={22} />
+          </span>
+          <h2 style={{ flex: 1, margin: 0, fontSize: 24, fontWeight: 700, color: C.ink }}>
+            {editObj ? (t.edit || "Edit") : `${t.add || "Add"} ${t[active] || active}`}
+          </h2>
+          <button onClick={goBack} style={{ width: 44, height: 44, borderRadius: 12, border: "none", background: `${C.line}44`, display: "grid", placeItems: "center", cursor: "pointer" }}>
+            <ArrowLeft size={22} color={C.ink} />
+          </button>
+        </div>
+
+        {/* Fields */}
+        <div style={{ padding: "28px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
+          <PhotoUpload url={data.photo_url} onChange={(url) => setData(d => ({...d, photo_url: url}))}
+            uploading={uploadingField === "photo_url"} setUploading={(u) => setUploadingField(u ? "photo_url" : null)} icon={Camera} />
+
+          {conf.fields.map(field => (
+            <GenericField key={field.n} field={field} value={data[field.n]} color={color} err={err} t={t}
+              onChange={(v) => setData(d => ({...d, [field.n]: v}))} />
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "20px 24px", borderTop: `1px solid ${C.line}`, display: "flex", gap: 12, background: "#fff" }}>
+          {editObj && (
+            <button onClick={del} style={{ padding: "16px 20px", borderRadius: 16, border: `1.5px solid ${C.coral}`, background: "transparent", color: C.coral, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 15 }}>
+              <Trash2 size={18} /> {t.delete || "Delete"}
+            </button>
+          )}
+          <button onClick={() => save()} style={{ flex: 1, padding: "18px", borderRadius: 16, border: "none", background: color, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 8px 24px ${color}44` }}>
+            <Check size={20} strokeWidth={2.5} /> {t.save || "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GenericField({ field, value, color, err, t, onChange }) {
+  const inputSt = (hasErr) => ({
+    width: "100%", padding: "16px 20px", borderRadius: 16,
+    border: `1.5px solid ${hasErr ? C.coral : C.line}`, background: hasErr ? "#fff" : C.field,
+    fontSize: 16, color: C.ink, outline: "none", fontFamily: "inherit"
+  });
+  const label = t[field.n] || field.l || field.n;
+  const hasErr = err && field.r && !value;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 4 }}>
+      <label style={{ fontSize: 13, fontWeight: 700, color: C.sub, textTransform: "uppercase", letterSpacing: 0.5 }}>
+        {label} {field.r && <span style={{ color: C.coral }}>*</span>}
+      </label>
+      {field.opts ? (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {field.opts.map(opt => (
+            <button key={opt} type="button" onClick={() => onChange(opt)}
+              style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${value === opt ? color : C.line}`,
+                background: value === opt ? color : C.surface, color: value === opt ? "#fff" : C.sub,
+                fontSize: 15, cursor: "pointer", fontWeight: 600, fontFamily: "inherit" }}>
+              {t[opt] || opt}
+            </button>
+          ))}
+        </div>
+      ) : field.t === "checkbox" ? (
+        <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} />
+      ) : field.t === "textarea" || field.n === "notes" || field.n === "description" ? (
+        <textarea value={value || ""} onChange={(e) => onChange(e.target.value)}
+          style={{ ...inputSt(hasErr), minHeight: 120, resize: "vertical" }} />
+      ) : (
+        <input type={field.t || "text"} value={value || ""} onChange={(e) => onChange(e.target.value)}
+          style={inputSt(hasErr)} />
+      )}
+    </div>
+  );
+}
+
+function GenericModuleScreen({ t, active, setRoute }) {
   const conf = GENERIC_CONFIG[active];
   const color = ACCENT[active] || C.mint;
   const Icon = ICONS[active] || Sparkles;
   
   const [data, setData] = useState([]);
-  const [modal, setModal] = useState(false);
-  const [editObj, setEditObj] = useState(null);
 
-  const [f, setF] = useState(conf ? (conf.defaultVals || {}) : {});
-  const [err, setErr] = useState(false);
-  const [uploadingField, setUploadingField] = useState(null);
-
-  const handleUpload = async (e, fieldName) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploadingField(fieldName);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "equivesa_uploads");
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "daj1lyfgk";
-
-    try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.secure_url) {
-        setF(prev => ({ ...prev, [fieldName]: data.secure_url, file_type: data.format || file.name.split('.').pop() }));
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Upload failed.");
-    } finally {
-      setUploadingField(null);
-    }
-  };
-
-  const save = async (customData) => {
-    let o;
-    if (customData) {
-      o = customData;
-    } else {
-      const missing = conf.fields.some(field => field.r && !f[field.n]);
-      if (missing) { setErr(true); return; }
-      o = { ...f };
-      Object.keys(o).forEach(k => { if (o[k] === "") o[k] = null; });
-    }
-    delete o.id;
-    delete o.created_at;
-    
-    if (editObj) {
-      const { data: res, error } = await supabase.from(conf.table).update(o).eq('id', editObj.id).select();
-      if (error) { console.error(error); alert("Database Error: " + error.message); }
-      if (res) {
-        setData(prev => prev.map(x => x.id === editObj.id ? res[0] : x));
-        setEditObj(null);
-      }
-    } else {
-      const { data: res, error } = await supabase.from(conf.table).insert([o]).select();
-      if (error) { console.error(error); alert("Database Error: " + error.message); }
-      if (res) {
-        setData(prev => [res[0], ...prev]);
-        setModal(false);
-        setF(conf.defaultVals || {});
-      }
-    }
+  const del = async (id) => {
+    if (!conf?.table) return;
+    await supabase.from(conf.table).delete().eq('id', id);
+    setData(prev => prev.filter(x => x.id !== id));
   };
 
   React.useEffect(() => {
@@ -2204,11 +2309,6 @@ function GenericModuleScreen({ t, active }) {
     fetch();
   }, [active, conf]);
 
-  const del = async (id) => {
-    await supabase.from(conf.table).delete().eq('id', id);
-    setData(prev => prev.filter(x => x.id !== id));
-  };
-
   if (!conf) {
     return (
       <div className="ev-card">
@@ -2217,21 +2317,12 @@ function GenericModuleScreen({ t, active }) {
     );
   }
 
-  const Editor = active === 'contacts' ? ContactEditor :
-                 active === 'clients' ? ClientEditor :
-                 active === 'locations' ? LocationEditor :
-                 active === 'documents' ? DocumentEditor :
-                 active === 'bookings' ? BookingEditor :
-                 active === 'invoices' ? InvoiceEditor :
-                 active === 'catalog' ? CatalogEditor :
-                 active === 'mares' ? MareEditor :
-                 active === 'embryos' ? EmbryoEditor :
-                 active === 'foals' ? FoalEditor : null;
+  const displayName = (x) => x.name || x.reference || x.stallion_name || x.title || x.invoice_number || x.date || "—";
 
   return (
     <div className="ev-card">
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-        <button onClick={() => setModal(true)} className="ev-tap" style={{
+        <button onClick={() => setRoute({ name: "add" })} className="ev-tap" style={{
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           padding: "15px 24px", borderRadius: 15, border: "none", cursor: "pointer", fontFamily: "inherit",
           background: color, color: "#fff", fontSize: 15.5, fontWeight: 600, boxShadow: `0 8px 20px ${color}50`,
@@ -2241,88 +2332,23 @@ function GenericModuleScreen({ t, active }) {
       </div>
 
       {data.length === 0 ? (
-        <EmptyHero accent={color} icon={<Icon size={46} strokeWidth={1.6} />} title={t.empty} cta={t.add} onClick={() => setModal(true)} />
+        <EmptyHero accent={color} icon={<Icon size={46} strokeWidth={1.6} />} title={t.empty} cta={t.add} onClick={() => setRoute({ name: "add" })} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {data.map((x) => (
             <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 14, background: C.surface,
-              border: `1px solid ${C.line}`, borderRadius: 16, padding: "14px 16px" }}>
-              <span style={{ width: 42, height: 42, borderRadius: 12, display: "grid", placeItems: "center",
+              border: `1px solid ${C.line}`, borderRadius: 16, padding: "16px", cursor: "pointer" }}
+              onClick={() => setRoute({ name: "edit", data: x })}>
+              <span style={{ width: 44, height: 44, borderRadius: 12, display: "grid", placeItems: "center",
                 background: `${color}1c`, color: color, flexShrink: 0 }}><Icon size={20} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 17, fontWeight: 600 }}>{x.name || x.reference || x.stallion_name || x.title || t[active]}</div>
+                <div style={{ fontSize: 17, fontWeight: 600, color: C.ink }}>{displayName(x)}</div>
+                {x.status && <div style={{ fontSize: 13, color: C.sub, marginTop: 2 }}>{x.status}</div>}
               </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button onClick={() => { setEditObj(x); setF(x); }} className="ev-tap" style={{
-                  border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
-                  <Edit2 size={20} />
-                </button>
-                <button onClick={() => del(x.id)} className="ev-tap" style={{ border: "none", background: "transparent",
-                  cursor: "pointer", color: C.sub, padding: 6 }}><Trash2 size={20} /></button>
-              </div>
+              <ChevronRight size={20} color={C.sub} />
             </div>
           ))}
         </div>
-      )}
-
-      {(modal || editObj) && (
-        <>
-          {Editor ? (
-            <Editor t={t} initialData={editObj} 
-              onSave={save} 
-              onClose={() => { setModal(false); setEditObj(null); }}
-              onDelete={editObj ? () => { del(editObj.id); setModal(false); setEditObj(null); } : null} />
-          ) : (
-            <EditorLayout t={t} title={editObj ? t.edit || "Edit" : `${t.add} ${t[active] || active}`} icon={Icon} color={color}
-              onClose={() => { setModal(false); setEditObj(null); setF(conf.defaultVals || {}); }}
-              onSave={() => save()} onDelete={editObj ? () => del(editObj.id) : null}>
-              
-              <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})}
-                uploading={uploadingField === "photo_url"} setUploading={(u) => setUploadingField(u ? "photo_url" : null)} icon={Camera} />
-                
-              {conf.fields.map(field => (
-                <Field key={field.n} label={t[field.n] || field.n} required={field.r}>
-                  {field.opts ? (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                      {field.opts.map(opt => (
-                        <button key={opt} type="button" onClick={() => setF({...f, [field.n]: opt})} className="ev-tap"
-                          style={{ flexShrink: 0, padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f[field.n] === opt ? color : C.line}`,
-                            background: f[field.n] === opt ? color : C.surface,
-                            color: f[field.n] === opt ? "#fff" : C.sub,
-                            fontSize: 16, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-                          {t[opt] || opt}
-                        </button>
-                      ))}
-                    </div>
-                  ) : field.t === "checkbox" ? (
-                    <input type="checkbox" checked={!!f[field.n]} onChange={(e) => setF({...f, [field.n]: e.target.checked})} />
-                  ) : field.t === "file" ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      <label className="ev-tap" style={{ display: "inline-flex", alignItems: "center", gap: 12, cursor: "pointer", ...inputStyle() }}>
-                        <span style={{ background: C.line, padding: "8px 14px", borderRadius: 10, fontSize: 15, fontWeight: 600 }}>{t.chooseFile}</span>
-                        <span style={{ color: f[field.n] ? C.ink : C.sub, fontSize: 15, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {f[field.n] ? (f[field.n].split('/').pop().substring(0, 20) + "...") : t.noFileChosen}
-                        </span>
-                        <input type="file" onChange={(e) => handleUpload(e, field.n)} accept="*/*" style={{ display: "none" }} />
-                      </label>
-                      {uploadingField === field.n && <span style={{ fontSize: 14, color: C.sub, fontWeight: 600 }}>Uploading...</span>}
-                      {f[field.n] && !uploadingField && (
-                        <div style={{ display: "flex", gap: 16 }}>
-                          <a href={f[field.n]} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: color, fontWeight: 700, textDecoration: "none" }}>{t.viewFile}</a>
-                          <a href={getDownloadUrl(f[field.n])} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: C.sub, fontWeight: 700, textDecoration: "none" }}>{t.downloadFile}</a>
-                        </div>
-                      )}
-                    </div>
-                  ) : field.t === "textarea" || field.n === "notes" || field.n === "description" ? (
-                    <textarea value={f[field.n] || ""} onChange={(e) => setF({...f, [field.n]: e.target.value})} style={{ ...inputStyle(err && field.r && !f[field.n]), minHeight: 120, resize: "vertical" }} />
-                  ) : (
-                    <input type={field.t || "text"} value={f[field.n] || ""} onChange={(e) => setF({...f, [field.n]: e.target.value})} style={inputStyle(err && field.r && !f[field.n])} />
-                  )}
-                </Field>
-              ))}
-            </EditorLayout>
-          )}
-        </>
       )}
     </div>
   );

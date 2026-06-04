@@ -74,27 +74,25 @@ export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon
 
 export function EditorLayout({ t, title, icon: Icon, color, onClose, onSave, onDelete, children }) {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 100, background: C.field, display: "flex", flexDirection: "column", animation: "evFade .2s ease" }}>
-      {/* Header (Fixed) */}
-      <div style={{ display: "flex", alignItems: "center", gap: 18, padding: "20px 24px", background: C.surface, borderBottom: `1px solid ${C.line}`, flexShrink: 0, zIndex: 10 }}>
-        <span style={{ width: 48, height: 48, borderRadius: 16, display: "grid", placeItems: "center", background: `${color}1c`, color: color }}>
+    <div style={{ background: C.field, borderRadius: 24, boxShadow: "0 4px 32px rgba(0,0,0,0.08)", overflow: "hidden", display: "flex", flexDirection: "column", minHeight: "calc(100vh - 180px)", animation: "evFade .2s ease" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 18, padding: "20px 24px", background: C.surface, borderBottom: `1px solid ${C.line}`, flexShrink: 0 }}>
+        <span style={{ width: 48, height: 48, borderRadius: 16, display: "grid", placeItems: "center", background: `${color}1c`, color: color, flexShrink: 0 }}>
           <Icon size={22} />
         </span>
         <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 26, fontWeight: 700, color: C.ink }}>{title}</h2>
-        <button onClick={onClose} className="ev-tap" style={{ width: 44, height: 44, borderRadius: 12, border: "none", background: C.bg, display: "grid", placeItems: "center", cursor: "pointer" }}>
+        <button onClick={onClose} className="ev-tap" style={{ width: 44, height: 44, borderRadius: 12, border: "none", background: C.bg, display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}>
           <ArrowLeft size={26} color={C.ink} />
         </button>
       </div>
 
-      {/* Content (Scrollable) */}
-      <div className="ev-scroll" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
-        <div style={{ padding: "28px 24px", width: "100%", display: "flex", flexDirection: "column", gap: 24, flex: 1 }}>
-          {children}
-        </div>
+      {/* Content */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "28px 24px", gap: 24 }}>
+        {children}
       </div>
 
-      {/* Footer (Fixed at bottom) */}
-      <div style={{ padding: "20px 24px", background: C.surface, borderTop: `1px solid ${C.line}`, width: "100%", flexShrink: 0, display: "flex", gap: 12 }}>
+      {/* Footer */}
+      <div style={{ padding: "20px 24px", background: C.surface, borderTop: `1px solid ${C.line}`, flexShrink: 0, display: "flex", gap: 12 }}>
         {onDelete && (
           <button onClick={onDelete} className="ev-tap" style={{ padding: "18px", borderRadius: 16, border: `1.5px solid ${C.coral}`, background: "transparent", color: C.coral, fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
             <Trash2 size={20} />
