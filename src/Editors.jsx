@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Camera, Check, Plus, Trash2, ArrowLeft, Link as LinkIcon, FileText, ShoppingCart, MapPin, Contact as ContactIcon, BookOpen, Receipt, Package, Wallet, Activity, Users, Carrot, AlertTriangle, AlertOctagon } from "lucide-react";
 import { useStore } from "./Equivesa";
+import { MapEditor } from "./MapEditor";
 
 const C = {
   bg: "#F2F5F8", surface: "#FFFFFF", line: "#E3E8EE",
@@ -160,11 +161,11 @@ export function LocationEditor({ t, initialData, onClose, onSave, onDelete }) {
         </div>
       </Field>
       <Field label="Capacity (Max Horses)"><input type="number" value={f.capacity || ""} onChange={(e) => setF({...f, capacity: e.target.value})} placeholder="e.g. 20" style={inputStyle()} /></Field>
-      <Field label={t.notes || "Notes"}><textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical" }} placeholder="Map layout or details..." /></Field>
-      <div style={{ marginTop: 24, padding: 20, background: `${C.amber}14`, borderRadius: 16, border: `1px solid ${C.amber}44` }}>
-        <h3 style={{ margin: "0 0 8px", fontSize: 16, color: C.ink }}>Map Editor / Stalbouwer</h3>
-        <p style={{ margin: 0, fontSize: 14, color: C.sub }}>The interactive grid layout builder for stalls will be rendered here. Save the location first to start building boxes!</p>
-      </div>
+      <Field label={t.notes || "Notes"}><textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical" }} placeholder="Additional information..." /></Field>
+      
+      {initialData && initialData.id && (
+        <MapEditor locationId={initialData.id} />
+      )}
     </EditorLayout>
   );
 }
