@@ -23,7 +23,7 @@ import {
 const globalStyle = `
 @media (max-width: 768px) {
   .ev-cal-body { flex-direction: column !important; }
-  .ev-cal-detail { width: 100% !important; border-left: none !important; border-top: 1px solid #E3E8EE !important; }
+  .ev-cal-detail { width: 100% !important; border-right: none !important; border-bottom: 1px solid #E3E8EE !important; }
 }
 `;
 if (typeof document !== 'undefined') {
@@ -859,7 +859,7 @@ function AppRoot() {
             </main>
           </div>
           <BottomNav t={t} active={active} go={go} mode={mode} />
-          {drawer && <Drawer t={t} active={active} go={go} close={() => setDrawer(false)} mode={mode} setMode={setMode} />}
+          {drawer && <Drawer t={t} active={active} go={go} close={() => setDrawer(false)} mode={mode} setMode={setMode} lang={lang} setLang={setLang} />}
         </div>
       )}
     </div>
@@ -950,11 +950,8 @@ function DesktopNav({ t, active, go, lang, setLang, mode, setMode }) {
             <NavRow k="help" t={t} active={active} go={go} />
           </>
         )}
-        {groom && <div style={{ flex: 1 }} />}
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase",
-          color: C.sub, padding: "12px 12px 6px" }}>{t.language}</div>
-        <LangPicker lang={lang} setLang={setLang} block />
-      </aside>
+        <div style={{ flex: 1 }} />
+    </aside>
     </>
   );
 }
@@ -1078,7 +1075,6 @@ function TopBar({ t, active, route, setRoute, onMenu, lang, setLang }) {
         </>
       )}
       <div style={{ flex: 1 }} />
-      <LangMenu lang={lang} setLang={setLang} t={t} />
       <button className="ev-tap" style={iconBtn}><Bell size={20} /></button>
       {active === "horses" && route.name === "list" && (
         <button onClick={() => setRoute({ name: "add" })} className="ev-tap"
@@ -1210,7 +1206,7 @@ function BottomNav({ t, active, go, mode }) {
   );
 }
 
-function Drawer({ t, active, go, close, mode, setMode }) {
+function Drawer({ t, active, go, close, mode, setMode, lang, setLang }) {
   const groom = mode === "groom";
   const renderGroup = (label, keys, fin) => (
     <>
@@ -1246,9 +1242,12 @@ function Drawer({ t, active, go, close, mode, setMode }) {
         <style>{`@keyframes evSlide{from{transform:translateX(-100%)}to{transform:none}}`}</style>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Brand />
-          <button onClick={close} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
-            <X size={22} />
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <LangMenu lang={lang} setLang={setLang} t={t} />
+            <button onClick={close} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
+              <X size={22} />
+            </button>
+          </div>
         </div>
         <ModeBadge t={t} mode={mode} setMode={setMode} inDrawer />
         <div style={{ height: 6 }} />
@@ -1637,7 +1636,7 @@ function CalendarScreen({ t, go }) {
   const now = new Date();
   const [year, setYear] = React.useState(now.getFullYear());
   const [month, setMonth] = React.useState(now.getMonth());
-  const [selDay, setSelDay] = React.useState(null);
+  const [selDay, setSelDay] = React.useState(now.getDate());
   const [view, setView] = React.useState('month'); // 'month' | 'week'
   const [addModal, setAddModal] = React.useState(false);
   const [notifEnabled, setNotifEnabled] = React.useState(
@@ -1830,8 +1829,8 @@ function CalendarScreen({ t, go }) {
           </button>
           {/* ADD EVENT BUTTON */}
           <button onClick={() => { if (selDay) setPickerDate(dayStr(selDay)); else setPickerDate(todayStr); }} className="ev-tap"
-            style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: C.mint, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Plus size={14} /> {t.add || 'Add'}
+            style={{ width: 38, height: 38, borderRadius: 10, border: "none", background: C.mint, color: "#fff", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, boxShadow: "0 4px 12px rgba(47,182,160,.4)" }}>
+            <Plus size={20} />
           </button>
           {!notifEnabled && 'Notification' in window && (
             <button onClick={enableNotifications} className="ev-tap" style={{ padding: '8px 14px', borderRadius: 10, border: `1px solid ${C.amber}`, background: `${C.amber}18`, cursor: 'pointer', fontSize: 13, fontWeight: 700, color: C.amber, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1859,6 +1858,76 @@ function CalendarScreen({ t, go }) {
       {/* ---- Main Body: Grid + Detail ---- */}
       <div className="ev-cal-body" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
 
+        {/* ---- Day Detail Panel ---- */}
+        {selDay && (
+          <div className="ev-cal-detail" style={{
+            width: 300, flexShrink: 0, borderRight: `1px solid ${C.line}`,
+            display: 'flex', flexDirection: 'column', background: '#fff',
+            animation: 'evFade .2s ease',
+          }}>
+            {/* Panel header */}
+            <div style={{ padding: '18px 20px 14px', borderBottom: `1px solid ${C.line}` }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>{monthName}</div>
+              <div style={{ fontSize: 32, fontWeight: 800, color: C.ink, lineHeight: 1 }}>{selDay}</div>
+              <div style={{ fontSize: 13, color: C.sub, marginTop: 4 }}>
+                {selEvents.length === 0 ? (t.nothingPlanned || 'Nothing planned') : `${selEvents.length} event${selEvents.length > 1 ? 's' : ''}`}
+              </div>
+            </div>
+
+            {/* ADD button in panel */}
+            <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.line}` }}>
+              <button onClick={() => setPickerDate(dayStr(selDay))} className="ev-tap"
+                style={{ width: '100%', padding: '12px', borderRadius: 14, border: `1.5px dashed ${C.mint}`, background: `${C.mint}08`, color: C.mint, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <Plus size={18} /> {t.addActivity}
+              </button>
+            </div>
+
+            {/* Event list */}
+            <div className="ev-scroll" style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {selEvents.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                  <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
+                  <div style={{ color: C.sub, fontSize: 14 }}>{t.nothingPlanned || 'Nothing planned'}</div>
+                </div>
+              ) : (
+                selEvents.map((ev, i) => (
+                  <div key={i} style={{
+                    borderRadius: 14, padding: '12px 14px',
+                    background: `${ev.color}12`,
+                    border: `1.5px solid ${ev.color}33`,
+                    opacity: ev.done ? 0.65 : 1,
+                    position: 'relative',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                      <span style={{
+                        width: 32, height: 32, borderRadius: 10, flexShrink: 0,
+                        background: `${ev.color}22`, display: 'grid', placeItems: 'center',
+                        fontSize: 16,
+                      }}>{ev.emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, textDecoration: ev.done ? 'line-through' : 'none' }}>
+                          {ev.title}
+                        </div>
+                        {ev.subtitle && <div style={{ fontSize: 12, color: C.sub, marginTop: 1 }}>🐴 {ev.subtitle}</div>}
+                        {ev.time && <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>🕐 {ev.time}</div>}
+                        {ev.performedBy && <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>👤 {ev.performedBy}</div>}
+                        {ev.location && (
+                          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}`}
+                            target="_blank" rel="noreferrer"
+                            style={{ fontSize: 12, color: ev.color, fontWeight: 700, textDecoration: 'none', marginTop: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <MapPin size={11} /> {ev.location}
+                          </a>
+                        )}
+                      </div>
+                      {ev.done && <span style={{ fontSize: 11, fontWeight: 700, color: ev.color, background: `${ev.color}20`, padding: '3px 8px', borderRadius: 8 }}>Done</span>}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
         {/* ---- Calendar Grid (Scrollable horizontally on mobile) ---- */}
         <div className="ev-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowX: 'auto' }}>
           <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 4, minWidth: view === 'month' ? 600 : '100%', flex: 1 }}>
@@ -1942,76 +2011,6 @@ function CalendarScreen({ t, go }) {
           </div>
         </div>
 
-        {/* ---- Day Detail Panel ---- */}
-        {selDay && (
-          <div className="ev-cal-detail" style={{
-            width: 300, flexShrink: 0, borderLeft: `1px solid ${C.line}`,
-            display: 'flex', flexDirection: 'column', background: '#fff',
-            animation: 'evFade .2s ease',
-          }}>
-            {/* Panel header */}
-            <div style={{ padding: '18px 20px 14px', borderBottom: `1px solid ${C.line}` }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>{monthName}</div>
-              <div style={{ fontSize: 32, fontWeight: 800, color: C.ink, lineHeight: 1 }}>{selDay}</div>
-              <div style={{ fontSize: 13, color: C.sub, marginTop: 4 }}>
-                {selEvents.length === 0 ? (t.nothingPlanned || 'Nothing planned') : `${selEvents.length} event${selEvents.length > 1 ? 's' : ''}`}
-              </div>
-            </div>
-
-            {/* ADD button in panel */}
-            <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.line}` }}>
-              <button onClick={() => setPickerDate(dayStr(selDay))} className="ev-tap"
-                style={{ width: '100%', padding: '12px', borderRadius: 14, border: `1.5px dashed ${C.mint}`, background: `${C.mint}08`, color: C.mint, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <Plus size={18} /> {t.addActivity}
-              </button>
-            </div>
-
-            {/* Event list */}
-            <div className="ev-scroll" style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {selEvents.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                  <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
-                  <div style={{ color: C.sub, fontSize: 14 }}>{t.nothingPlanned || 'Nothing planned'}</div>
-                </div>
-              ) : (
-                selEvents.map((ev, i) => (
-                  <div key={i} style={{
-                    borderRadius: 14, padding: '12px 14px',
-                    background: `${ev.color}12`,
-                    border: `1.5px solid ${ev.color}33`,
-                    opacity: ev.done ? 0.65 : 1,
-                    position: 'relative',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                      <span style={{
-                        width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-                        background: `${ev.color}22`, display: 'grid', placeItems: 'center',
-                        fontSize: 16,
-                      }}>{ev.emoji}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, textDecoration: ev.done ? 'line-through' : 'none' }}>
-                          {ev.title}
-                        </div>
-                        {ev.subtitle && <div style={{ fontSize: 12, color: C.sub, marginTop: 1 }}>🐴 {ev.subtitle}</div>}
-                        {ev.time && <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>🕐 {ev.time}</div>}
-                        {ev.performedBy && <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>👤 {ev.performedBy}</div>}
-                        {ev.location && (
-                          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}`}
-                            target="_blank" rel="noreferrer"
-                            style={{ fontSize: 12, color: ev.color, fontWeight: 700, textDecoration: 'none', marginTop: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
-                            <MapPin size={11} /> {ev.location}
-                          </a>
-                        )}
-                      </div>
-                      {ev.done && <span style={{ fontSize: 11, fontWeight: 700, color: ev.color, background: `${ev.color}20`, padding: '3px 8px', borderRadius: 8 }}>Done</span>}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* ---- Upcoming strip at bottom ---- */}
       <div style={{ borderTop: `1px solid ${C.line}`, padding: '14px 20px', background: '#fafbfc' }}>
