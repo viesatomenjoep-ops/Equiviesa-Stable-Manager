@@ -887,10 +887,10 @@ function ModeGate({ t, onPick, lang, setLang }) {
           </h1>
           <p style={{ color: C.sub, fontSize: 16, margin: "0 0 32px" }}>{t.chooseModeSub}</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
-            <ModeCard t={t} onClick={() => setPending("groom")} color={C.amber} icon={<Carrot size={34} />}
-              title={t.groom} desc={t.groomDesc} />
             <ModeCard t={t} onClick={() => setPending("manager")} color={C.mint} icon={<Sparkles size={34} />}
               title={t.manager} desc={t.managerDesc} />
+            <ModeCard t={t} onClick={() => setPending("groom")} color={C.amber} icon={<Carrot size={34} />}
+              title={t.groom} desc={t.groomDesc} />
           </div>
         </div>
       </div>
@@ -1549,14 +1549,16 @@ function Divider({ label }) {
 
 /* ---------- Horses: detail ---------- */
 function HorseDetail({ t, id, setRoute }) {
-  const { horses, deleteHorse } = useStore();
+  const { horses, deleteHorse, stalls } = useStore();
   const h = horses.find((x) => x.id === id);
   if (!h) { setRoute({ name: "list" }); return null; }
+
+  const stall = stalls?.find(s => s.horse_id === id);
 
   const rows = [
     [t.studbook, h.studbook], [t.sex, h.sex && t[h.sex]], [t.color, h.color],
     [t.birthdate, h.birthdate], [t.ueln, h.ueln], [t.chip, h.chip],
-    [t.feiid, h.feiid], [t.location, h.location],
+    [t.feiid, h.feiid], ["Box / Stall", stall ? stall.name : null], [t.location, h.location],
   ].filter(([, v]) => v);
 
   const del = () => { if (window.confirm(t.confirmDelete || "Delete?")) { deleteHorse(id); setRoute({ name: "list" }); } };
