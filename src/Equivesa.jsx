@@ -385,15 +385,18 @@ function StoreProvider({ children }) {
   const [supplies, setSupplies] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [healthRecords, setHealthRecords] = useState([]);
+  const [embryos, setEmbryos] = useState([]);
+  const [foals, setFoals] = useState([]);
+  const [stalls, setStalls] = useState([]);
 
   React.useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         fetchHorses(); fetchTxns(); fetchSupplies(); fetchUsers(); fetchFeed();
-        fetchTasks(); fetchHealthRecords();
+        fetchTasks(); fetchHealthRecords(); fetchEmbryos(); fetchFoals(); fetchStalls();
       } else {
         setHorses([]); setTxns([]); setSupplies([]); setUsers([]); setFeed({});
-        setTasks([]); setHealthRecords([]);
+        setTasks([]); setHealthRecords([]); setEmbryos([]); setFoals([]); setStalls([]);
       }
     });
     return () => subscription.unsubscribe();

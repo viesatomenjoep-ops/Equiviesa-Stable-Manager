@@ -532,3 +532,21 @@ $$ language plpgsql security definer;
 create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- 15. STALLS / BOXES (Map Editor)
+create table if not exists public.stalls (
+    id uuid default gen_random_uuid() primary key,
+    created_at timestamptz default now() not null,
+    location_id uuid references public.locations(id) on delete cascade not null,
+    horse_id uuid references public.horses(id) on delete set null,
+    name text not null, -- e.g. "Box 1"
+    grid_x integer default 0,
+    grid_y integer default 0,
+    width integer default 1,
+    height integer default 1
+);
+
+create index if not exists stalls_location_idx on public.stalls (location_id);
+
+alter table public.stalls enable row level security;
+create policy "Allow authenticated CRUD" on public.stalls for all using (auth.role() = 'authenticated');
