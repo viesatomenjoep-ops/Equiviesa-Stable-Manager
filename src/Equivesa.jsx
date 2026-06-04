@@ -9,7 +9,8 @@ import { supabase } from "./supabaseClient";
 import { 
   EditorLayout, PhotoUpload, ContactEditor, ClientEditor, LocationEditor, 
   DocumentEditor, SupplyEditor, FinanceEditor, TaskEditor, HealthEditor, 
-  BookingEditor, InvoiceEditor, CatalogEditor, UserEditor, FeedingEditor, QuickReportEditor
+  BookingEditor, InvoiceEditor, CatalogEditor, UserEditor, FeedingEditor, QuickReportEditor,
+  MareEditor, EmbryoEditor, FoalEditor
 } from "./Editors";
 
 /* ============================================================
@@ -2222,7 +2223,10 @@ function GenericModuleScreen({ t, active }) {
                  active === 'documents' ? DocumentEditor :
                  active === 'bookings' ? BookingEditor :
                  active === 'invoices' ? InvoiceEditor :
-                 active === 'catalog' ? CatalogEditor : null;
+                 active === 'catalog' ? CatalogEditor :
+                 active === 'mares' ? MareEditor :
+                 active === 'embryos' ? EmbryoEditor :
+                 active === 'foals' ? FoalEditor : null;
 
   return (
     <div className="ev-card">

@@ -783,3 +783,108 @@ export function QuickReportEditor({ t, onClose, onSave }) {
     </EditorLayout>
   );
 }
+
+export function MareEditor({ t, initialData, onClose, onSave, onDelete }) {
+  const [f, setF] = useState(initialData || { stallion_name: "", service_date: "", expected_foal_date: "", status: "inseminated" });
+  const [err, setErr] = useState(false);
+  const STATUSES = [
+    { id: "inseminated", emoji: "💉", label: "Inseminated" },
+    { id: "confirmed_pregnant", emoji: "✅", label: "Pregnant" },
+    { id: "empty", emoji: "❌", label: "Empty" },
+    { id: "aborted", emoji: "⚠️", label: "Aborted" },
+    { id: "foaled", emoji: "🐴", label: "Foaled" }
+  ];
+
+  return (
+    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Mare Record"} icon={Heart} color={C.pink} onClose={onClose} onSave={() => f.stallion_name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
+      <Field label="Stallion Name" required>
+        <input value={f.stallion_name || ""} onChange={(e) => { setF({...f, stallion_name: e.target.value}); setErr(false); }} placeholder="e.g. Chacco-Blue" style={inputStyle(err)} />
+      </Field>
+
+      <Field label="Status">
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
+          {STATUSES.map(cat => {
+            const isSel = f.status === cat.id;
+            return (
+              <button key={cat.id} type="button" onClick={() => setF({...f, status: cat.id})} className="ev-tap"
+                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${isSel ? C.pink : C.line}`, background: isSel ? C.pink : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+                <span style={{ fontSize: 20 }}>{cat.emoji}</span>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>{t[cat.id] || cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label="Service Date">
+            <input type="date" value={f.service_date || ""} onChange={(e) => setF({...f, service_date: e.target.value})} style={{...inputStyle(), background: C.surface}} />
+          </Field>
+          <Field label="Expected Foal Date">
+            <input type="date" value={f.expected_foal_date || ""} onChange={(e) => setF({...f, expected_foal_date: e.target.value})} style={{...inputStyle(), background: C.surface}} />
+          </Field>
+        </div>
+      </div>
+    </EditorLayout>
+  );
+}
+
+export function EmbryoEditor({ t, initialData, onClose, onSave, onDelete }) {
+  const [f, setF] = useState(initialData || { stallion_name: "", flush_date: "", status: "frozen" });
+  const [err, setErr] = useState(false);
+  const STATUSES = [
+    { id: "frozen", emoji: "❄️", label: "Frozen" },
+    { id: "transferred", emoji: "🧬", label: "Transferred" },
+    { id: "pregnant", emoji: "✅", label: "Pregnant" },
+    { id: "failed", emoji: "❌", label: "Failed" }
+  ];
+
+  return (
+    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Embryo"} icon={Sparkles} color={C.pink} onClose={onClose} onSave={() => f.stallion_name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
+      <Field label="Stallion Name" required>
+        <input value={f.stallion_name || ""} onChange={(e) => { setF({...f, stallion_name: e.target.value}); setErr(false); }} placeholder="e.g. Cornet Obolensky" style={inputStyle(err)} />
+      </Field>
+
+      <Field label="Status">
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
+          {STATUSES.map(cat => {
+            const isSel = f.status === cat.id;
+            return (
+              <button key={cat.id} type="button" onClick={() => setF({...f, status: cat.id})} className="ev-tap"
+                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${isSel ? C.pink : C.line}`, background: isSel ? C.pink : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+                <span style={{ fontSize: 20 }}>{cat.emoji}</span>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>{t[cat.id] || cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <Field label="Flush Date">
+          <input type="date" value={f.flush_date || ""} onChange={(e) => setF({...f, flush_date: e.target.value})} style={{...inputStyle(), background: C.surface}} />
+        </Field>
+      </div>
+    </EditorLayout>
+  );
+}
+
+export function FoalEditor({ t, initialData, onClose, onSave, onDelete }) {
+  const [f, setF] = useState(initialData || { name: "", birthdate: "" });
+  const [err, setErr] = useState(false);
+
+  return (
+    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Foal"} icon={Heart} color={C.pink} onClose={onClose} onSave={() => f.name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
+      <Field label="Foal Name" required>
+        <input value={f.name || ""} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }} placeholder="e.g. Thunder" style={inputStyle(err)} />
+      </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <Field label="Birthdate">
+          <input type="date" value={f.birthdate || ""} onChange={(e) => setF({...f, birthdate: e.target.value})} style={{...inputStyle(), background: C.surface}} />
+        </Field>
+      </div>
+    </EditorLayout>
+  );
+}
