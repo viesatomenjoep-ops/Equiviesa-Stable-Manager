@@ -670,15 +670,6 @@ function AppRoot() {
           background: #f8fafc; display: flex; flex-direction: column;
           width: 100%; height: 100%;
         }
-        @media (min-width: 768px) {
-          .ev-modal-overlay { padding: 40px; }
-          .ev-modal-content {
-            max-width: 800px; height: auto; max-height: 100%;
-            border-radius: 28px;
-            box-shadow: 0 30px 80px rgba(14,21,30,0.2), 0 0 0 1px rgba(14,21,30,0.05);
-            overflow: hidden;
-          }
-        }
       `}</style>
 
       {mode === null ? (
@@ -1848,7 +1839,7 @@ function HealthModal({ t, category, initialData, horses, onClose, onSave }) {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Field label={t.selectHorse} required>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+          <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, marginBottom: 4 }}>
             {horses.map(h => (
               <button key={h.id} type="button" onClick={() => { setF({...f, horse_id: h.id}); setErr(false); }} className="ev-tap"
                 style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.horse_id === h.id ? C.coral : C.line}`, background: f.horse_id === h.id ? C.coral : C.surface, color: f.horse_id === h.id ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
