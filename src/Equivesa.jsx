@@ -495,7 +495,8 @@ function StoreProvider({ children }) {
     if (data) setHorses(data.map(h => ({...h, tint: h.tint || HORSE_TINTS[Math.floor(Math.random() * HORSE_TINTS.length)]})));
   };
   const addHorse = async (h) => {
-    const cleanH = cleanObj({ ...h, tint: HORSE_TINTS[horses.length % HORSE_TINTS.length] });
+    const nextNumber = horses.length > 0 ? Math.max(...horses.map(x => x.horse_number || 0)) + 1 : 1;
+    const cleanH = cleanObj({ ...h, horse_number: nextNumber, tint: HORSE_TINTS[horses.length % HORSE_TINTS.length] });
     const { data, error } = await supabase.from('horses').insert([cleanH]).select();
     if (error) { console.error(error); alert("Database Error: " + error.message); }
     if (data) setHorses(prev => [data[0], ...prev]);
@@ -822,16 +823,16 @@ const MODE_PIN = { manager: "1111", groom: "2222" };
 function ModeGate({ t, onPick, lang, setLang }) {
   const [pending, setPending] = useState(null); // 'groom' | 'manager' awaiting PIN
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column",
-      background: C.surface }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 22px",
-        borderBottom: `1px solid ${C.line}` }}>
-        <Brand />
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: C.surface }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", padding: "20px 22px" }}>
         <LangMenu lang={lang} setLang={setLang} t={t} />
       </div>
-      <div style={{ flex: 1, display: "grid", placeItems: "center", padding: "20px 18px 60px", background: C.bg }}>
-        <div style={{ width: "100%", textAlign: "center" }}>
-          <h1 className="ev-display" style={{ fontSize: 34, fontWeight: 700, margin: "0 0 8px", letterSpacing: -0.6, color: C.ink }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 18px 80px" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 40, transform: "scale(1.2)" }}>
+          <Brand />
+        </div>
+        <div style={{ width: "100%", maxWidth: 400, textAlign: "center" }}>
+          <h1 className="ev-display" style={{ fontSize: 34, fontWeight: 800, margin: "0 0 8px", letterSpacing: -0.6, color: C.ink }}>
             {t.chooseMode}
           </h1>
           <p style={{ color: C.sub, fontSize: 16, margin: "0 0 32px" }}>{t.chooseModeSub}</p>
@@ -1185,9 +1186,12 @@ function Drawer({ t, active, go, close, mode, setMode }) {
         <style>{`@keyframes evSlide{from{transform:translateX(-100%)}to{transform:none}}`}</style>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Brand />
-          <button onClick={close} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
-            <X size={22} />
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: C.sub }}>Dashboard</span>
+            <button onClick={close} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
+              <X size={22} />
+            </button>
+          </div>
         </div>
         <ModeBadge t={t} mode={mode} setMode={setMode} inDrawer />
         <div style={{ height: 6 }} />
@@ -1295,7 +1299,7 @@ function HorsesList({ t, setRoute }) {
 function HorseAvatar({ h, size = 52 }) {
   if (h.photo_url) {
     return (
-      <img src={h.photo_url} alt={h.name} style={{ width: size, height: size, borderRadius: "32%", objectFit: "cover", flexShrink: 0 }} />
+      <MediaThumb url={h.photo_url} alt={h.name} style={{ width: size, height: size, borderRadius: "32%", objectFit: "cover", flexShrink: 0 }} />
     );
   }
   return (
@@ -1308,6 +1312,13 @@ function HorseAvatar({ h, size = 52 }) {
   );
 }
 
+function MediaThumb({ url, alt, style }) {
+  if (!url) return null;
+  const isVideo = url.match(/\.(mp4|mov|webm)$/i);
+  if (isVideo) return <video src={url} style={style} muted loop playsInline autoPlay />;
+  return <img src={url} alt={alt} style={style} />;
+}
+
 function HorseCard({ h, t, onClick }) {
   return (
     <button onClick={onClick} className="ev-tap" style={{
@@ -1317,7 +1328,10 @@ function HorseCard({ h, t, onClick }) {
     }}>
       <HorseAvatar h={h} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 17, fontWeight: 600, color: C.ink }}>{h.name}</div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: C.ink }}>
+          {h.horse_number && <span style={{ color: C.sub, marginRight: 6 }}>#{h.horse_number}</span>}
+          {h.name}
+        </div>
         <div style={{ fontSize: 13, color: C.sub, marginTop: 2 }}>
           {[h.sex && t[h.sex], h.studbook].filter(Boolean).join(" · ") || t.profile}
         </div>
@@ -1383,7 +1397,7 @@ function HorseForm({ t, initialData, onDone }) {
           color: C.sub, gap: 4, overflow: "hidden", position: "relative"
         }}>
           {f.photo_url ? (
-            <img src={f.photo_url} alt="Horse" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <MediaThumb url={f.photo_url} alt="Horse" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : uploading ? (
             <span style={{ fontSize: 12 }}>Up...</span>
           ) : (
@@ -1581,37 +1595,85 @@ function CalendarScreen({ t, go }) {
     const map = {};
     const add = (key, ev) => { if (!map[key]) map[key] = []; map[key].push(ev); };
 
+    const applyRecurrence = (baseDateStr, rule, callback) => {
+      if (!rule || rule === 'none') {
+        callback(baseDateStr);
+        return;
+      }
+      const baseDate = new Date(baseDateStr);
+      // Generate instances within a reasonable window (e.g., current year/month context)
+      const start = new Date(year, month - 2, 1);
+      const end = new Date(year, month + 3, 0); 
+      
+      let cur = new Date(baseDate);
+      if (cur > end) return; // Starts in the future
+
+      while (cur <= end) {
+        if (cur >= start) {
+          callback(cur.toISOString().slice(0, 10));
+        }
+        if (rule === 'daily') {
+          cur.setDate(cur.getDate() + 1);
+        } else if (rule === 'weekly') {
+          cur.setDate(cur.getDate() + 7);
+        } else if (rule === 'monthly') {
+          cur.setMonth(cur.getMonth() + 1);
+        } else if (rule === 'yearly') {
+          cur.setFullYear(cur.getFullYear() + 1);
+        } else {
+          break; // unknown or complex rule not supported yet
+        }
+      }
+    };
+
     // Tasks
     tasks.forEach(tk => {
       if (!tk.due_date) return;
-      const key = tk.due_date.slice(0, 10);
-      const horse = horses.find(h => h.id === tk.horse_id);
+      applyRecurrence(tk.due_date, tk.recurrence_rule, (key) => {
+        const horse = horses.find(h => h.id === tk.horse_id);
+        add(key, {
+          id: tk.id, type: 'task', done: tk.is_completed,
+          title: tk.title || 'Task',
+          subtitle: horse ? horse.name : (tk.category || ''),
+          color: CAL_EVENT_TYPES.task.color,
+          emoji: CAL_EVENT_TYPES.task.emoji,
+          time: tk.start_time || null,
+          location: tk.location || null,
+          assignedTo: tk.staff_id || tk.assigned_to || null,
+        });
+      });
+    });
+
+    // Supplies
+    supplies.forEach(s => {
+      if (!s.created_at) return;
+      const key = s.created_at.slice(0, 10);
       add(key, {
-        id: tk.id, type: 'task', done: tk.is_completed,
-        title: tk.title || 'Task',
-        subtitle: horse ? horse.name : (tk.category || ''),
-        color: CAL_EVENT_TYPES.task.color,
-        emoji: CAL_EVENT_TYPES.task.emoji,
-        time: tk.start_time || null,
-        location: tk.location || null,
-        assignedTo: tk.assigned_to || null,
+        id: s.id, type: "supply", done: s.status === "received",
+        title: s.item_name || s.name || "Supply",
+        subtitle: `Status: ${s.status}`,
+        color: C.coral,
+        emoji: "📦",
+        time: null,
+        location: null,
       });
     });
 
     // Health records
     healthRecords.forEach(hr => {
       if (!hr.scheduled_date) return;
-      const key = hr.scheduled_date.slice(0, 10);
-      const horse = horses.find(h => h.id === hr.horse_id);
-      add(key, {
-        id: hr.id, type: 'health', done: hr.completed,
-        title: t[hr.category] || hr.category,
-        subtitle: horse ? horse.name : '',
-        color: CAL_EVENT_TYPES.health.color,
-        emoji: CAL_EVENT_TYPES.health.emoji,
-        time: null,
-        location: null,
-        performedBy: hr.performed_by || null,
+      applyRecurrence(hr.scheduled_date, hr.recurrence_rule, (key) => {
+        const horse = horses.find(h => h.id === hr.horse_id);
+        add(key, {
+          id: hr.id, type: 'health', done: hr.completed,
+          title: t[hr.category] || hr.category,
+          subtitle: horse ? horse.name : '',
+          color: CAL_EVENT_TYPES.health.color,
+          emoji: CAL_EVENT_TYPES.health.emoji,
+          time: null,
+          location: null,
+          performedBy: hr.performed_by || null,
+        });
       });
     });
 
@@ -1937,7 +1999,7 @@ function CalendarScreen({ t, go }) {
 
 /* ---------- Tasks ---------- */
 function TasksScreen({ t }) {
-  const { tasks, addTask, editTask, toggleTask, deleteTask, horses } = useStore();
+  const { tasks, addTask, editTask, toggleTask, deleteTask, horses, staffMembers } = useStore();
   const [tab, setTab] = useState(0); // 0 = open, 1 = completed
   const [modal, setModal] = useState(false);
   const [editObj, setEditObj] = useState(null);
@@ -2016,11 +2078,11 @@ function TasksScreen({ t }) {
       )}
 
       {modal && (
-        <TaskEditor t={t} horses={horses} onClose={() => setModal(false)}
+        <TaskEditor t={t} horses={horses} staffMembers={staffMembers} onClose={() => setModal(false)}
           onSave={(task) => { addTask(task); setModal(false); }} />
       )}
       {editObj && (
-        <TaskEditor t={t} horses={horses} initialData={editObj} onClose={() => setEditObj(null)}
+        <TaskEditor t={t} horses={horses} staffMembers={staffMembers} initialData={editObj} onClose={() => setEditObj(null)}
           onSave={(task) => { editTask(editObj.id, task); setEditObj(null); }}
           onDelete={() => { deleteTask(editObj.id); setEditObj(null); }} />
       )}
@@ -2036,7 +2098,7 @@ function HealthScreenRouter({ t, route, setRoute }) {
   if (route.name === "add") {
     return (
       <div style={wrap}>
-        <HealthEditor t={t} horses={horses}
+        <HealthEditor t={t} horses={horses} staffMembers={staffMembers}
           onClose={() => setRoute({ name: "list" })}
           onSave={async (rec) => { await addHealthRecord(rec); setRoute({ name: "list" }); }} />
       </div>
@@ -2045,7 +2107,7 @@ function HealthScreenRouter({ t, route, setRoute }) {
   if (route.name === "edit") {
     return (
       <div style={wrap}>
-        <HealthEditor t={t} horses={horses} initialData={route.data}
+        <HealthEditor t={t} horses={horses} staffMembers={staffMembers} staffMembers={staffMembers} initialData={route.data}
           onClose={() => setRoute({ name: "list" })}
           onSave={async (rec) => { await editHealthRecord(route.data.id, rec); setRoute({ name: "list" }); }}
           onDelete={async () => { await deleteHealthRecord(route.data.id); setRoute({ name: "list" }); }} />
@@ -2061,6 +2123,10 @@ function HealthScreen({ t, setRoute }) {
   const [activeCat, setActiveCat] = useState(null); // null = overview, string = category subpage
   const [modal, setModal] = useState(null); // keep for backward compat, but route takes priority
   const [editRecord, setEditRecord] = useState(null);
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
 
   // If setRoute available, always use full-page editor
   const openAdd = (cat) => {
@@ -2194,11 +2260,11 @@ function HealthScreen({ t, setRoute }) {
       </div>
 
       {modal && (
-        <HealthEditor t={t} category={modal} horses={horses} onClose={() => setModal(null)}
+        <HealthEditor t={t} category={modal} horses={horses} staffMembers={staffMembers} onClose={() => setModal(null)}
           onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />
       )}
       {editRecord && (
-        <HealthEditor t={t} horses={horses} initialData={editRecord} onClose={() => setEditRecord(null)}
+        <HealthEditor t={t} horses={horses} staffMembers={staffMembers} staffMembers={staffMembers} initialData={editRecord} onClose={() => setEditRecord(null)}
           onSave={(rec) => { editHealthRecord(editRecord.id, rec); setEditRecord(null); }}
           onDelete={() => { deleteHealthRecord(editRecord.id); setEditRecord(null); }} />
       )}
@@ -2402,38 +2468,26 @@ function FeedingScreen({ t, go, setRoute }) {
       {tab === 0 ? (
         <>
           <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 20 }}>
-            {/* Slot selector */}
-            <div style={{ display: "inline-flex", gap: 3, background: C.bg, borderRadius: 16, padding: 4, alignSelf: "flex-start" }}>
-              {SLOTS.map((s) => (
-                <button key={s} onClick={() => setSlot(s)} className="ev-tap" style={{
-                  border: "none", cursor: "pointer", borderRadius: 14, padding: "16px 28px",
-                  fontSize: 16, fontWeight: 600, fontFamily: "inherit",
-                  background: slot === s ? C.sky : "transparent", color: slot === s ? "#fff" : C.sub }}>
-                  {t[s]}
-                </button>
-              ))}
-            </div>
-            
             {/* Horse filter pill row */}
-            <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8 }}>
+            <div className="ev-scroll" style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingBottom: 8 }}>
               <button type="button" onClick={() => setHorseFilter("")} className="ev-tap"
-                style={{ flexShrink: 0, padding: "14px 22px", borderRadius: 16, border: `1.5px solid ${!horseFilter ? C.sky : C.line}`, background: !horseFilter ? C.sky : C.surface, color: !horseFilter ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                style={{ flexShrink: 0, padding: "10px 18px", borderRadius: 16, border: `1.5px solid ${!horseFilter ? C.sky : C.line}`, background: !horseFilter ? C.sky : C.surface, color: !horseFilter ? "#fff" : C.sub, fontSize: 14, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
                 {t.allHorsesShort}
               </button>
               {horses.map(h => (
                 <button key={h.id} type="button" onClick={() => setHorseFilter(String(h.id))} className="ev-tap"
-                  style={{ flexShrink: 0, padding: "14px 22px", borderRadius: 16, border: `1.5px solid ${horseFilter === String(h.id) ? C.sky : C.line}`, background: horseFilter === String(h.id) ? C.sky : C.surface, color: horseFilter === String(h.id) ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                  style={{ flexShrink: 0, padding: "10px 18px", borderRadius: 16, border: `1.5px solid ${horseFilter === String(h.id) ? C.sky : C.line}`, background: horseFilter === String(h.id) ? C.sky : C.surface, color: horseFilter === String(h.id) ? "#fff" : C.sub, fontSize: 14, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
                   {h.name}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* per-horse feed rows for selected slot */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* per-horse feed rows for all slots vertically */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {shown.map((h) => {
               const horseHasFeed = feed[h.id] && (SLOTS.some(s => (feed[h.id][s] || []).length > 0));
-              const items = (feed[h.id] && feed[h.id][slot]) || [];
+              
               return (
                 <div key={h.id} style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 20, overflow: "hidden" }}>
                   {/* Horse header */}
@@ -2442,17 +2496,9 @@ function FeedingScreen({ t, go, setRoute }) {
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 16, fontWeight: 700, color: C.ink }}>{h.name}</div>
                       <div style={{ fontSize: 12, color: C.sub }}>
-                        {horseHasFeed
-                          ? SLOTS.filter(s => (feed[h.id]?.[s] || []).length > 0)
-                              .map(s => `${SLOT_EMOJIS[s]} ${t[s] || s}`).join("  ")
-                          : "⚠️ Geen schema"}
+                        {horseHasFeed ? "Actief schema" : "⚠️ Geen schema"}
                       </div>
                     </div>
-                    <button onClick={() => setAddFor(h.id)} className="ev-tap" style={{
-                      width: 34, height: 34, borderRadius: 10, border: "none", cursor: "pointer",
-                      background: `${C.amber}1f`, color: C.amber, display: "grid", placeItems: "center" }}>
-                      <Plus size={19} />
-                    </button>
                   </div>
 
                   {/* Quick-setup banner wanneer helemaal geen schema */}
@@ -2460,20 +2506,6 @@ function FeedingScreen({ t, go, setRoute }) {
                     <div style={{ padding: "16px 18px", background: `${C.amber}08`, borderBottom: `1px solid ${C.amber}22` }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: C.amber, marginBottom: 10 }}>
                         🥕 Geen voedingsschema — zet er snel één op!
-                      </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
-                        {["morning", "noon", "evening"].map(sl => (
-                          <div key={sl} style={{ background: C.surface, borderRadius: 12, padding: "10px 12px", border: `1px solid ${C.line}` }}>
-                            <div style={{ fontSize: 16, marginBottom: 4 }}>{SLOT_EMOJIS[sl]}</div>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: C.sub, textTransform: "uppercase", marginBottom: 6 }}>{t[sl] || sl}</div>
-                            {DEFAULT_SCHEDULE.filter(d => d.slot === sl).map((d, i) => (
-                              <div key={i} style={{ fontSize: 12, color: C.ink, display: "flex", justifyContent: "space-between" }}>
-                                <span>{trFeed(d.product, t)}</span>
-                                <span style={{ color: C.sub }}>{d.qty}</span>
-                              </div>
-                            ))}
-                          </div>
-                        ))}
                       </div>
                       <button
                         disabled={settingUp === h.id}
@@ -2488,32 +2520,45 @@ function FeedingScreen({ t, go, setRoute }) {
                     </div>
                   )}
 
-                  {/* Items voor geselecteerde slot */}
-                  <div style={{ padding: "12px 18px" }}>
-                    {items.length === 0 ? (
-                      <button onClick={() => setAddFor(h.id)} className="ev-tap" style={{
-                        display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: 14,
-                        border: `1.5px dashed ${C.amber}`, background: `${C.amber}11`, color: C.amber,
-                        fontSize: 14.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", width: "100%"
-                      }}>
-                        <Plus size={18} strokeWidth={2.5} /> {t.add} {SLOT_EMOJIS[slot]} {t[slot] || slot}
-                      </button>
-                    ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                        {items.map((it) => (
-                          <div key={it.id} style={{ display: "flex", alignItems: "center", gap: 10,
-                            background: C.field, borderRadius: 11, padding: "10px 14px" }}>
-                            <Carrot size={17} color={C.amber} />
-                            <span style={{ flex: 1, fontSize: 14.5, fontWeight: 500 }}>{trFeed(it.product, t)}</span>
-                            <span style={{ fontSize: 14, color: C.sub, fontWeight: 600 }}>{it.qty}</span>
-                            <button onClick={() => deleteFeedItem(h.id, slot, it.id)} className="ev-tap"
-                              style={{ border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 2 }}>
-                              <Trash2 size={15} />
+                  {/* Items voor slots: morning, noon, evening */}
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    {["morning", "noon", "evening"].map(sl => {
+                      const items = (feed[h.id] && feed[h.id][sl]) || [];
+                      return (
+                        <div key={sl} style={{ borderBottom: sl === "evening" ? "none" : `1px solid ${C.line}`, padding: "16px 18px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>
+                              {SLOT_EMOJIS[sl]} {t[sl] || sl}
+                            </div>
+                            <button onClick={() => { setSlot(sl); setAddFor(h.id); }} className="ev-tap" style={{
+                              background: `${C.amber}1f`, color: C.amber, border: "none", borderRadius: 10, padding: "6px 12px",
+                              fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4
+                            }}>
+                              <Plus size={14} strokeWidth={2.5} /> {t.add}
                             </button>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          
+                          {items.length === 0 ? (
+                            <div style={{ fontSize: 13, color: C.sub }}>{t.noFeedHorse || "Niets gepland"}</div>
+                          ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                              {items.map((it) => (
+                                <div key={it.id} style={{ display: "flex", alignItems: "center", gap: 10,
+                                  background: C.field, borderRadius: 12, padding: "10px 14px" }}>
+                                  <Carrot size={16} color={C.amber} />
+                                  <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{trFeed(it.product, t)}</span>
+                                  <span style={{ fontSize: 13, color: C.sub, fontWeight: 600 }}>{it.qty}</span>
+                                  <button onClick={() => deleteFeedItem(h.id, sl, it.id)} className="ev-tap"
+                                    style={{ border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 4 }}>
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -2851,6 +2896,7 @@ function GenericModuleScreen({ t, active, setRoute }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 17, fontWeight: 600, color: C.ink }}>{displayName(x)}</div>
                 {x.status && <div style={{ fontSize: 13, color: C.sub, marginTop: 2 }}>{x.status}</div>}
+                {x.category && !x.status && <div style={{ fontSize: 13, color: C.sub, marginTop: 2, textTransform: "capitalize" }}>{x.category.replace("_", " ")}</div>}
               </div>
               <ChevronRight size={20} color={C.sub} />
             </div>
@@ -3102,12 +3148,52 @@ function GroomDashboard({ t, go }) {
           </div>
         </div>
         <div style={{ fontSize: 13, opacity: 0.85 }}>{pct === 100 ? t.allDone : t.remaining(todayTasks.length - done)}</div>
-        {/* Report Issue button */}
-        <button onClick={() => setReportModal(true)} className="ev-tap"
-          style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,0.25)', border: 'none', borderRadius: 12, padding: '8px 14px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <AlertTriangle size={15} /> {t.reportIssue}
+      </div>
+
+      {/* Top actions */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <button onClick={() => setRoute({ name: 'tasks', active: 'tasks' })} className="ev-tap" style={{
+          background: C.amber, border: "none", borderRadius: 20, padding: 18, color: "#fff",
+          display: "flex", alignItems: "center", gap: 14, cursor: "pointer",
+          boxShadow: `0 12px 28px ${C.amber}4d`
+        }}>
+          <div style={{ background: "rgba(255,255,255,0.2)", width: 44, height: 44, borderRadius: 14, display: "grid", placeItems: "center" }}>
+            <Plus size={24} />
+          </div>
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>{t.addTask || "Add task"}</div>
+            <div style={{ fontSize: 13, opacity: 0.9 }}>{t.tapToCreate || "Tap to create"}</div>
+          </div>
+        </button>
+        <button onClick={() => go('calendar')} className="ev-tap" style={{
+          background: C.sky, border: "none", borderRadius: 20, padding: 18, color: "#fff",
+          display: "flex", alignItems: "center", gap: 14, cursor: "pointer",
+          boxShadow: `0 12px 28px ${C.sky}4d`
+        }}>
+          <div style={{ background: "rgba(255,255,255,0.2)", width: 44, height: 44, borderRadius: 14, display: "grid", placeItems: "center" }}>
+            <Calendar size={24} />
+          </div>
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>{t.calendar}</div>
+            <div style={{ fontSize: 13, opacity: 0.9 }}>{t.viewSchedule || "View schedule"}</div>
+          </div>
         </button>
       </div>
+
+      {/* Quick Report Button positioned nicely */}
+      <button onClick={() => setReportModal(true)} className="ev-tap" style={{
+        display: "flex", alignItems: "center", gap: 14, width: "100%",
+        background: C.surface, border: `1.5px dashed ${C.amber}80`, borderRadius: 20, padding: 18,
+        color: C.ink, fontSize: 16, fontWeight: 700, cursor: "pointer", justifyContent: "flex-start",
+      }}>
+        <div style={{ background: `${C.amber}15`, width: 44, height: 44, borderRadius: 14, display: "grid", placeItems: "center", flexShrink: 0 }}>
+          <AlertTriangle size={24} color={C.amber} strokeWidth={2.5} />
+        </div>
+        <div style={{ textAlign: "left" }}>
+          <div>{t.quickReport || "Quick Report"}</div>
+          <div style={{ fontSize: 13, color: C.sub, fontWeight: 500, marginTop: 2 }}>{t.reportIssue || "Report an issue or missing item"}</div>
+        </div>
+      </button>
 
       {reportModal && <QuickReportEditor t={t} onClose={() => setReportModal(false)} onSave={(r) => { addSupply(r); setReportModal(false); }} />}
 
@@ -3333,6 +3419,25 @@ function ManagerDashboard({ t, go }) {
           })
         )}
       </div>
+
+      {/* ---- Pending Supplies ---- */}
+      {pendingSupplies > 0 && (
+        <div style={{ background: '#fff', borderRadius: 20, border: `1px solid ${C.coral}40`, overflow: 'hidden' }}>
+          <div style={{ padding: '16px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.coral }}>📦 Supplies to Order ({pendingSupplies})</div>
+            <button onClick={() => go('supplies')} style={{ fontSize: 12, color: C.coral, background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer' }}>View All</button>
+          </div>
+          {supplies.filter(s => s.status === 'needed').slice(0,3).map(s => (
+            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px', borderTop: `1px solid ${C.line}` }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{s.item_name || s.name}</div>
+                <div style={{ fontSize: 12, color: C.sub }}>Qty: {s.qty || s.quantity || 1}</div>
+              </div>
+              <button onClick={() => go('supplies')} style={{ padding: '6px 12px', borderRadius: 10, background: `${C.coral}14`, color: C.coral, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Order</button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ---- Week planning ---- */}
       <div style={{ background: '#fff', borderRadius: 20, border: `1px solid ${C.line}`, overflow: 'hidden' }}>

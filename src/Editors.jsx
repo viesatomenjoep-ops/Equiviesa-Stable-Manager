@@ -28,7 +28,7 @@ function Field({ label, required, children }) {
   );
 }
 
-export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon = Camera, accept = "image/*,application/pdf", label = "Upload" }) {
+export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon = Camera, accept = "image/*,video/*,application/pdf", label = "Upload" }) {
   const [error, setError] = React.useState(null);
   const [progress, setProgress] = React.useState(0);
 
@@ -36,9 +36,9 @@ export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setError("File too large — max 10 MB");
+    // Validate file size (max 50MB for videos)
+    if (file.size > 50 * 1024 * 1024) {
+      setError("File too large — max 50 MB");
       return;
     }
 
@@ -51,7 +51,7 @@ export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon
     formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "equivesa_uploads");
 
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "daj1lyfgk";
-    const endpoint = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+    const endpoint = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
 
     try {
       setProgress(40);
@@ -62,7 +62,7 @@ export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon
         onChange(data.secure_url);
         setProgress(100);
       } else if (data.error) {
-        // Cloudinary returned an error (e.g. preset not Unsigned)
+        // Cloudinary returned an error
         setError(`Upload error: ${data.error.message}`);
       } else {
         setError("Upload failed — check Cloudinary preset settings");
@@ -77,6 +77,7 @@ export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon
   };
 
   const isPdf = url && url.toLowerCase().includes(".pdf");
+  const isVideo = url && url.match(/\.(mp4|mov|webm)$/i);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 28, gap: 10 }}>
@@ -90,7 +91,9 @@ export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon
         boxShadow: url ? "0 8px 24px rgba(47,182,160,.18)" : "0 4px 12px rgba(0,0,0,.04)",
         transition: "all .2s",
       }}>
-        {url && !isPdf ? (
+        {url && isVideo ? (
+          <video src={url} autoPlay muted loop playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : url && !isPdf ? (
           <img src={url} alt="Uploaded" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : url && isPdf ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: 12 }}>
@@ -98,21 +101,17 @@ export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon
             <span style={{ fontSize: 11, fontWeight: 700, color: C.mint, textAlign: "center" }}>PDF</span>
           </div>
         ) : uploading ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: "50%",
-              border: `3px solid ${C.line}`, borderTopColor: C.mint,
-              animation: "evRotate 0.8s linear infinite"
-            }} />
-            <span style={{ fontSize: 12, fontWeight: 700, color: C.mint }}>{progress}%</span>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 24, height: 24, borderRadius: "50%", border: `3px solid ${C.mint}40`, borderTopColor: C.mint, animation: "spin 1s linear infinite" }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: C.mint }}>{progress}%</span>
           </div>
         ) : (
           <>
-            <Icon size={34} strokeWidth={1.5} color={error ? C.coral : C.sub} />
-            <span style={{ fontSize: 12, fontWeight: 700, color: error ? C.coral : C.sub }}>{label}</span>
+            <Icon size={28} color={C.sub} strokeWidth={2.5} />
+            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>{label}</span>
           </>
         )}
-        <input type="file" accept={accept} onChange={handleUpload} style={{ display: "none" }} />
+        <input type="file" accept={accept} onChange={handleUpload} style={{ display: "none" }} disabled={uploading} />
       </label>
 
       {/* Error message */}
@@ -333,7 +332,7 @@ export function DocumentEditor({ t, initialData, horses, onClose, onSave, onDele
 }
 
 
-export function SupplyEditor({ t, initialData, lang, onClose, onSave, onDelete }) {
+export function SupplyEditor({ t, initialData, lang, staffMembers, onClose, onSave, onDelete }) {
   const [f, setF] = useState(initialData || { item_name: "", quantity: "", requested_by: "", notes: "", photo_url: "", amazon_link: "", report_type: "supply" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -375,7 +374,12 @@ export function SupplyEditor({ t, initialData, lang, onClose, onSave, onDelete }
             </div>
           </Field>
           <Field label={t.requestedBy || "Requested By"}>
-            <input value={f.requested_by || ""} onChange={(e) => setF({...f, requested_by: e.target.value})} placeholder="Your name..." style={{...inputStyle(), background: C.surface}} />
+            <select value={f.requested_by || ""} onChange={(e) => setF({...f, requested_by: e.target.value})} style={{...inputStyle(), background: C.surface}}>
+              <option value="">Selecteer...</option>
+              {staffMembers && staffMembers.map(st => (
+                <option key={st.id} value={st.id}>{st.name}</option>
+              ))}
+            </select>
           </Field>
         </div>
 
@@ -461,9 +465,9 @@ export function FinanceEditor({ t, initialData, horses, onClose, onSave, onDelet
   );
 }
 
-export function TaskEditor({ t, initialData, horses, onClose, onSave, onDelete }) {
+export function TaskEditor({ t, initialData, horses, staffMembers, onClose, onSave, onDelete }) {
   const today = new Date().toISOString().slice(0, 10);
-  const [f, setF] = useState(initialData || { title: "", description: "", due_date: today, start_time: "09:00", end_time: "10:00", category: "general", horse_id: null, photo_url: "" });
+  const [f, setF] = useState(initialData || { title: "", description: "", due_date: today, start_time: "", end_time: "", category: "general", horse_id: null, staff_id: null, photo_url: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -520,11 +524,45 @@ export function TaskEditor({ t, initialData, horses, onClose, onSave, onDelete }
             </button>
           ))}
         </div>
-        <input value={f.title} onChange={(e) => { setF({...f, title: e.target.value}); setErr(false); }} placeholder="Or type a custom task..." style={inputStyle(err)} />
+        <input value={f.title || ""} onChange={(e) => { setF({...f, title: e.target.value}); setErr(false); }} placeholder="Or type a custom task..." style={inputStyle(err)} />
       </Field>
 
+      {staffMembers && staffMembers.length > 0 && (
+        <Field label={t.assignedTo || "Assigned To"}>
+          <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8 }}>
+            <button type="button" onClick={() => setF({...f, staff_id: null})} className="ev-tap"
+              style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: 100, border: `1.5px solid ${!f.staff_id ? C.amber : C.line}`, background: !f.staff_id ? `${C.amber}1f` : C.surface, color: !f.staff_id ? C.ink : C.sub, cursor: "pointer", fontWeight: 700, fontSize: 15 }}>
+              🤷 Anyone
+            </button>
+            {staffMembers.map(st => {
+              const isSel = f.staff_id === st.id;
+              return (
+                <button key={st.id} type="button" onClick={() => setF({...f, staff_id: st.id})} className="ev-tap"
+                  style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: 100, border: `1.5px solid ${isSel ? C.amber : C.line}`, background: isSel ? `${C.amber}1f` : C.surface, color: isSel ? C.ink : C.sub, cursor: "pointer", fontWeight: 700, fontSize: 15 }}>
+                  <div style={{ width: 24, height: 24, borderRadius: 12, background: C.sub, border: `2px solid #fff`, overflow: "hidden", display: "grid", placeItems: "center" }}>
+                    {st.photo_url ? <img src={st.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/> : <User size={14} color="#fff"/>}
+                  </div>
+                  {st.name}
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+      )}
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
-        <Field label={t.taskDue || "Date"}><input type="date" value={f.due_date || ""} onChange={(e) => setF({...f, due_date: e.target.value})} style={{...inputStyle(), background: C.surface}} /></Field>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label={t.taskDue || "Date"}><input type="date" value={f.due_date || ""} onChange={(e) => setF({...f, due_date: e.target.value})} style={{...inputStyle(), background: C.surface}} /></Field>
+          <Field label={t.repeat || "Repeat"}>
+            <select value={f.recurrence_rule || "none"} onChange={(e) => setF({...f, recurrence_rule: e.target.value})} style={{...inputStyle(), background: C.surface}}>
+              <option value="none">Geen herhaling</option>
+              <option value="daily">Dagelijks</option>
+              <option value="weekly">Wekelijks</option>
+              <option value="monthly">Maandelijks</option>
+              <option value="yearly">Jaarlijks</option>
+            </select>
+          </Field>
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <Field label={t.timeStart || "Start Time"}><input type="time" value={f.start_time || ""} onChange={(e) => setF({...f, start_time: e.target.value})} style={{...inputStyle(), background: C.surface}} /></Field>
           <Field label={t.timeEnd || "End Time"}><input type="time" value={f.end_time || ""} onChange={(e) => setF({...f, end_time: e.target.value})} style={{...inputStyle(), background: C.surface}} /></Field>
@@ -538,9 +576,9 @@ export function TaskEditor({ t, initialData, horses, onClose, onSave, onDelete }
   );
 }
 
-export function HealthEditor({ t, initialData, horses, onClose, onSave, onDelete }) {
+export function HealthEditor({ t, initialData, horses, staffMembers, onClose, onSave, onDelete }) {
   const today = new Date().toISOString().slice(0, 10);
-  const [f, setF] = useState(initialData || { horse_id: "", scheduled_date: today, notes: "", performed_by: "", cost: "", category: "generalCare", photo_url: "" });
+  const [f, setF] = useState(initialData || { horse_id: "", scheduled_date: today, notes: "", performed_by: "", cost: "", category: "generalCare", photo_url: "", recurrence_rule: "none" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -601,13 +639,32 @@ export function HealthEditor({ t, initialData, horses, onClose, onSave, onDelete
           <Field label={t.recordDate || "Date"} required>
             <input type="date" value={f.scheduled_date || ""} onChange={(e) => { setF({...f, scheduled_date: e.target.value}); setErr(false); }} style={{...inputStyle(err && !f.scheduled_date), background: C.surface}} />
           </Field>
+          <Field label={t.repeat || "Repeat"}>
+            <select value={f.recurrence_rule || "none"} onChange={(e) => setF({...f, recurrence_rule: e.target.value})} style={{...inputStyle(), background: C.surface}}>
+              <option value="none">Geen herhaling</option>
+              <option value="daily">Dagelijks</option>
+              <option value="weekly">Wekelijks</option>
+              <option value="monthly">Maandelijks</option>
+              <option value="yearly">Jaarlijks</option>
+            </select>
+          </Field>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label={t.performedBy || "Performed By"}>
+            <select value={f.performed_by || ""} onChange={(e) => setF({...f, performed_by: e.target.value})} style={{...inputStyle(), background: C.surface}}>
+              <option value="">Selecteer...</option>
+              <option value="Dierenarts (Vet)">Dierenarts (Vet)</option>
+              <option value="Smid (Farrier)">Smid (Farrier)</option>
+              {staffMembers && staffMembers.map(st => (
+                <option key={st.id} value={st.name}>{st.name}</option>
+              ))}
+            </select>
+          </Field>
           <Field label={t.cost || "Cost (€)"}>
             <input type="number" step="0.01" value={f.cost || ""} onChange={(e) => setF({...f, cost: e.target.value})} placeholder="0.00" style={{...inputStyle(), background: C.surface}} />
           </Field>
         </div>
-        <Field label={t.performedBy || "Performed By"}>
-          <input value={f.performed_by || ""} onChange={(e) => setF({...f, performed_by: e.target.value})} placeholder="e.g. Dr. Smith, Farrier Joe..." style={{...inputStyle(), background: C.surface}} />
-        </Field>
+        </div>
       </div>
 
       <Field label={t.notes || "Diagnosis / Treatment Details"}>

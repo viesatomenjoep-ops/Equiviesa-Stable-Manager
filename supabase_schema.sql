@@ -40,7 +40,9 @@ create table if not exists public.horses (
     dam_name text,
     gender text default 'mare' check (gender in ('mare','stallion','gelding','colt','filly','unknown')),
     location_id bigint,
+    horse_number integer,
     archived boolean default false not null,
+    category text,
     notes text
 );
 alter table public.horses enable row level security;
@@ -83,6 +85,8 @@ create table if not exists public.tasks (
     title text not null,
     description text,
     due_date date,
+    staff_id uuid references public.staff_members on delete set null,
+    recurrence_rule text,
     start_time time,
     end_time time,
     category text default 'general' check (category in ('general','horse')),
@@ -102,6 +106,7 @@ create table if not exists public.health_records (
     created_at timestamptz default now() not null,
     horse_id bigint references public.horses on delete cascade not null,
     scheduled_date date not null,
+    category text,
     notes text,
     performed_by text,
     cost numeric(10,2),
@@ -125,6 +130,7 @@ create table if not exists public.documents (
     file_type text,
     horse_id bigint references public.horses on delete set null,
     document_type text,
+    category text,
     notes text
 );
 alter table public.documents enable row level security;
@@ -142,6 +148,7 @@ create table if not exists public.mares_breeding (
     status text default 'inseminated' check (status in (
         'inseminated','confirmed_pregnant','empty','aborted','foaled'
     )),
+    category text,
     notes text,
     photo_url text
 );
@@ -157,6 +164,7 @@ create table if not exists public.embryos (
     stallion_name text not null,
     flush_date date not null,
     status text default 'frozen' check (status in ('frozen','transferred','pregnant','failed')),
+    category text,
     notes text,
     photo_url text
 );
@@ -171,6 +179,7 @@ create table if not exists public.locations (
     name text not null,
     type text,
     capacity integer,
+    category text,
     notes text,
     lat numeric,
     lng numeric,
@@ -189,6 +198,7 @@ create table if not exists public.contacts (
     phone text,
     company text,
     role text default 'other' check (role in ('owner','client','vet','farrier','rider','supplier','other')),
+    category text,
     notes text,
     photo_url text
 );
@@ -207,6 +217,7 @@ create table if not exists public.supplies_needed (
     category text default 'feed' check (category in ('feed','medical','equipment','bedding','cleaning','clothing','other')),
     amazon_link text,
     photo_url text,
+    category text,
     notes text
 );
 alter table public.supplies_needed enable row level security;
@@ -221,6 +232,7 @@ create table if not exists public.clients (
     email text,
     phone text,
     address text,
+    category text,
     notes text,
     photo_url text
 );
@@ -243,6 +255,7 @@ create table if not exists public.bookings (
     end_time time,
     status text default 'pending' check (status in ('pending','confirmed','cancelled','completed')),
     location text,
+    category text,
     notes text,
     photo_url text,
     client_id bigint references public.clients on delete set null,
@@ -261,12 +274,15 @@ create table if not exists public.invoices (
     client_name text not null,
     client_id bigint references public.clients on delete set null,
     invoice_date date,
-    due_date date not null,
+    due_date date,
+    staff_id uuid references public.staff_members on delete set null,
+    recurrence_rule text not null,
     subtotal numeric(10,2) default 0,
     tax_rate numeric(5,2) default 21,
     tax_amount numeric(10,2) default 0,
     total numeric(10,2) default 0,
     status text default 'draft' check (status in ('draft','sent','paid','overdue','partial')),
+    category text,
     notes text
 );
 alter table public.invoices enable row level security;
@@ -312,6 +328,7 @@ create table if not exists public.stalls (
     created_at timestamptz default now() not null,
     name text not null,
     horse_id bigint references public.horses on delete set null,
+    category text,
     notes text,
     status text default 'available' check (status in ('available','occupied','maintenance'))
 );
