@@ -276,16 +276,73 @@ export function TaskEditor({ t, initialData, horses, onClose, onSave, onDelete }
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  // Quick suggestions for tasks to save typing
+  const SUGGESTIONS = {
+    general: ["Clean stable", "Sweep aisle", "Wash blankets", "Order feed", "Fix fence", "Clean tack"],
+    horse: ["Turnout", "Lunging", "Riding", "Grooming", "Hand walking", "Blanket change"]
+  };
+  const activeSuggestions = SUGGESTIONS[f.category] || SUGGESTIONS.general;
+
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.addTask || "Add Task"} icon={Check} color={C.amber} onClose={onClose} onSave={() => f.title.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
       <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
-      <Field label={t.taskTitle || "Title"} required><input value={f.title} onChange={(e) => { setF({...f, title: e.target.value}); setErr(false); }} placeholder="e.g. Clean stable" style={inputStyle(err)} /></Field>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label={t.timeStart || "Start Time"}><input type="time" value={f.start_time || ""} onChange={(e) => setF({...f, start_time: e.target.value})} style={inputStyle()} /></Field>
-        <Field label={t.timeEnd || "End Time"}><input type="time" value={f.end_time || ""} onChange={(e) => setF({...f, end_time: e.target.value})} style={inputStyle()} /></Field>
+      
+      <Field label={t.category || "Task Type"}>
+        <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+          <button type="button" onClick={() => setF({...f, category: "general", horse_id: null})} className="ev-tap"
+            style={{ flex: 1, padding: "18px", borderRadius: 16, border: `2px solid ${f.category === "general" ? C.amber : C.line}`, background: f.category === "general" ? C.amber : C.surface, color: f.category === "general" ? "#fff" : C.sub, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+            <Activity size={28} />
+            <span style={{ fontSize: 15, fontWeight: 700 }}>{t.general || "General"}</span>
+          </button>
+          <button type="button" onClick={() => setF({...f, category: "horse"})} className="ev-tap"
+            style={{ flex: 1, padding: "18px", borderRadius: 16, border: `2px solid ${f.category === "horse" ? C.amber : C.line}`, background: f.category === "horse" ? C.amber : C.surface, color: f.category === "horse" ? "#fff" : C.sub, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+            <span style={{ fontSize: 28 }}>🐴</span>
+            <span style={{ fontSize: 15, fontWeight: 700 }}>{t.horses || "Horse"}</span>
+          </button>
+        </div>
+      </Field>
+
+      {f.category === "horse" && horses && horses.length > 0 && (
+        <div style={{ marginBottom: 24, background: C.bg, padding: 16, borderRadius: 20 }}>
+          <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: C.sub, marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>Select Horse</label>
+          <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8 }}>
+            {horses.map(h => {
+              const isSel = f.horse_id === h.id;
+              return (
+                <button key={h.id} type="button" onClick={() => setF({...f, horse_id: h.id})} className="ev-tap"
+                  style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: 100, border: `1.5px solid ${isSel ? C.amber : C.line}`, background: isSel ? `${C.amber}1f` : C.surface, color: isSel ? C.ink : C.sub, cursor: "pointer", fontWeight: 700, fontSize: 15 }}>
+                  <div style={{ width: 24, height: 24, borderRadius: 12, background: h.color_hex || C.sub, border: `2px solid #fff`, boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }} />
+                  {h.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <Field label={t.taskTitle || "Title"} required>
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, marginBottom: 12, paddingBottom: 4 }}>
+          {activeSuggestions.map(s => (
+            <button key={s} type="button" onClick={() => { setF({...f, title: s}); setErr(false); }} className="ev-tap"
+              style={{ flexShrink: 0, padding: "10px 16px", borderRadius: 12, border: `1px solid ${f.title === s ? C.amber : C.line}`, background: f.title === s ? C.amber : C.surface, color: f.title === s ? "#fff" : C.sub, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+              {s}
+            </button>
+          ))}
+        </div>
+        <input value={f.title} onChange={(e) => { setF({...f, title: e.target.value}); setErr(false); }} placeholder="Or type a custom task..." style={inputStyle(err)} />
+      </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <Field label={t.taskDue || "Date"}><input type="date" value={f.due_date || ""} onChange={(e) => setF({...f, due_date: e.target.value})} style={{...inputStyle(), background: C.surface}} /></Field>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label={t.timeStart || "Start Time"}><input type="time" value={f.start_time || ""} onChange={(e) => setF({...f, start_time: e.target.value})} style={{...inputStyle(), background: C.surface}} /></Field>
+          <Field label={t.timeEnd || "End Time"}><input type="time" value={f.end_time || ""} onChange={(e) => setF({...f, end_time: e.target.value})} style={{...inputStyle(), background: C.surface}} /></Field>
+        </div>
       </div>
-      <Field label={t.taskDue || "Date"}><input type="date" value={f.due_date || ""} onChange={(e) => setF({...f, due_date: e.target.value})} style={inputStyle()} /></Field>
-      <Field label={t.taskDesc || "Description"}><textarea value={f.description || ""} onChange={(e) => setF({...f, description: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical" }} placeholder="Extra details..." /></Field>
+
+      <Field label={t.taskDesc || "Description"}>
+        <textarea value={f.description || ""} onChange={(e) => setF({...f, description: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical", background: C.field }} placeholder="Extra details..." />
+      </Field>
     </EditorLayout>
   );
 }
