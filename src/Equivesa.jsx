@@ -2824,7 +2824,7 @@ function SupplyModal({ t, lang, onClose, onSave }) {
     <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<ShoppingCart size={22} />} title={t.addSupply}
       footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.add} saveIcon={<Plus size={20} />} />}>
       <Field label={t.supplyItem} required>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, marginBottom: 4 }}>
           {suggestions.map(s => (
             <button key={s} type="button" onClick={() => { setF({...f, item_name: s}); setErr(false); }}
               className="ev-tap"
