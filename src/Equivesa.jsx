@@ -1208,7 +1208,7 @@ function HorseEditWrapper({ t, id, setRoute }) {
   return <HorseForm t={t} initialData={h} onDone={() => setRoute({ name: "detail", id })} />;
 }
 
-function Screen({ active, route, setRoute, t, go }) {
+function Screen({ active, route, setRoute, t, go, mode }) {
   const wrap = { width: "100%", margin: "0 auto", padding: "22px 18px" };
   if (active === "myday") return <div style={wrap}><MyDayScreen t={t} mode={mode} go={go} setRoute={setRoute} /></div>;
   if (active === "horses") {
@@ -1217,7 +1217,7 @@ function Screen({ active, route, setRoute, t, go }) {
     if (route.name === "detail") return <div style={wrap}><HorseDetail t={t} id={route.id} setRoute={setRoute} /></div>;
     return <div style={wrap}><HorsesList t={t} setRoute={setRoute} /></div>;
   }
-  if (active === "calendar") return <div style={wrap}><CalendarScreen t={t} /></div>;
+  if (active === "calendar") return <div style={wrap}><CalendarScreen t={t} go={go} /></div>;
   if (active === "tasks") return <div style={wrap}><TasksScreen t={t} /></div>;
   if (active === "health") return <HealthScreenRouter t={t} route={route} setRoute={setRoute} />;
   if (active === "finance") return <div style={wrap}><FinanceScreen t={t} /></div>;
@@ -1551,7 +1551,7 @@ function sendNotification(title, body, icon) {
   }
 }
 
-function CalendarScreen({ t }) {
+function CalendarScreen({ t, go }) {
   const { tasks, healthRecords, horses, supplies } = useStore();
   const now = new Date();
   const [year, setYear] = React.useState(now.getFullYear());
@@ -2791,15 +2791,18 @@ function GenericModuleScreen({ t, active, setRoute }) {
   React.useEffect(() => {
     if (!conf) return;
     const fetch = async () => {
-      const { data: res } = await supabase.from(conf.table).select('*').order('created_at', { ascending: false });
-      if (res) {
-        if (conf.defaultVals) {
-          const keys = Object.keys(conf.defaultVals);
-          setData(res.filter(x => keys.every(k => x[k] === conf.defaultVals[k])));
-        } else {
-          setData(res);
+      try {
+        const { data: res, error } = await supabase.from(conf.table).select('*').order('created_at', { ascending: false });
+        if (error) { console.warn(`Table ${conf.table} not found:`, error.message); return; }
+        if (res) {
+          if (conf.defaultVals) {
+            const keys = Object.keys(conf.defaultVals);
+            setData(res.filter(x => keys.every(k => x[k] === conf.defaultVals[k])));
+          } else {
+            setData(res);
+          }
         }
-      }
+      } catch (e) { console.warn('GenericModuleScreen fetch error:', e); }
     };
     fetch();
   }, [active, conf]);
