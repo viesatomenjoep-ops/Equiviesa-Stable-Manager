@@ -557,6 +557,11 @@ function StoreProvider({ children }) {
     if (error) { console.error(error); alert("Database Error: " + error.message); }
     if (data) setUsers(prev => [data[0], ...prev]);
   };
+  const editUser = async (id, u) => {
+    const { data, error } = await supabase.from('profiles').update(cleanObj(u)).eq('id', id).select();
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
+    if (data) setUsers(prev => prev.map(x => x.id === id ? data[0] : x));
+  };
   const deleteUser = async (id) => {
     const { error } = await supabase.from('profiles').delete().eq('id', id);
     if (error) { console.error(error); alert("Database Error: " + error.message); }
@@ -713,7 +718,7 @@ function StoreProvider({ children }) {
 
   return (
     <Store.Provider value={{ horses, addHorse, editHorse, deleteHorse, txns, addTxn, deleteTxn,
-      users, addUser, deleteUser, feed, addFeedItem, editFeedItem, addDefaultSchedule, deleteFeedItem,
+      users, addUser, editUser, deleteUser, feed, addFeedItem, editFeedItem, addDefaultSchedule, deleteFeedItem,
       supplies, addSupply, toggleSupplyStatus, deleteSupply,
       tasks, addTask, editTask, toggleTask, deleteTask,
       stalls, addStall, editStall, deleteStall,
@@ -2426,8 +2431,9 @@ const PERM_KEYS = ["permContacts", "permHorses", "permCalendar", "permTasks", "p
   "permTeams", "permFinance", "permFeeding", "permLinks", "permStaff"];
 
 function UsersScreen({ t }) {
-  const { users, addUser, deleteUser } = useStore();
+  const { users, addUser, editUser, deleteUser } = useStore();
   const [modal, setModal] = useState(false);
+  const [editFor, setEditFor] = useState(null);
 
   return (
     <div className="ev-card">
@@ -2446,18 +2452,22 @@ function UsersScreen({ t }) {
           title={t.noUsers} sub={t.noUsersSub} cta={t.addUser} onClick={() => setModal(true)} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {users.map((u) => <UserRow key={u.id} u={u} t={t} onDelete={() => { if(window.confirm(t.confirmDelete || "Delete?")) deleteUser(u.id); }} />)}
+          {users.map((u) => <UserRow key={u.id} u={u} t={t} onEdit={() => setEditFor(u)} onDelete={() => { if(window.confirm(t.confirmDelete || "Delete?")) deleteUser(u.id); }} />)}
         </div>
       )}
 
       {modal && (
         <UserEditor t={t} onClose={() => setModal(false)} onSave={(u) => { addUser(u); setModal(false); }} />
       )}
+      
+      {editFor && (
+        <UserEditor t={t} initialData={editFor} onClose={() => setEditFor(null)} onSave={(u) => { editUser(editFor.id, u); setEditFor(null); }} />
+      )}
     </div>
   );
 }
 
-function UserRow({ u, t, onDelete }) {
+function UserRow({ u, t, onEdit, onDelete }) {
   const initials = u.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   return (
     <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 18, padding: 18 }}>
@@ -2470,6 +2480,8 @@ function UserRow({ u, t, onDelete }) {
         </div>
         <span style={{ fontSize: 13, fontWeight: 600, color: C.sky, background: `${C.sky}18`,
           padding: "6px 12px", borderRadius: 10 }}>{t[u.role]}</span>
+        <button onClick={onEdit} className="ev-tap" style={{ border: "none", background: "transparent",
+          cursor: "pointer", color: C.sky, padding: 6 }}><Edit2 size={17} /></button>
         <button onClick={onDelete} className="ev-tap" style={{ border: "none", background: "transparent",
           cursor: "pointer", color: C.sub, padding: 6 }}><Trash2 size={17} /></button>
       </div>
