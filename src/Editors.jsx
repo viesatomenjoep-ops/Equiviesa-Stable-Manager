@@ -28,47 +28,108 @@ function Field({ label, required, children }) {
   );
 }
 
-export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon = Camera }) {
+export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon = Camera, accept = "image/*,application/pdf", label = "Upload" }) {
+  const [error, setError] = React.useState(null);
+  const [progress, setProgress] = React.useState(0);
+
   const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError("File too large — max 10 MB");
+      return;
+    }
+
+    setError(null);
     setUploading(true);
+    setProgress(10);
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "equivesa_uploads");
+
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "daj1lyfgk";
+    const endpoint = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+
     try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: formData });
+      setProgress(40);
+      const res = await fetch(endpoint, { method: "POST", body: formData });
+      setProgress(80);
       const data = await res.json();
-      if (data.secure_url) onChange(data.secure_url);
+      if (data.secure_url) {
+        onChange(data.secure_url);
+        setProgress(100);
+      } else if (data.error) {
+        // Cloudinary returned an error (e.g. preset not Unsigned)
+        setError(`Upload error: ${data.error.message}`);
+      } else {
+        setError("Upload failed — check Cloudinary preset settings");
+      }
     } catch (err) {
-      console.error(err);
-      alert("Upload failed.");
+      console.error("Cloudinary upload error:", err);
+      setError("Network error — check your connection");
     } finally {
       setUploading(false);
+      setTimeout(() => setProgress(0), 800);
     }
   };
 
+  const isPdf = url && url.toLowerCase().includes(".pdf");
+
   return (
-    <div style={{ display: "flex", justifyContent: "center", marginBottom: 30 }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 28, gap: 10 }}>
       <label style={{
-        width: 140, height: 140, borderRadius: "30%", border: `2px dashed ${C.line}`,
-        background: C.field, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        width: 150, height: 150, borderRadius: "28%",
+        border: `2px ${url ? "solid" : "dashed"} ${error ? C.coral : url ? C.mint : C.line}`,
+        background: uploading ? `${C.mint}10` : url ? C.surface : C.field,
+        cursor: "pointer", display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
         color: C.sub, gap: 8, overflow: "hidden", position: "relative",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.03)"
+        boxShadow: url ? "0 8px 24px rgba(47,182,160,.18)" : "0 4px 12px rgba(0,0,0,.04)",
+        transition: "all .2s",
       }}>
-        {url ? (
+        {url && !isPdf ? (
           <img src={url} alt="Uploaded" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : url && isPdf ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: 12 }}>
+            <span style={{ fontSize: 38 }}>📄</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: C.mint, textAlign: "center" }}>PDF</span>
+          </div>
         ) : uploading ? (
-          <span style={{ fontSize: 14, fontWeight: 600 }}>Up...</span>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: "50%",
+              border: `3px solid ${C.line}`, borderTopColor: C.mint,
+              animation: "evRotate 0.8s linear infinite"
+            }} />
+            <span style={{ fontSize: 12, fontWeight: 700, color: C.mint }}>{progress}%</span>
+          </div>
         ) : (
           <>
-            <Icon size={36} strokeWidth={1.5} />
-            <span style={{ fontSize: 12, fontWeight: 600 }}>Upload</span>
+            <Icon size={34} strokeWidth={1.5} color={error ? C.coral : C.sub} />
+            <span style={{ fontSize: 12, fontWeight: 700, color: error ? C.coral : C.sub }}>{label}</span>
           </>
         )}
-        <input type="file" accept="image/*,application/pdf" onChange={handleUpload} style={{ display: "none" }} />
+        <input type="file" accept={accept} onChange={handleUpload} style={{ display: "none" }} />
       </label>
+
+      {/* Error message */}
+      {error && (
+        <div style={{ fontSize: 12, color: C.coral, fontWeight: 600, textAlign: "center", maxWidth: 200 }}>
+          ⚠️ {error}
+        </div>
+      )}
+
+      {/* Clear button when image is uploaded */}
+      {url && !uploading && (
+        <button type="button" onClick={() => { onChange(""); setError(null); }}
+          style={{ fontSize: 12, color: C.sub, background: "none", border: "none", cursor: "pointer",
+            textDecoration: "underline", fontFamily: "inherit" }}>
+          🗑️ Verwijder foto
+        </button>
+      )}
     </div>
   );
 }
