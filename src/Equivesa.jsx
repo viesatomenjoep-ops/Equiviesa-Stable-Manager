@@ -1051,30 +1051,25 @@ function TopBar({ t, active, route, setRoute, onMenu, lang, setLang }) {
     <header style={{
       position: "sticky", top: 0, zIndex: 20, background: "rgba(255,255,255,.85)",
       backdropFilter: "blur(10px)", borderBottom: `1px solid ${C.line}`,
-      padding: "14px 18px", display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12,
+      padding: "14px 18px", display: "flex", alignItems: "center", gap: 12,
     }}>
-      {/* LEFT */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        {inSub && (
-          <>
-            <button onClick={() => setRoute({ name: "list" })} className="ev-tap" style={iconBtn}>
-              <ChevronLeft size={22} />
-            </button>
-            <div style={{ width: 1, height: 24, background: C.line, margin: "0 4px" }} />
-            <h1 className="ev-display" style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.4 }}>
-              {route.name === "add" ? t.add : t.profile}
-            </h1>
-          </>
-        )}
-      </div>
+      {inSub ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <button onClick={() => setRoute({ name: "list" })} className="ev-tap" style={iconBtn}>
+            <ChevronLeft size={22} />
+          </button>
+          <div style={{ width: 1, height: 24, background: C.line, margin: "0 4px" }} />
+          <h1 className="ev-display" style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.4 }}>
+            {route.name === "add" ? t.add : t.profile}
+          </h1>
+        </div>
+      ) : (
+        <Brand />
+      )}
 
-      {/* CENTER */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        {!inSub && <Brand />}
-      </div>
+      <div style={{ flex: 1 }} />
 
-      {/* RIGHT */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <button className="ev-tap" style={iconBtn}><Bell size={20} /></button>
         {active === "horses" && route.name === "list" && (
           <button onClick={() => setRoute({ name: "add" })} className="ev-tap"
