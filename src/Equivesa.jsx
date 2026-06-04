@@ -3,7 +3,7 @@ import {
   Menu, X, Bell, Plus, Search, ChevronRight, ChevronLeft, Check, LayoutDashboard,
   Home, Calendar, CheckSquare, Heart, Carrot, MapPin, Contact,
   FileText, Users, Settings, HelpCircle, Receipt, BookOpen,
-  Package, Baby, ShoppingCart, Sparkles, Trash2, Camera, MoreHorizontal, Globe, Wallet, ArrowUpRight, ArrowDownRight, Paperclip, ChevronDown, LogOut, Edit2, AlertTriangle, AlertOctagon
+  Package, Baby, ShoppingCart, Sparkles, Trash2, Camera, MoreHorizontal, Globe, Wallet, ArrowUpRight, ArrowDownRight, Paperclip, ChevronDown, LogOut, Edit2, AlertTriangle, AlertOctagon, Activity
 } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import { 
