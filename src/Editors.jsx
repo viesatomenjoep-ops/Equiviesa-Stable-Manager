@@ -347,3 +347,113 @@ export function CatalogEditor({ t, initialData, onClose, onSave, onDelete }) {
     </EditorLayout>
   );
 }
+
+export function UserEditor({ t, initialData, onClose, onSave, onDelete }) {
+  const [f, setF] = useState(initialData || { name: "", email: "", role: "roleStaff", perms: [] });
+  const [err, setErr] = useState(false);
+  const ROLE_KEYS = ["roleAdmin", "roleManager", "roleStaff", "roleVet", "roleOwner"];
+  const PERM_KEYS = ["permContacts", "permHorses", "permCalendar", "permTasks", "permHealth", "permFeeding", "permSettings"];
+
+  const togglePerm = (p) => setF((s) => ({ ...s, perms: s.perms.includes(p) ? s.perms.filter((x) => x !== p) : [...s.perms, p] }));
+  const allOn = f.perms.length === PERM_KEYS.length;
+  const toggleAll = () => setF((s) => ({ ...s, perms: allOn ? [] : [...PERM_KEYS] }));
+
+  return (
+    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.addUser || "Add User"} icon={Users} color={C.sky} onClose={onClose} onSave={() => f.name.trim() && f.email.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
+      <Field label={t.name || "Name"} required><input value={f.name || ""} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }} placeholder="Full Name" style={inputStyle(err && !f.name.trim())} /></Field>
+      <Field label={t.email || "Email"} required><input value={f.email || ""} onChange={(e) => { setF({...f, email: e.target.value}); setErr(false); }} placeholder="naam@mail.com" style={inputStyle(err && !f.email.trim())} /></Field>
+      
+      <Field label={t.role || "Role"}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+          {ROLE_KEYS.map((r) => (
+            <button key={r} type="button" onClick={() => setF({ ...f, role: r })} className="ev-tap"
+              style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.role === r ? C.sky : C.line}`, background: f.role === r ? C.sky : C.surface, color: f.role === r ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+              {t[r] || r}
+            </button>
+          ))}
+        </div>
+      </Field>
+
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+        <label style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.sub }}>{t.permissions || "Permissions"}</label>
+        <button onClick={toggleAll} className="ev-tap" style={{ border: "none", background: "transparent", cursor: "pointer", color: C.mint, fontWeight: 600, fontSize: 13, fontFamily: "inherit" }}>{t.selectAll || "Select All"}</button>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+        {PERM_KEYS.map((p) => {
+          const on = f.perms.includes(p);
+          return (
+            <button key={p} onClick={() => togglePerm(p)} className="ev-tap" style={{
+              flexShrink: 0, border: `1.5px solid ${on ? C.sky : C.line}`, cursor: "pointer", fontFamily: "inherit",
+              background: on ? C.sky + "1f" : C.surface, color: on ? C.sky : C.sub,
+              padding: "16px 24px", borderRadius: 16, fontSize: 16, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 8 }}>
+              {on && <Check size={14} />}{t[p] || p}
+            </button>
+          );
+        })}
+      </div>
+    </EditorLayout>
+  );
+}
+
+export function FeedingEditor({ t, initialData, slot, onClose, onSave, onDelete }) {
+  const [f, setF] = useState(initialData || { product: "", qty: "" });
+  const [err, setErr] = useState(false);
+  const COMMON = {
+    nl: ["Hooi", "Stro", "Houtkrullen", "Vlas", "Biks", "Muesli", "Slobber"],
+    en: ["Hay", "Straw", "Shavings", "Flax", "Pellets", "Muesli", "Mash"],
+    es: ["Heno", "Paja", "Virutas", "Lino", "Pellets", "Muesli", "Papilla"],
+  };
+  const suggestions = COMMON[t.code?.toLowerCase()] || COMMON.en;
+
+  return (
+    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : `${t.addProduct || "Add Product"} · ${t[slot] || slot}`} icon={Carrot} color={C.amber} onClose={onClose} onSave={() => f.product.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
+      <Field label={t.product || "Product"} required>
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, marginBottom: 4 }}>
+          {suggestions.map(s => (
+            <button key={s} type="button" onClick={() => { setF({...f, product: s}); setErr(false); }}
+              className="ev-tap"
+              style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.product === s ? C.amber : C.line}`, background: f.product === s ? C.amber : C.surface, color: f.product === s ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+              {s}
+            </button>
+          ))}
+        </div>
+        <input value={f.product || ""} onChange={(e) => { setF({...f, product: e.target.value}); setErr(false); }} placeholder="e.g. Muesli" style={inputStyle(err)} />
+      </Field>
+      <Field label={t.qty || "Quantity"}><input value={f.qty || ""} onChange={(e) => setF({...f, qty: e.target.value})} placeholder="2 kg" style={inputStyle()} /></Field>
+    </EditorLayout>
+  );
+}
+
+export function QuickReportEditor({ t, onClose, onSave }) {
+  const [f, setF] = useState({ report_type: "supply", item_name: "", notes: "", photo_url: "" });
+  const [err, setErr] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  return (
+    <EditorLayout t={t} title={t.reportIssue || "Report Issue"} icon={AlertTriangle} color={C.coral} onClose={onClose} onSave={() => f.item_name.trim() ? onSave({ ...f, quantity: "1", requested_by: "Groom", status: "pending" }) : setErr(true)}>
+      <Field label={t.whatIsWrong || "What is wrong?"}>
+        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+          {["supply", "defect"].map(type => (
+            <button key={type} type="button" onClick={() => setF({...f, report_type: type})} className="ev-tap"
+              style={{ flex: 1, padding: "20px", borderRadius: 16, border: `1.5px solid ${f.report_type === type ? C.coral : C.line}`, background: f.report_type === type ? C.coral : C.surface, color: f.report_type === type ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+              {type === "supply" ? <ShoppingCart size={28} /> : <AlertOctagon size={28} />}
+              {type === "supply" ? (t.issueSupply || "I need supplies") : (t.issueDefect || "Something is broken")}
+            </button>
+          ))}
+        </div>
+      </Field>
+      
+      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
+
+      <Field label={t.taskTitle || "Title"} required>
+        <input value={f.item_name || ""} onChange={(e) => { setF({...f, item_name: e.target.value}); setErr(false); }} placeholder={f.report_type === "supply" ? "e.g. Dish soap, Tape" : "e.g. Broken halter horse X"} style={inputStyle(err)} />
+      </Field>
+      {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.required || "Required"}</div>}
+
+      <Field label={t.notes || "Notes"}>
+        <textarea value={f.notes || ""} onChange={(e) => setF({ ...f, notes: e.target.value })} style={{ ...inputStyle(), resize: "vertical", minHeight: 140 }} placeholder={t.notesHint || "Any additional details..."} />
+      </Field>
+    </EditorLayout>
+  );
+}

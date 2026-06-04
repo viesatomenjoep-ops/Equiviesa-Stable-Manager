@@ -9,7 +9,7 @@ import { supabase } from "./supabaseClient";
 import { 
   EditorLayout, PhotoUpload, ContactEditor, ClientEditor, LocationEditor, 
   DocumentEditor, SupplyEditor, FinanceEditor, TaskEditor, HealthEditor, 
-  BookingEditor, InvoiceEditor, CatalogEditor 
+  BookingEditor, InvoiceEditor, CatalogEditor, UserEditor, FeedingEditor, QuickReportEditor
 } from "./Editors";
 
 /* ============================================================
@@ -2574,6 +2574,7 @@ function MyDayScreen({ t }) {
 
 function GroomFab({ t }) {
   const [open, setOpen] = useState(false);
+  const { addSupply } = useStore();
   return (
     <>
       <button onClick={() => setOpen(true)} className="ev-tap" style={{
@@ -2584,108 +2585,7 @@ function GroomFab({ t }) {
       }}>
         <AlertTriangle size={30} strokeWidth={2.2} />
       </button>
-      {open && <QuickReportModal t={t} onClose={() => setOpen(false)} />}
+      {open && <QuickReportEditor t={t} onClose={() => setOpen(false)} onSave={(report) => { addSupply(report); setOpen(false); }} />}
     </>
-  );
-}
-
-function QuickReportModal({ t, onClose }) {
-  const { addSupply } = useStore();
-  const [f, setF] = useState({ report_type: "supply", item_name: "", notes: "", photo_url: "" });
-  const [err, setErr] = useState(false);
-  const [uploading, setUploading] = useState(false);
-
-  const handleUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "equivesa_uploads");
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "daj1lyfgk";
-
-    try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: "POST", body: formData,
-      });
-      const data = await res.json();
-      if (data.secure_url) {
-        setF(prev => ({ ...prev, photo_url: data.secure_url }));
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Upload failed.");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const save = () => {
-    if (!f.item_name.trim()) { setErr(true); return; }
-    addSupply({
-      item_name: f.item_name,
-      report_type: f.report_type,
-      notes: f.notes,
-      photo_url: f.photo_url,
-      quantity: "1",
-      requested_by: "Groom",
-      status: "pending"
-    });
-    onClose();
-  };
-
-  return (
-    <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<AlertTriangle size={22} />} title={t.reportIssue}
-      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
-      
-      <Field label={t.whatIsWrong}>
-        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-          {["supply", "defect"].map(type => (
-            <button key={type} type="button" onClick={() => setF({...f, report_type: type})} className="ev-tap"
-              style={{
-                flex: 1, padding: "16px", borderRadius: 16, border: `1.5px solid ${f.report_type === type ? C.coral : C.line}`,
-                background: f.report_type === type ? C.coral : C.surface,
-                color: f.report_type === type ? "#fff" : C.sub,
-                fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600,
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 8
-              }}>
-              {type === "supply" ? <ShoppingCart size={24} /> : <AlertOctagon size={24} />}
-              {type === "supply" ? t.issueSupply : t.issueDefect}
-            </button>
-          ))}
-        </div>
-      </Field>
-
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
-        <label style={{
-          width: "100%", height: 160, borderRadius: 20, border: `2px dashed ${C.coral}66`,
-          background: `${C.coral}0a`, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          color: C.coral, gap: 12, overflow: "hidden", position: "relative"
-        }}>
-          {f.photo_url ? (
-            <img src={f.photo_url} alt="Report" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 16 }} />
-          ) : uploading ? (
-            <span style={{ fontSize: 16, fontWeight: 600 }}>Up...</span>
-          ) : (
-            <>
-              <Camera size={36} />
-              <span style={{ fontSize: 16, fontWeight: 600 }}>{t.takePhoto}</span>
-            </>
-          )}
-          <input type="file" accept="image/*;capture=camera" onChange={handleUpload} style={{ display: "none" }} />
-        </label>
-      </div>
-
-      <Field label={t.taskTitle} required>
-        <input value={f.item_name} onChange={(e) => { setF({...f, item_name: e.target.value}); setErr(false); }}
-          placeholder={f.report_type === "supply" ? "e.g. Dish soap, Tape" : "e.g. Broken halter horse X"} style={inputStyle(err)} />
-      </Field>
-      {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.required}</div>}
-
-      <Field label={t.notes}>
-        <textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })}
-          style={{ ...inputStyle(), resize: "vertical", minHeight: 140 }} placeholder={t.notesHint} />
-      </Field>
-    </ModalShell>
   );
 }
