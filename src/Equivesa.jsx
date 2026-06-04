@@ -851,7 +851,7 @@ function PinModal({ t, target, onClose, onOk }) {
 function Brand() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 6px" }}>
-      <img src="/logo.png" alt="Equiviesa Logo" style={{ width: 38, height: 38, objectFit: "contain" }} />
+      <img src="/logo.png" alt="Equiviesa Logo" style={{ width: 57, height: 57, objectFit: "contain" }} />
       <div className="ev-display" style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.3 }}>Equiviesa</div>
     </div>
   );
