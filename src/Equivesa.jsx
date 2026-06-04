@@ -658,6 +658,27 @@ function AppRoot() {
         input, select { font-family: inherit; }
         .ev-scroll::-webkit-scrollbar { width: 0; height: 0; }
         body.modal-open .ev-bottom { display: none !important; }
+        
+        .ev-modal-overlay {
+          position: fixed; inset: 0; z-index: 100;
+          background: rgba(14, 21, 30, 0.5);
+          backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+          animation: evFade .2s ease;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .ev-modal-content {
+          background: #f8fafc; display: flex; flex-direction: column;
+          width: 100%; height: 100%;
+        }
+        @media (min-width: 768px) {
+          .ev-modal-overlay { padding: 40px; }
+          .ev-modal-content {
+            max-width: 800px; height: auto; max-height: 100%;
+            border-radius: 28px;
+            box-shadow: 0 30px 80px rgba(14,21,30,0.2), 0 0 0 1px rgba(14,21,30,0.05);
+            overflow: hidden;
+          }
+        }
       `}</style>
 
       {mode === null ? (
@@ -1620,7 +1641,7 @@ function TaskModal({ t, initialData, horses, onClose, onSave }) {
 
       <Field label={t.taskDesc}>
         <textarea value={f.description} onChange={(e) => setF({...f, description: e.target.value})}
-          style={{ ...inputStyle(), resize: "vertical", minHeight: 120 }} placeholder={t.notesHint} />
+          style={{ ...inputStyle(), resize: "vertical", minHeight: 140 }} placeholder={t.notesHint} />
       </Field>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -1856,7 +1877,7 @@ function HealthModal({ t, category, initialData, horses, onClose, onSave }) {
 
       <Field label={t.recordNotes}>
         <textarea value={f.notes} onChange={(e) => setF({...f, notes: e.target.value})}
-          style={{ ...inputStyle(), resize: "vertical", minHeight: 120 }} placeholder={t.notesHint} />
+          style={{ ...inputStyle(), resize: "vertical", minHeight: 140 }} placeholder={t.notesHint} />
       </Field>
 
       {err && <div style={{ color: C.coral, fontSize: 13, marginBottom: 10 }}>{t.selectHorse} & {t.recordDate} {t.required}</div>}
@@ -2276,24 +2297,32 @@ function FeedingScreen({ t, go, setRoute }) {
 
       {tab === 0 ? (
         <>
-          {/* slot + horse filters */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
-            <div style={{ display: "inline-flex", gap: 3, background: C.bg, borderRadius: 13, padding: 4 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 20 }}>
+            {/* Slot selector */}
+            <div style={{ display: "inline-flex", gap: 3, background: C.bg, borderRadius: 16, padding: 4, alignSelf: "flex-start" }}>
               {SLOTS.map((s) => (
                 <button key={s} onClick={() => setSlot(s)} className="ev-tap" style={{
-                  border: "none", cursor: "pointer", borderRadius: 14, padding: "16px 24px",
+                  border: "none", cursor: "pointer", borderRadius: 14, padding: "16px 28px",
                   fontSize: 16, fontWeight: 600, fontFamily: "inherit",
                   background: slot === s ? C.sky : "transparent", color: slot === s ? "#fff" : C.sub }}>
                   {t[s]}
                 </button>
               ))}
             </div>
-            <select value={horseFilter} onChange={(e) => setHorseFilter(e.target.value)}
-              style={{ ...inputStyle(), width: "auto", flex: 1, minWidth: 140, padding: "11px 14px", appearance: "none",
-                color: horseFilter ? C.ink : C.sub }}>
-              <option value="">{t.allHorsesShort}</option>
-              {horses.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-            </select>
+            
+            {/* Horse filter pill row */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <button type="button" onClick={() => setHorseFilter("")} className="ev-tap"
+                style={{ flexShrink: 0, padding: "14px 22px", borderRadius: 16, border: `1.5px solid ${!horseFilter ? C.sky : C.line}`, background: !horseFilter ? C.sky : C.surface, color: !horseFilter ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                {t.allHorsesShort}
+              </button>
+              {horses.map(h => (
+                <button key={h.id} type="button" onClick={() => setHorseFilter(String(h.id))} className="ev-tap"
+                  style={{ flexShrink: 0, padding: "14px 22px", borderRadius: 16, border: `1.5px solid ${horseFilter === String(h.id) ? C.sky : C.line}`, background: horseFilter === String(h.id) ? C.sky : C.surface, color: horseFilter === String(h.id) ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                  {h.name}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* per-horse feed rows for selected slot */}
@@ -2406,33 +2435,33 @@ function ModalShell({ t, onClose, accent, icon, title, children, footer }) {
   }, []);
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 100, animation: "evFade .25s ease",
-      display: "flex", flexDirection: "column", background: C.bg }}>
-      
-      {/* Header (Fixed) */}
-      <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px",
-        background: C.surface, borderBottom: `1px solid ${C.line}`, flexShrink: 0 }}>
-        <span style={{ width: 44, height: 44, borderRadius: 14, display: "grid", placeItems: "center",
-          background: `${accent}1c`, color: accent }}>{icon}</span>
-        <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 24, fontWeight: 700, color: C.ink }}>{title}</h2>
-        <button onClick={onClose} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg, width: 40, height: 40 }}>
-          <X size={24} />
-        </button>
-      </div>
+    <div className="ev-modal-overlay" onClick={onClose}>
+      <div className="ev-modal-content" onClick={(e) => e.stopPropagation()}>
+        {/* Header (Fixed) */}
+        <div style={{ display: "flex", alignItems: "center", gap: 18, padding: "20px 24px",
+          background: C.surface, borderBottom: `1px solid ${C.line}`, flexShrink: 0 }}>
+          <span style={{ width: 48, height: 48, borderRadius: 16, display: "grid", placeItems: "center",
+            background: `${accent}1c`, color: accent }}>{icon}</span>
+          <h2 className="ev-display" style={{ flex: 1, margin: 0, fontSize: 26, fontWeight: 700, color: C.ink }}>{title}</h2>
+          <button onClick={onClose} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg, width: 44, height: 44 }}>
+            <X size={26} />
+          </button>
+        </div>
 
       {/* Content (Scrollable) */}
       <div className="ev-scroll" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
-        <div style={{ padding: "24px 20px", width: "100%", display: "flex", flexDirection: "column", gap: 20, flex: 1 }}>
+        <div style={{ padding: "28px 24px", width: "100%", display: "flex", flexDirection: "column", gap: 24, flex: 1 }}>
           {children}
         </div>
       </div>
 
       {/* Footer (Fixed at bottom) */}
       {footer && (
-        <div style={{ padding: "16px 20px", background: C.surface, borderTop: `1px solid ${C.line}`, width: "100%", flexShrink: 0 }}>
+        <div style={{ padding: "20px 24px", background: C.surface, borderTop: `1px solid ${C.line}`, width: "100%", flexShrink: 0 }}>
           {footer}
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -2836,7 +2865,7 @@ function SupplyModal({ t, lang, onClose, onSave }) {
 
       <Field label={t.notes}>
         <textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })}
-          style={{ ...inputStyle(), resize: "vertical", minHeight: 120 }} placeholder={t.notesHint} />
+          style={{ ...inputStyle(), resize: "vertical", minHeight: 140 }} placeholder={t.notesHint} />
       </Field>
     </ModalShell>
   );
