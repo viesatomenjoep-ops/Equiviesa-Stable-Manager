@@ -302,6 +302,7 @@ const SECTIONS = {
   general: ["horses", "calendar", "tasks", "health", "feeding", "supplies", "locations", "contacts", "documents"],
   finance: ["finance", "clients", "bookings", "invoices", "catalog"],
   breeding: ["mares", "embryos", "foals"],
+  team: ["staff"],
 };
 
 function AuthScreen({ t, lang, setLang }) {
@@ -356,6 +357,7 @@ const ICONS = {
   feeding: Carrot, supplies: ShoppingCart, locations: MapPin, contacts: Contact, documents: FileText,
   finance: Wallet, clients: Users, bookings: BookOpen, invoices: Receipt, catalog: Package,
   mares: Heart, embryos: Sparkles, foals: Baby, sales: ShoppingCart,
+  staff: Users,
   users: Users, settings: Settings, help: HelpCircle,
 };
 const ACCENT = {
@@ -363,6 +365,7 @@ const ACCENT = {
   feeding: C.amber, supplies: C.coral, locations: C.mint, contacts: C.sky, documents: C.lilac,
   finance: C.mint, clients: C.sky, bookings: C.sky, invoices: C.sky, catalog: C.sky,
   mares: C.pink, embryos: C.pink, foals: C.pink, sales: C.amber,
+  staff: C.lilac,
 };
 const HEALTH_CATS = [
   ["appointments", Calendar, C.sky], ["farrier", Sparkles, C.lilac],
@@ -389,15 +392,16 @@ function StoreProvider({ children }) {
   const [embryos, setEmbryos] = useState([]);
   const [foals, setFoals] = useState([]);
   const [stalls, setStalls] = useState([]);
+  const [staffMembers, setStaffMembers] = useState([]);
 
   React.useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         fetchHorses(); fetchTxns(); fetchSupplies(); fetchUsers(); fetchFeed();
-        fetchTasks(); fetchHealthRecords(); fetchEmbryos(); fetchFoals(); fetchStalls();
+        fetchTasks(); fetchHealthRecords(); fetchEmbryos(); fetchFoals(); fetchStalls(); fetchStaff();
       } else {
         setHorses([]); setTxns([]); setSupplies([]); setUsers([]); setFeed({});
-        setTasks([]); setHealthRecords([]); setEmbryos([]); setFoals([]); setStalls([]);
+        setTasks([]); setHealthRecords([]); setEmbryos([]); setFoals([]); setStalls([]); setStaffMembers([]);
       }
     });
     return () => subscription.unsubscribe();
@@ -857,11 +861,15 @@ function PinModal({ t, target, onClose, onOk }) {
 function Brand() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 6px" }}>
-      <img src="/logo.png" alt="Equiviesa Logo" style={{ width: 57, height: 57, objectFit: "contain" }} />
-      <div className="ev-display" style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.3 }}>Equiviesa</div>
+      <img src="/logo.png" alt="Equiviesa Logo" style={{ width: 71, height: 71, objectFit: "contain", flexShrink: 0 }} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <div className="ev-display" style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.3, lineHeight: 1.1 }}>Equiviesa</div>
+        <div style={{ fontSize: 10.5, fontWeight: 600, color: C.sub, letterSpacing: 0.8, textTransform: "uppercase" }}>Stable Manager</div>
+      </div>
     </div>
   );
 }
+
 function Group({ label }) {
   return (
     <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase",
