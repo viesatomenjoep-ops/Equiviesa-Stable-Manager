@@ -484,10 +484,26 @@ function StoreProvider({ children }) {
   const [stalls, setStalls] = useState([]);
   const [staffMembers, setStaffMembers] = useState([]);
 
-  // ... (dummy implementation of addStall, editStall, deleteStall)
-  const addStall = (s) => setStalls(p => [...p, { id: Date.now(), ...s }]);
-  const editStall = (id, upd) => setStalls(p => p.map(x => x.id === id ? { ...x, ...upd } : x));
-  const deleteStall = (id) => setStalls(p => p.filter(x => x.id !== id));
+  const fetchStalls = async () => {
+    const { data } = await supabase.from('stalls').select('*');
+    if (data) setStalls(data);
+  };
+  const addStall = async (s) => {
+    const { data, error } = await supabase.from('stalls').insert([cleanObj(s)]).select();
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
+    if (data) setStalls(p => [...p, data[0]]);
+  };
+  const editStall = async (id, upd) => {
+    // Optimistic UI update for map builder responsiveness
+    setStalls(p => p.map(x => x.id === id ? { ...x, ...upd } : x));
+    const { error } = await supabase.from('stalls').update(cleanObj(upd)).eq('id', id);
+    if (error) { console.error(error); alert("Database Error: " + error.message); fetchStalls(); }
+  };
+  const deleteStall = async (id) => {
+    const { error } = await supabase.from('stalls').delete().eq('id', id);
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
+    else setStalls(p => p.filter(x => x.id !== id));
+  };
 
   React.useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
