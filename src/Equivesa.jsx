@@ -446,6 +446,15 @@ const Store = createContext(null);
 export const useStore = () => useContext(Store);
 
 const HORSE_TINTS = [C.mint, C.sky, C.coral, C.amber, C.pink, C.lilac];
+export const trFeed = (val, t) => {
+  if (!val || !t) return val;
+  const v = val.toLowerCase().trim();
+  if (["hooi", "hoi", "hay", "heno"].includes(v)) return t.feedHay || val;
+  if (["biks", "bix", "pellets", "concentrates", "concentrado"].includes(v)) return t.feedConcentrate || val;
+  if (["muesli"].includes(v)) return t.feedMuesli || val;
+  if (["water", "agua"].includes(v)) return t.feedWater || val;
+  return val;
+};
 
 function StoreProvider({ children }) {
   const [horses, setHorses] = useState([]);
@@ -2459,7 +2468,7 @@ function FeedingScreen({ t, go, setRoute }) {
                             <div style={{ fontSize: 11, fontWeight: 700, color: C.sub, textTransform: "uppercase", marginBottom: 6 }}>{t[sl] || sl}</div>
                             {DEFAULT_SCHEDULE.filter(d => d.slot === sl).map((d, i) => (
                               <div key={i} style={{ fontSize: 12, color: C.ink, display: "flex", justifyContent: "space-between" }}>
-                                <span>{d.product}</span>
+                                <span>{trFeed(d.product, t)}</span>
                                 <span style={{ color: C.sub }}>{d.qty}</span>
                               </div>
                             ))}
@@ -2495,7 +2504,7 @@ function FeedingScreen({ t, go, setRoute }) {
                           <div key={it.id} style={{ display: "flex", alignItems: "center", gap: 10,
                             background: C.field, borderRadius: 11, padding: "10px 14px" }}>
                             <Carrot size={17} color={C.amber} />
-                            <span style={{ flex: 1, fontSize: 14.5, fontWeight: 500 }}>{it.product}</span>
+                            <span style={{ flex: 1, fontSize: 14.5, fontWeight: 500 }}>{trFeed(it.product, t)}</span>
                             <span style={{ fontSize: 14, color: C.sub, fontWeight: 600 }}>{it.qty}</span>
                             <button onClick={() => deleteFeedItem(h.id, slot, it.id)} className="ev-tap"
                               style={{ border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 2 }}>
@@ -3115,7 +3124,7 @@ function GroomDashboard({ t, go }) {
                 <div style={{ width: 32, height: 32, borderRadius: 10, background: it.color || C.amber, display: 'grid', placeItems: 'center', fontSize: 16, flexShrink: 0 }}>🥕</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{it.horseName}</div>
-                  <div style={{ fontSize: 12, color: C.sub }}>{it.product}</div>
+                  <div style={{ fontSize: 12, color: C.sub }}>{trFeed(it.product, t)}</div>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: C.amber }}>{it.qty}</div>
               </div>

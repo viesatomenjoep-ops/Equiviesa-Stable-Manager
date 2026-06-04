@@ -187,6 +187,7 @@ create table if not exists public.contacts (
     name text not null,
     email text,
     phone text,
+    company text,
     role text default 'other' check (role in ('owner','client','vet','farrier','rider','supplier','other')),
     notes text,
     photo_url text
@@ -200,6 +201,7 @@ create table if not exists public.supplies_needed (
     id bigserial primary key,
     created_at timestamptz default now() not null,
     name text not null,
+    item_name text,
     qty text,
     status text default 'needed' check (status in ('needed','ordered','received')),
     category text default 'feed' check (category in ('feed','medical','equipment','bedding','cleaning','clothing','other')),
