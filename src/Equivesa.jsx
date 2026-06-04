@@ -483,6 +483,22 @@ function StoreProvider({ children }) {
   const [foals, setFoals] = useState([]);
   const [stalls, setStalls] = useState([]);
   const [staffMembers, setStaffMembers] = useState([]);
+  const [temperatures, setTemperatures] = useState([]);
+
+  const fetchTemperatures = async () => {
+    const { data } = await supabase.from('horse_temperatures').select('*').order('measured_at', { ascending: false });
+    if (data) setTemperatures(data);
+  };
+  const addTemperature = async (t) => {
+    const { data, error } = await supabase.from('horse_temperatures').insert([cleanObj(t)]).select();
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
+    if (data) setTemperatures(p => [data[0], ...p]);
+  };
+  const deleteTemperature = async (id) => {
+    const { error } = await supabase.from('horse_temperatures').delete().eq('id', id);
+    if (error) { console.error(error); alert("Database Error: " + error.message); }
+    else setTemperatures(p => p.filter(x => x.id !== id));
+  };
 
   const fetchStalls = async () => {
     const { data } = await supabase.from('stalls').select('*');
@@ -509,10 +525,10 @@ function StoreProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         fetchHorses(); fetchTxns(); fetchSupplies(); fetchUsers(); fetchFeed();
-        fetchTasks(); fetchHealthRecords(); fetchEmbryos(); fetchFoals(); fetchStalls(); fetchStaff();
+        fetchTasks(); fetchHealthRecords(); fetchEmbryos(); fetchFoals(); fetchStalls(); fetchStaff(); fetchTemperatures();
       } else {
         setHorses([]); setTxns([]); setSupplies([]); setUsers([]); setFeed({});
-        setTasks([]); setHealthRecords([]); setEmbryos([]); setFoals([]); setStalls([]); setStaffMembers([]);
+        setTasks([]); setHealthRecords([]); setEmbryos([]); setFoals([]); setStalls([]); setStaffMembers([]); setTemperatures([]);
       }
     });
     return () => subscription.unsubscribe();
@@ -738,6 +754,8 @@ function StoreProvider({ children }) {
       supplies, addSupply, toggleSupplyStatus, deleteSupply,
       tasks, addTask, editTask, toggleTask, deleteTask,
       stalls, addStall, editStall, deleteStall,
+      staffMembers,
+      temperatures, addTemperature, deleteTemperature,
       healthRecords, addHealthRecord, editHealthRecord, toggleHealthRecord, deleteHealthRecord }}>{children}</Store.Provider>
   );
 }
@@ -782,7 +800,7 @@ export default function Equivesa() {
 function AppRoot() {
   const [lang, setLang] = useState("en");
   const [mode, setMode] = useState(null);
-  const [active, setActive] = useState("horses");
+  const [active, setActive] = useState("myday");
   const [drawer, setDrawer] = useState(false);
   const [route, setRoute] = useState({ name: "list" });
   const [session, setSession] = useState(null);
@@ -1094,22 +1112,21 @@ const iconBtn = {
 function LangPicker({ lang, setLang, block }) {
   const FLAGS = { en: "🇬🇧", nl: "🇳🇱", es: "🇪🇸" };
   return (
-    <div style={{ display: "flex", gap: 4, background: C.bg, borderRadius: 14, padding: 4,
+    <div style={{ display: "flex", gap: 4, background: C.bg, borderRadius: 12, padding: 4,
       width: block ? "100%" : "auto", justifyContent: "center" }}>
       {["en", "nl", "es"].map((l) => (
         <button key={l} onClick={() => setLang(l)} className="ev-tap" style={{
-          border: "none", cursor: "pointer", borderRadius: 10, padding: "8px 12px",
-          fontSize: 14, fontWeight: 600, fontFamily: "inherit", flex: block ? 1 : "none",
+          flex: block ? 1 : "none", padding: "6px 10px", borderRadius: 8, border: "none",
           background: lang === l ? C.surface : "transparent",
           color: lang === l ? C.mint : C.sub,
           boxShadow: lang === l ? "0 2px 8px rgba(0,0,0,.10)" : "none",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-          transition: "all .15s",
+          fontWeight: 600, fontFamily: "inherit", cursor: "pointer", transition: "all .15s",
         }}>
-          <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <span style={{ fontSize: 20, lineHeight: 1, display: "block", transform: "scale(1.1)" }}>{FLAGS[l]}</span>
+          <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontSize: 16, lineHeight: 1, display: "block", transform: "scale(1.1)" }}>{FLAGS[l]}</span>
           </div>
-          <span style={{ fontSize: 12 }}>{I18N[l].code}</span>
+          <span style={{ fontSize: 11 }}>{I18N[l].code}</span>
         </button>
       ))}
     </div>
@@ -1563,6 +1580,10 @@ function HorseDetail({ t, id, setRoute }) {
 
   const del = () => { if (window.confirm(t.confirmDelete || "Delete?")) { deleteHorse(id); setRoute({ name: "list" }); } };
 
+  const horseTemps = temperatures?.filter(temp => temp.horse_id === id).sort((a,b) => new Date(b.measured_at) - new Date(a.measured_at)) || [];
+  const latestTemp = horseTemps[0];
+  const [showTempModal, setShowTempModal] = useState(false);
+
   return (
     <div className="ev-card" style={{ width: "100%", margin: "0 auto" }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 24, position: "relative" }}>
@@ -1591,6 +1612,29 @@ function HorseDetail({ t, id, setRoute }) {
         ))}
       </div>
 
+      {/* Vitals Widget */}
+      <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 18, overflow: "hidden", marginBottom: 18 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 18px", borderBottom: `1px solid ${C.line}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, color: C.ink }}>
+            <Activity size={18} color={C.coral} /> Vitals / Temperature
+          </div>
+          <button onClick={() => setShowTempModal(true)} className="ev-tap" style={{ background: `${C.coral}1a`, color: C.coral, border: "none", padding: "6px 12px", borderRadius: 10, fontWeight: 700, cursor: "pointer" }}>Log Temp</button>
+        </div>
+        <div style={{ padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", background: C.field }}>
+          <div>
+            <div style={{ fontSize: 13, color: C.sub, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Current Status</div>
+            {latestTemp ? (
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                <span style={{ fontSize: 28, fontWeight: 800, color: Number(latestTemp.temperature) > 38.5 ? C.coral : C.mint }}>{latestTemp.temperature}°C</span>
+                <span style={{ fontSize: 13, color: C.sub }}>{new Date(latestTemp.measured_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}</span>
+              </div>
+            ) : (
+              <div style={{ color: C.sub, fontStyle: "italic", fontSize: 15 }}>No data</div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {rows.length > 0 && (
         <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 18, overflow: "hidden", marginBottom: 18 }}>
           {rows.map(([label, val], i) => (
@@ -1608,7 +1652,53 @@ function HorseDetail({ t, id, setRoute }) {
         background: `${C.coral}12`, color: C.coral, fontSize: 15, fontWeight: 600, cursor: "pointer",
         fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
       }}><Trash2 size={18} /> {t.delete}</button>
+
+      {showTempModal && <TemperatureLogModal horse={h} temps={horseTemps} onClose={() => setShowTempModal(false)} />}
     </div>
+  );
+}
+
+/* ---------- Temperature Modal ---------- */
+function TemperatureLogModal({ horse, temps, onClose }) {
+  const { addTemperature } = useStore();
+  const [f, setF] = useState({ temperature: "", notes: "", time: new Date().toISOString().slice(0,16) });
+
+  const submit = () => {
+    if (!f.temperature) return;
+    addTemperature({ horse_id: horse.id, temperature: parseFloat(f.temperature), measured_at: new Date(f.time).toISOString(), notes: f.notes });
+    setF({ temperature: "", notes: "", time: new Date().toISOString().slice(0,16) });
+  };
+
+  return (
+    <ModalShell onClose={onClose} title={`Vitals: ${horse.name}`} icon={<Activity size={20} />} accent={C.coral}>
+      <div style={{ padding: 20 }}>
+        <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 6 }}>Temperature (°C)</label>
+            <input type="number" step="0.1" value={f.temperature} onChange={e => setF({...f, temperature: e.target.value})} placeholder="37.5" style={{ width: "100%", padding: 12, borderRadius: 12, border: `1.5px solid ${C.line}`, fontSize: 16, outline: "none" }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 6 }}>Date & Time</label>
+            <input type="datetime-local" value={f.time} onChange={e => setF({...f, time: e.target.value})} style={{ width: "100%", padding: 12, borderRadius: 12, border: `1.5px solid ${C.line}`, fontSize: 16, outline: "none" }} />
+          </div>
+        </div>
+        <button onClick={submit} className="ev-tap" disabled={!f.temperature} style={{ width: "100%", padding: 14, borderRadius: 12, border: "none", background: f.temperature ? C.coral : C.line, color: "#fff", fontWeight: 700, fontSize: 16, cursor: "pointer", marginBottom: 24 }}>Add Reading</button>
+
+        <h4 style={{ margin: "0 0 12px", color: C.ink }}>History</h4>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto" }}>
+          {temps.map(t => (
+            <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: C.field, borderRadius: 10 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: Number(t.temperature) > 38.5 ? C.coral : C.ink }}>{t.temperature}°C</div>
+                {t.notes && <div style={{ fontSize: 12, color: C.sub }}>{t.notes}</div>}
+              </div>
+              <div style={{ fontSize: 13, color: C.sub }}>{new Date(t.measured_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}</div>
+            </div>
+          ))}
+          {temps.length === 0 && <div style={{ color: C.sub, fontStyle: "italic", fontSize: 14 }}>No history recorded.</div>}
+        </div>
+      </div>
+    </ModalShell>
   );
 }
 
