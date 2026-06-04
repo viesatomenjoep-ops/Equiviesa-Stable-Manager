@@ -698,7 +698,6 @@ function AppRoot() {
           </div>
           <BottomNav t={t} active={active} go={go} mode={mode} />
           {drawer && <Drawer t={t} active={active} go={go} close={() => setDrawer(false)} mode={mode} setMode={setMode} />}
-          {mode === "groom" && <GroomFab t={t} />}
         </div>
       )}
     </div>
