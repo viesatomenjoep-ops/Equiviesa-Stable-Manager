@@ -3,7 +3,7 @@ import {
   Menu, X, Bell, Plus, Search, ChevronRight, ChevronLeft, Check,
   Home, Calendar, CheckSquare, Heart, Carrot, MapPin, Contact,
   FileText, Users, Settings, HelpCircle, Receipt, BookOpen,
-  Package, Baby, ShoppingCart, Sparkles, Trash2, Camera, MoreHorizontal, Globe, Wallet, ArrowUpRight, ArrowDownRight, Paperclip, ChevronDown, LogOut, Edit2
+  Package, Baby, ShoppingCart, Sparkles, Trash2, Camera, MoreHorizontal, Globe, Wallet, ArrowUpRight, ArrowDownRight, Paperclip, ChevronDown, LogOut, Edit2, AlertTriangle, AlertOctagon
 } from "lucide-react";
 import { supabase } from "./supabaseClient";
 
@@ -104,6 +104,8 @@ const I18N = {
     selectHorse: "Selecteer paard", allCats: "Alle categorieën",
     taskCommon: ["Stal uitmesten", "Paddock", "Longeren", "Poetsen", "Hooi vullen", "Watercheck", "Weide maaien"],
     timeStart: "Starttijd", timeEnd: "Eindtijd",
+    myDay: "Mijn Dag", myDaySub: "Jouw dagelijkse taken. Tik om af te vinken.",
+    reportIssue: "Snel Melden", whatIsWrong: "Wat wil je doorgeven?", issueSupply: "Voorraad nodig", issueDefect: "Kapot / Defect", takePhoto: "Maak een foto (optioneel)", noTasksToday: "Geen taken voor jou vandaag!",
   },
   en: {
     code: "EN",
@@ -189,6 +191,8 @@ const I18N = {
     selectHorse: "Select horse", allCats: "All categories",
     taskCommon: ["Muck out", "Paddock", "Lunging", "Grooming", "Fill hay", "Water check", "Mow pasture"],
     timeStart: "Start time", timeEnd: "End time",
+    myDay: "My Day", myDaySub: "Your daily tasks. Tap to complete.",
+    reportIssue: "Quick Report", whatIsWrong: "What do you want to report?", issueSupply: "Supply needed", issueDefect: "Broken item / Defect", takePhoto: "Take a photo (optional)", noTasksToday: "No tasks for you today!",
   },
   es: {
     code: "ES",
@@ -638,7 +642,7 @@ function AppRoot() {
 
   const pickMode = (m) => {
     setMode(m);
-    setActive(m === "groom" ? "feeding" : "horses");
+    setActive(m === "groom" ? "myday" : "horses");
     setRoute({ name: "list" });
     setDrawer(false);
   };
@@ -686,6 +690,7 @@ function AppRoot() {
           </div>
           <BottomNav t={t} active={active} go={go} mode={mode} />
           {drawer && <Drawer t={t} active={active} go={go} close={() => setDrawer(false)} mode={mode} setMode={setMode} />}
+          {mode === "groom" && <GroomFab t={t} />}
         </div>
       )}
     </div>
@@ -693,8 +698,8 @@ function AppRoot() {
 }
 
 /* ---------- groom config: only the daily-essential modules ---------- */
-const GROOM_KEYS = ["calendar", "feeding", "tasks", "health", "supplies", "horses"];
-const GROOM_BOTTOM = ["calendar", "feeding", "tasks", "health", "horses"];
+const GROOM_KEYS = ["myday", "calendar", "feeding", "tasks", "health", "supplies", "horses"];
+const GROOM_BOTTOM = ["myday", "feeding", "horses"];
 const MODE_PIN = { manager: "1111", groom: "2222" };
 
 /* ---------- Mode chooser (first screen) ---------- */
@@ -788,29 +793,23 @@ function DesktopNav({ t, active, go, lang, setLang, mode, setMode }) {
 
 /* ---------- mode badge + switcher ---------- */
 function ModeBadge({ t, mode, setMode, inDrawer }) {
-  const [pinOpen, setPinOpen] = useState(false);
   const groom = mode === "groom";
   const color = groom ? C.amber : C.mint;
   const label = groom ? t.groomMode : t.managerMode;
 
   const onSwitch = () => {
-    if (groom) { setPinOpen(true); }   // groom locked → needs manager PIN to switch
-    else { setMode(null); }            // manager → free, back to chooser
+    setMode(null);
   };
 
   return (
-    <>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "12px 6px 4px",
-        background: `${color}14`, borderRadius: 12, padding: "8px 10px" }}>
-        <span style={{ width: 9, height: 9, borderRadius: "50%", background: color }} />
-        <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color }}>{label}</span>
-        <button onClick={onSwitch} className="ev-tap" title={t.switchMode} style={{
-          border: "none", background: "transparent", cursor: "pointer", color, padding: 2,
-          fontSize: 12, fontWeight: 600, fontFamily: "inherit" }}>{t.switchMode}</button>
-      </div>
-      {pinOpen && <PinModal t={t} target="manager" onClose={() => setPinOpen(false)}
-        onOk={() => { setPinOpen(false); setMode(null); }} />}
-    </>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "12px 6px 4px",
+      background: `${color}14`, borderRadius: 12, padding: "8px 10px" }}>
+      <span style={{ width: 9, height: 9, borderRadius: "50%", background: color }} />
+      <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color }}>{label}</span>
+      <button onClick={onSwitch} className="ev-tap" title={t.switchMode} style={{
+        border: "none", background: "transparent", cursor: "pointer", color, padding: 2,
+        fontSize: 12, fontWeight: 600, fontFamily: "inherit" }}>{t.switchMode}</button>
+    </div>
   );
 }
 
@@ -1074,6 +1073,7 @@ function HorseEditWrapper({ t, id, setRoute }) {
 
 function Screen({ active, route, setRoute, t, go }) {
   const wrap = { width: "100%", margin: "0 auto", padding: "22px 18px" };
+  if (active === "myday") return <div style={wrap}><MyDayScreen t={t} /></div>;
   if (active === "horses") {
     if (route.name === "add") return <div style={wrap}><HorseForm t={t} onDone={() => setRoute({ name: "list" })} /></div>;
     if (route.name === "edit") return <div style={wrap}><HorseEditWrapper t={t} id={route.id} setRoute={setRoute} /></div>;
@@ -2853,6 +2853,195 @@ function SupplyModal({ t, lang, onClose, onSave }) {
             placeholder={t.reqByHint} style={inputStyle()} />
         </Field>
       </div>
+
+      <Field label={t.notes}>
+        <textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })}
+          style={{ ...inputStyle(), resize: "vertical", minHeight: 140 }} placeholder={t.notesHint} />
+      </Field>
+    </ModalShell>
+  );
+}
+
+/* ============================================================
+   MILESTONE 1: GROOM "MY DAY" & QUICK REPORTS
+   ============================================================ */
+
+function MyDayScreen({ t }) {
+  const { tasks, horses, toggleTask } = useStore();
+  const todayStr = new Date().toISOString().split("T")[0];
+  
+  const myTasks = tasks
+    .filter(tk => tk.due_date === todayStr || (!tk.due_date && !tk.is_completed))
+    .sort((a, b) => {
+      if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
+      return (a.start_time || "23:59").localeCompare(b.start_time || "23:59");
+    });
+
+  return (
+    <div className="ev-card">
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 24 }}>
+        <h2 className="ev-display" style={{ margin: 0, fontSize: 26, fontWeight: 800, color: C.ink }}>{t.myDay}</h2>
+        <p style={{ margin: 0, color: C.sub, fontSize: 15 }}>{t.myDaySub}</p>
+      </div>
+
+      {myTasks.length === 0 ? (
+        <EmptyHero accent={C.amber} icon={<CheckSquare size={46} />} title={t.noTasksToday} sub="" cta="" onClick={() => {}} />
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {myTasks.map(tk => {
+            const horse = horses.find(h => h.id === tk.horse_id);
+            return (
+              <button key={tk.id} onClick={() => toggleTask(tk.id)} className="ev-tap" style={{
+                display: "flex", alignItems: "center", gap: 16, width: "100%", textAlign: "left",
+                background: tk.is_completed ? C.bg : C.surface,
+                border: `1.5px solid ${tk.is_completed ? C.line : C.amber + '44'}`,
+                borderRadius: 20, padding: 18, cursor: "pointer",
+                opacity: tk.is_completed ? 0.6 : 1, transition: "all .2s ease"
+              }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                  border: `2px solid ${tk.is_completed ? C.sub : C.amber}`,
+                  background: tk.is_completed ? C.sub : "transparent",
+                  display: "grid", placeItems: "center", color: "#fff"
+                }}>
+                  {tk.is_completed && <Check size={20} strokeWidth={3} />}
+                </div>
+                
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: tk.is_completed ? C.sub : C.ink,
+                    textDecoration: tk.is_completed ? "line-through" : "none" }}>{tk.title}</div>
+                  
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
+                    {(tk.start_time || tk.end_time) && (
+                      <span style={{ fontSize: 13, fontWeight: 600, color: C.amber, background: `${C.amber}1f`, padding: "4px 10px", borderRadius: 8 }}>
+                        {tk.start_time?.slice(0,5) || "-"} {tk.end_time ? `- ${tk.end_time.slice(0,5)}` : ""}
+                      </span>
+                    )}
+                    {horse && (
+                      <span style={{ fontSize: 13, fontWeight: 600, color: C.mint, background: C.mintSoft, padding: "4px 10px", borderRadius: 8 }}>
+                        🐴 {horse.name}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GroomFab({ t }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className="ev-tap" style={{
+        position: "fixed", bottom: 84, right: 20, zIndex: 40,
+        width: 64, height: 64, borderRadius: 24, background: C.coral, color: "#fff",
+        display: "grid", placeItems: "center", border: "none", cursor: "pointer",
+        boxShadow: `0 12px 30px ${C.coral}66`,
+      }}>
+        <AlertTriangle size={30} strokeWidth={2.2} />
+      </button>
+      {open && <QuickReportModal t={t} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+function QuickReportModal({ t, onClose }) {
+  const { addSupply } = useStore();
+  const [f, setF] = useState({ report_type: "supply", item_name: "", notes: "", photo_url: "" });
+  const [err, setErr] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "equivesa_uploads");
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "daj1lyfgk";
+
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: "POST", body: formData,
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        setF(prev => ({ ...prev, photo_url: data.secure_url }));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const save = () => {
+    if (!f.item_name.trim()) { setErr(true); return; }
+    addSupply({
+      item_name: f.item_name,
+      report_type: f.report_type,
+      notes: f.notes,
+      photo_url: f.photo_url,
+      quantity: "1",
+      requested_by: "Groom",
+      status: "pending"
+    });
+    onClose();
+  };
+
+  return (
+    <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<AlertTriangle size={22} />} title={t.reportIssue}
+      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
+      
+      <Field label={t.whatIsWrong}>
+        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+          {["supply", "defect"].map(type => (
+            <button key={type} type="button" onClick={() => setF({...f, report_type: type})} className="ev-tap"
+              style={{
+                flex: 1, padding: "16px", borderRadius: 16, border: `1.5px solid ${f.report_type === type ? C.coral : C.line}`,
+                background: f.report_type === type ? C.coral : C.surface,
+                color: f.report_type === type ? "#fff" : C.sub,
+                fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600,
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 8
+              }}>
+              {type === "supply" ? <ShoppingCart size={24} /> : <AlertOctagon size={24} />}
+              {type === "supply" ? t.issueSupply : t.issueDefect}
+            </button>
+          ))}
+        </div>
+      </Field>
+
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+        <label style={{
+          width: "100%", height: 160, borderRadius: 20, border: `2px dashed ${C.coral}66`,
+          background: `${C.coral}0a`, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          color: C.coral, gap: 12, overflow: "hidden", position: "relative"
+        }}>
+          {f.photo_url ? (
+            <img src={f.photo_url} alt="Report" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 16 }} />
+          ) : uploading ? (
+            <span style={{ fontSize: 16, fontWeight: 600 }}>Up...</span>
+          ) : (
+            <>
+              <Camera size={36} />
+              <span style={{ fontSize: 16, fontWeight: 600 }}>{t.takePhoto}</span>
+            </>
+          )}
+          <input type="file" accept="image/*;capture=camera" onChange={handleUpload} style={{ display: "none" }} />
+        </label>
+      </div>
+
+      <Field label={t.taskTitle} required>
+        <input value={f.item_name} onChange={(e) => { setF({...f, item_name: e.target.value}); setErr(false); }}
+          placeholder={f.report_type === "supply" ? "e.g. Dish soap, Tape" : "e.g. Broken halter horse X"} style={inputStyle(err)} />
+      </Field>
+      {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.required}</div>}
 
       <Field label={t.notes}>
         <textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })}
