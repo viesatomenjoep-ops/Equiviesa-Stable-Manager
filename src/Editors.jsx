@@ -312,31 +312,66 @@ export function FinanceEditor({ t, initialData, horses, onClose, onSave, onDelet
   const [f, setF] = useState(initialData || { type: "expense", category: "catFeed", amount: "", description: "", reference: "", horse_id: "", date: new Date().toISOString().split("T")[0], receipt_url: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const CATS = ["catFeed", "catVet", "catFarrier", "catBoard", "catConcours", "catOther"];
+  const CATS = [
+    { id: "catFeed", emoji: "🌾" },
+    { id: "catVet", emoji: "🩺" },
+    { id: "catFarrier", emoji: "🔨" },
+    { id: "catBoard", emoji: "🏠" },
+    { id: "catConcours", emoji: "🏆" },
+    { id: "catOther", emoji: "🛒" }
+  ];
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.addTransaction || "Add Transaction"} icon={Wallet} color={C.mint} onClose={onClose} onSave={() => f.amount && f.description.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
       <PhotoUpload url={f.receipt_url} onChange={(url) => setF({...f, receipt_url: url})} uploading={uploading} setUploading={setUploading} icon={FileText} />
+      
       <Field label="Transaction Type">
-        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8 }}>
-          {["expense", "income"].map(r => (
-            <button key={r} type="button" onClick={() => setF({...f, type: r})} className="ev-tap" style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.type === r ? C.mint : C.line}`, background: f.type === r ? C.mint : C.surface, color: f.type === r ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontWeight: 600 }}>{r.toUpperCase()}</button>
-          ))}
+        <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+          <button type="button" onClick={() => setF({...f, type: "income"})} className="ev-tap"
+            style={{ flex: 1, padding: "18px", borderRadius: 16, border: `2px solid ${f.type === "income" ? C.mint : C.line}`, background: f.type === "income" ? C.mint : C.surface, color: f.type === "income" ? "#fff" : C.sub, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+            <span style={{ fontSize: 28 }}>📈</span>
+            <span style={{ fontSize: 15, fontWeight: 700 }}>{t.income || "Income"}</span>
+          </button>
+          <button type="button" onClick={() => setF({...f, type: "expense"})} className="ev-tap"
+            style={{ flex: 1, padding: "18px", borderRadius: 16, border: `2px solid ${f.type === "expense" ? C.coral : C.line}`, background: f.type === "expense" ? C.coral : C.surface, color: f.type === "expense" ? "#fff" : C.sub, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+            <span style={{ fontSize: 28 }}>📉</span>
+            <span style={{ fontSize: 15, fontWeight: 700 }}>{t.expenses || "Expense"}</span>
+          </button>
         </div>
       </Field>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label={t.amount || "Amount (€)"} required><input type="number" step="0.01" value={f.amount} onChange={(e) => { setF({...f, amount: e.target.value}); setErr(false); }} placeholder="0.00" style={inputStyle(err && !f.amount)} /></Field>
-        <Field label="Date" required><input type="date" value={f.date || ""} onChange={(e) => setF({...f, date: e.target.value})} style={inputStyle()} /></Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label={t.amount || "Amount (€)"} required>
+            <input type="number" step="0.01" value={f.amount} onChange={(e) => { setF({...f, amount: e.target.value}); setErr(false); }} placeholder="0.00" style={{...inputStyle(err && !f.amount), background: C.surface, fontSize: 18, fontWeight: 700, color: f.type === "income" ? C.mint : C.coral}} />
+          </Field>
+          <Field label="Date" required>
+            <input type="date" value={f.date || ""} onChange={(e) => setF({...f, date: e.target.value})} style={{...inputStyle(), background: C.surface}} />
+          </Field>
+        </div>
+        <Field label={t.description || "Description"} required>
+          <input value={f.description} onChange={(e) => { setF({...f, description: e.target.value}); setErr(false); }} placeholder="e.g. New saddle" style={{...inputStyle(err && !f.description), background: C.surface}} />
+        </Field>
       </div>
-      <Field label={t.description || "Description"} required><input value={f.description} onChange={(e) => { setF({...f, description: e.target.value}); setErr(false); }} placeholder="e.g. New saddle" style={inputStyle(err && !f.description)} /></Field>
+
       <Field label={t.fCategory || "Category"}>
-        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8 }}>
-          {CATS.map(r => (
-            <button key={r} type="button" onClick={() => setF({...f, category: r})} className="ev-tap" style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.category === r ? C.mint : C.line}`, background: f.category === r ? C.mint : C.surface, color: f.category === r ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontWeight: 600 }}>{t[r] || r.replace("cat", "")}</button>
-          ))}
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
+          {CATS.map(r => {
+            const isSel = f.category === r.id;
+            return (
+              <button key={r.id} type="button" onClick={() => setF({...f, category: r.id})} className="ev-tap"
+                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${isSel ? C.mint : C.line}`, background: isSel ? C.mint : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+                <span style={{ fontSize: 20 }}>{r.emoji}</span>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>{t[r.id] || r.id.replace("cat", "")}</span>
+              </button>
+            );
+          })}
         </div>
       </Field>
-      <Field label={t.reference || "Reference"}><input value={f.reference || ""} onChange={(e) => setF({...f, reference: e.target.value})} placeholder="Invoice #..." style={inputStyle()} /></Field>
+
+      <Field label={t.reference || "Reference"}>
+        <input value={f.reference || ""} onChange={(e) => setF({...f, reference: e.target.value})} placeholder="Invoice #..." style={inputStyle()} />
+      </Field>
     </EditorLayout>
   );
 }
@@ -497,19 +532,40 @@ export function BookingEditor({ t, initialData, onClose, onSave, onDelete }) {
   const [f, setF] = useState(initialData || { date: "", status: "pending", notes: "", photo_url: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const STATUSES = [
+    { id: "pending", emoji: "⏳" },
+    { id: "confirmed", emoji: "✅" },
+    { id: "cancelled", emoji: "❌" }
+  ];
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Booking"} icon={BookOpen} color={C.sky} onClose={onClose} onSave={() => f.date ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
       <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
-      <Field label="Date" required><input type="date" value={f.date || ""} onChange={(e) => { setF({...f, date: e.target.value}); setErr(false); }} style={inputStyle(err && !f.date)} /></Field>
+      
       <Field label="Status">
-        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8 }}>
-          {["pending", "confirmed", "cancelled"].map(r => (
-            <button key={r} type="button" onClick={() => setF({...f, status: r})} className="ev-tap" style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.status === r ? C.sky : C.line}`, background: f.status === r ? C.sky : C.surface, color: f.status === r ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontWeight: 600 }}>{r.toUpperCase()}</button>
-          ))}
+        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+          {STATUSES.map(cat => {
+            const isSel = f.status === cat.id;
+            return (
+              <button key={cat.id} type="button" onClick={() => setF({...f, status: cat.id})} className="ev-tap"
+                style={{ flex: 1, padding: "14px 10px", borderRadius: 16, border: `1.5px solid ${isSel ? C.sky : C.line}`, background: isSel ? C.sky : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", transition: "all .2s" }}>
+                <span style={{ fontSize: 24 }}>{cat.emoji}</span>
+                <span style={{ fontSize: 14, fontWeight: 700 }}>{cat.id.charAt(0).toUpperCase() + cat.id.slice(1)}</span>
+              </button>
+            );
+          })}
         </div>
       </Field>
-      <Field label={t.notes || "Notes"}><textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical" }} placeholder="Booking details..." /></Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <Field label="Date" required>
+          <input type="date" value={f.date || ""} onChange={(e) => { setF({...f, date: e.target.value}); setErr(false); }} style={{...inputStyle(err && !f.date), background: C.surface}} />
+        </Field>
+      </div>
+
+      <Field label={t.notes || "Notes"}>
+        <textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical", background: C.field }} placeholder="Booking details..." />
+      </Field>
     </EditorLayout>
   );
 }
@@ -518,23 +574,49 @@ export function InvoiceEditor({ t, initialData, onClose, onSave, onDelete }) {
   const [f, setF] = useState(initialData || { invoice_number: "", amount: "", due_date: "", status: "draft", file_url: "", notes: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const STATUSES = [
+    { id: "draft", emoji: "📝" },
+    { id: "sent", emoji: "📨" },
+    { id: "paid", emoji: "💳" },
+    { id: "overdue", emoji: "⚠️" }
+  ];
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Invoice"} icon={Receipt} color={C.sky} onClose={onClose} onSave={() => f.amount ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
       <PhotoUpload url={f.file_url} onChange={(url) => setF({...f, file_url: url})} uploading={uploading} setUploading={setUploading} icon={FileText} />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label="Invoice Number"><input value={f.invoice_number || ""} onChange={(e) => setF({...f, invoice_number: e.target.value})} placeholder="INV-2026-..." style={inputStyle()} /></Field>
-        <Field label="Amount (€)" required><input type="number" step="0.01" value={f.amount || ""} onChange={(e) => { setF({...f, amount: e.target.value}); setErr(false); }} placeholder="0.00" style={inputStyle(err && !f.amount)} /></Field>
-      </div>
-      <Field label="Due Date"><input type="date" value={f.due_date || ""} onChange={(e) => setF({...f, due_date: e.target.value})} style={inputStyle()} /></Field>
+      
       <Field label="Status">
-        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8 }}>
-          {["draft", "sent", "paid", "overdue"].map(r => (
-            <button key={r} type="button" onClick={() => setF({...f, status: r})} className="ev-tap" style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.status === r ? C.sky : C.line}`, background: f.status === r ? C.sky : C.surface, color: f.status === r ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontWeight: 600 }}>{r.toUpperCase()}</button>
-          ))}
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
+          {STATUSES.map(cat => {
+            const isSel = f.status === cat.id;
+            return (
+              <button key={cat.id} type="button" onClick={() => setF({...f, status: cat.id})} className="ev-tap"
+                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${isSel ? C.sky : C.line}`, background: isSel ? C.sky : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+                <span style={{ fontSize: 20 }}>{cat.emoji}</span>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>{cat.id.charAt(0).toUpperCase() + cat.id.slice(1)}</span>
+              </button>
+            );
+          })}
         </div>
       </Field>
-      <Field label={t.notes || "Notes"}><textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical" }} placeholder="Notes..." /></Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <Field label="Invoice Number">
+          <input value={f.invoice_number || ""} onChange={(e) => setF({...f, invoice_number: e.target.value})} placeholder="INV-2026-..." style={{...inputStyle(), background: C.surface}} />
+        </Field>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label="Amount (€)" required>
+            <input type="number" step="0.01" value={f.amount || ""} onChange={(e) => { setF({...f, amount: e.target.value}); setErr(false); }} placeholder="0.00" style={{...inputStyle(err && !f.amount), background: C.surface, fontSize: 18, fontWeight: 700, color: C.sky}} />
+          </Field>
+          <Field label="Due Date">
+            <input type="date" value={f.due_date || ""} onChange={(e) => setF({...f, due_date: e.target.value})} style={{...inputStyle(), background: C.surface}} />
+          </Field>
+        </div>
+      </div>
+
+      <Field label={t.notes || "Notes"}>
+        <textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical", background: C.field }} placeholder="Notes..." />
+      </Field>
     </EditorLayout>
   );
 }
