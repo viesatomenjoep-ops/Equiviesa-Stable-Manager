@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, Check, X, GripHorizontal, Horse } from "lucide-react";
+import { Plus, Trash2, Check, X, GripHorizontal } from "lucide-react";
 import { useStore } from "./Equivesa";
 
 const C = {
