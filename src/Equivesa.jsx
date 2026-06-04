@@ -351,14 +351,14 @@ function AuthScreen({ t, lang, setLang }) {
   );
 }
 const ICONS = {
-  horses: Home, calendar: Calendar, tasks: CheckSquare, health: Heart,
+  myday: CheckSquare, horses: Home, calendar: Calendar, tasks: CheckSquare, health: Heart,
   feeding: Carrot, supplies: ShoppingCart, locations: MapPin, contacts: Contact, documents: FileText,
   finance: Wallet, clients: Users, bookings: BookOpen, invoices: Receipt, catalog: Package,
   mares: Heart, embryos: Sparkles, foals: Baby, sales: ShoppingCart,
   users: Users, settings: Settings, help: HelpCircle,
 };
 const ACCENT = {
-  horses: C.mint, calendar: C.sky, tasks: C.amber, health: C.coral,
+  myday: C.amber, horses: C.mint, calendar: C.sky, tasks: C.amber, health: C.coral,
   feeding: C.amber, supplies: C.coral, locations: C.mint, contacts: C.sky, documents: C.lilac,
   finance: C.mint, clients: C.sky, bookings: C.sky, invoices: C.sky, catalog: C.sky,
   mares: C.pink, embryos: C.pink, foals: C.pink, sales: C.amber,
@@ -985,7 +985,7 @@ function BottomNav({ t, active, go, mode }) {
         padding: groom ? "10px 6px" : "8px 6px", display: "flex", justifyContent: "space-around",
       }}>
         {items.map((k) => {
-          const Icon = k === "menu" ? Menu : ICONS[k];
+          const Icon = k === "menu" ? Menu : (ICONS[k] || Home);
           const on = active === k;
           const accent = groom ? C.amber : C.mint;
           const softAccent = groom ? `${C.amber}1f` : C.mintSoft;
