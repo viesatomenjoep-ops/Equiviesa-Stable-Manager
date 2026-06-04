@@ -82,10 +82,6 @@ const I18N = {
     noFeed: "Geen voerschema", noFeedSub: "Voeg paarden toe en stel hun voerschema per dagdeel in.",
     product: "Product", addProduct: "Product toevoegen",
     noFeedHorse: "Nog niets ingesteld voor dit dagdeel.",
-    noSchedule: "⚠️ Geen schema",
-    noScheduleBanner: "🥕 Geen voedingsschema — zet er snel één op!",
-    setupSchedule: (name) => `⚡ Schema instellen voor ${name}`,
-    settingUpSchedule: "Bezig...",
     // mode gate
     chooseMode: "Wie ben je?", chooseModeSub: "Kies je weergave. Je kunt dit later wisselen.",
     groom: "Groom", manager: "Manager",
@@ -116,6 +112,27 @@ const I18N = {
     timeStart: "Starttijd", timeEnd: "Eindtijd",
     myDay: "Mijn Dag", myDaySub: "Jouw dagelijkse taken. Tik om af te vinken.",
     reportIssue: "Snel Melden", whatIsWrong: "Wat wil je doorgeven?", issueSupply: "Voorraad nodig", issueDefect: "Kapot / Defect", takePhoto: "Maak een foto (optioneel)", noTasksToday: "Geen taken voor jou vandaag!",
+    // Dashboard
+    dashboardTitle: "Jouw dag vandaag", tasksDoneToday: "Taken voltooid", allDone: "🎉 Alles gedaan voor vandaag!",
+    remaining: (n) => `Nog ${n} te gaan`,
+    morningFeed: "🌅 Ochtendvoeding", todayTasks: "✅ Taken vandaag", allTasks: "Alle taken →",
+    thisWeek: "📆 Deze week", weekPlan: "📆 Weekplanning",
+    quickActions: "Snelle acties", stableOverview: "Stalbeheer overzicht",
+    openTasks: "Open taken", activeHorses: "Actieve paarden",
+    monthlyIncome: "Inkomsten (mnd)", toOrder: "Te bestellen",
+    todayN: (n) => `📅 Vandaag — ${n} taken`,
+    upcomingHealth: "🩺 Komende zorgafspraken", monthlyFinance: "💰 Financiën deze maand",
+    noTasksScheduled: "Geen taken gepland voor vandaag.",
+    daysLeftN: (n) => n === 0 ? "Vandaag" : `Over ${n}d`,
+    addActivity: "Activiteit toevoegen", whatToAdd: "Wat wil je toevoegen?",
+    seeAll: "Zie alles →", toFinance: "Naar financiën →",
+    // Feeding UI
+    noFeedSchedule: "Geen voedingsschema", quickSetup: "⚡ Schema instellen voor",
+    addSlot: "Voedingsmoment toevoegen",
+    // Common feed product names
+    feedHay: "Hooi", feedConcentrate: "Biks", feedMuesli: "Muesli", feedWater: "Water",
+    feedStraw: "Stro", feedBran: "Zemelen", feedCarrots: "Wortels", feedApples: "Appels",
+    feedSalt: "Zoutblok", feedOil: "Olie",
   },
   en: {
     code: "EN",
@@ -174,10 +191,6 @@ const I18N = {
     noFeed: "No feeding schedule", noFeedSub: "Add horses and set up their feed per time of day.",
     product: "Product", addProduct: "Add product",
     noFeedHorse: "Nothing set for this time of day yet.",
-    noSchedule: "⚠️ No schedule",
-    noScheduleBanner: "🥕 No feeding schedule — set one up quickly!",
-    setupSchedule: (name) => `⚡ Set up schedule for ${name}`,
-    settingUpSchedule: "Setting up...",
     chooseMode: "Who are you?", chooseModeSub: "Choose your view. You can switch later.",
     groom: "Groom", manager: "Manager",
     groomDesc: "Daily work at the stable: feeding, tasks and care.",
@@ -207,6 +220,28 @@ const I18N = {
     timeStart: "Start time", timeEnd: "End time",
     myDay: "My Day", myDaySub: "Your daily tasks. Tap to complete.",
     reportIssue: "Quick Report", whatIsWrong: "What do you want to report?", issueSupply: "Supply needed", issueDefect: "Broken item / Defect", takePhoto: "Take a photo (optional)", noTasksToday: "No tasks for you today!",
+    // Dashboard
+    dashboardTitle: "Your day today", tasksDoneToday: "Tasks completed", allDone: "🎉 Everything done for today!",
+    remaining: (n) => `${n} more to go`,
+    morningFeed: "🌅 Morning feeding", todayTasks: "✅ Today's tasks", allTasks: "All tasks →",
+    thisWeek: "📆 This week", weekPlan: "📆 Week planning",
+    quickActions: "Quick actions", stableOverview: "Stable management overview",
+    openTasks: "Open tasks", activeHorses: "Active horses",
+    monthlyIncome: "Income (month)", toOrder: "To order",
+    todayN: (n) => `📅 Today — ${n} tasks`,
+    upcomingHealth: "🩺 Upcoming health appointments", monthlyFinance: "💰 Finance this month",
+    noTasksScheduled: "No tasks scheduled for today.",
+    daysLeftN: (n) => n === 0 ? "Today" : `In ${n}d`,
+    addActivity: "Add activity", whatToAdd: "What do you want to add?",
+    seeAll: "See all →", toFinance: "Go to finance →",
+    // Feeding UI
+    noFeedSchedule: "No feeding schedule", quickSetup: "⚡ Set up schedule for",
+    addSlot: "Add feeding slot",
+    myDay: "My Day", myDaySub: "Your daily tasks. Tap to complete.",
+    // Common feed product names
+    feedHay: "Hay", feedConcentrate: "Concentrates", feedMuesli: "Muesli", feedWater: "Water",
+    feedStraw: "Straw", feedBran: "Bran", feedCarrots: "Carrots", feedApples: "Apples",
+    feedSalt: "Salt lick", feedOil: "Oil",
   },
   es: {
     code: "ES",
@@ -264,11 +299,7 @@ const I18N = {
     horse: "Caballo", allHorsesShort: "Todos los caballos", addFeed: "Añadir comida",
     noFeed: "Sin plan de alimentación", noFeedSub: "Añade caballos y configura su comida por momento del día.",
     product: "Producto", addProduct: "Añadir producto",
-    noFeedHorse: "Nada configurado para este momento del día.",
-    noSchedule: "⚠️ Sin horario",
-    noScheduleBanner: "🥕 Sin horario de alimentación — ¡configura uno rápidamente!",
-    setupSchedule: (name) => `⚡ Configurar horario para ${name}`,
-    settingUpSchedule: "Configurando...",
+    noFeedHorse: "Aún no hay nada para este momento del día.",
     chooseMode: "¿Quién eres?", chooseModeSub: "Elige tu vista. Puedes cambiarla más tarde.",
     groom: "Mozo", manager: "Gerente",
     groomDesc: "Trabajo diario en la cuadra: comida, tareas y cuidados.",
@@ -296,6 +327,29 @@ const I18N = {
     selectHorse: "Seleccionar caballo", allCats: "Todas las categorías",
     taskCommon: ["Limpiar cuadra", "Paddock", "Cuerda", "Cepillar", "Llenar heno", "Revisar agua", "Cortar pasto"],
     timeStart: "Hora inicio", timeEnd: "Hora fin",
+    myDay: "Mi día", myDaySub: "Tus tareas diarias. Toca para completar.",
+    reportIssue: "Reportar", whatIsWrong: "¿Qué quieres reportar?", issueSupply: "Suministro necesario", issueDefect: "Artículo roto / Defecto", takePhoto: "Hacer una foto (opcional)", noTasksToday: "¡No hay tareas para ti hoy!",
+    // Dashboard
+    dashboardTitle: "Tu día hoy", tasksDoneToday: "Tareas completadas", allDone: "🎉 ¡Todo listo por hoy!",
+    remaining: (n) => `${n} más por hacer`,
+    morningFeed: "🌅 Alimentación matutina", todayTasks: "✅ Tareas de hoy", allTasks: "Todas las tareas →",
+    thisWeek: "📆 Esta semana", weekPlan: "📆 Planificación semanal",
+    quickActions: "Acciones rápidas", stableOverview: "Resumen de gestión",
+    openTasks: "Tareas abiertas", activeHorses: "Caballos activos",
+    monthlyIncome: "Ingresos (mes)", toOrder: "Por pedir",
+    todayN: (n) => `📅 Hoy — ${n} tareas`,
+    upcomingHealth: "🩺 Próximas citas de salud", monthlyFinance: "💰 Finanzas este mes",
+    noTasksScheduled: "No hay tareas para hoy.",
+    daysLeftN: (n) => n === 0 ? "Hoy" : `En ${n}d`,
+    addActivity: "Añadir actividad", whatToAdd: "¿Qué quieres añadir?",
+    seeAll: "Ver todo →", toFinance: "Ir a finanzas →",
+    // Feeding UI
+    noFeedSchedule: "Sin plan de alimentación", quickSetup: "⚡ Configurar plan para",
+    addSlot: "Añadir momento de alimentación",
+    // Common feed product names
+    feedHay: "Heno", feedConcentrate: "Concentrado", feedMuesli: "Muesli", feedWater: "Agua",
+    feedStraw: "Paja", feedBran: "Salvado", feedCarrots: "Zanahorias", feedApples: "Manzanas",
+    feedSalt: "Bloque de sal", feedOil: "Aceite",
   },
 };
 
@@ -484,9 +538,11 @@ function StoreProvider({ children }) {
     if (data) setSupplies(data);
   };
   const addSupply = async (item) => {
-    // amazon_link column does not exist in live supplies_needed table yet — strip it
-    const { amazon_link: _a, ...safe } = item;
-    const { data, error } = await supabase.from('supplies_needed').insert([cleanObj({...safe, status: 'pending'})]).select();
+    // Strip columns that may not exist in all environments
+    const { amazon_link: _a, photo_url, ...safe } = item;
+    // Only include photo_url if it actually has a value
+    const payload = photo_url ? { ...safe, photo_url, status: 'pending' } : { ...safe, status: 'pending' };
+    const { data, error } = await supabase.from('supplies_needed').insert([cleanObj(payload)]).select();
     if (error) { console.error(error); alert("Database Error: " + error.message); }
     if (data) setSupplies(prev => [data[0], ...prev]);
   };
@@ -1154,7 +1210,7 @@ function HorseEditWrapper({ t, id, setRoute }) {
 
 function Screen({ active, route, setRoute, t, go }) {
   const wrap = { width: "100%", margin: "0 auto", padding: "22px 18px" };
-  if (active === "myday") return <div style={wrap}><MyDayScreen t={t} /></div>;
+  if (active === "myday") return <div style={wrap}><MyDayScreen t={t} mode={mode} go={go} setRoute={setRoute} /></div>;
   if (active === "horses") {
     if (route.name === "add") return <div style={wrap}><HorseForm t={t} onDone={() => setRoute({ name: "list" })} /></div>;
     if (route.name === "edit") return <div style={wrap}><HorseEditWrapper t={t} id={route.id} setRoute={setRoute} /></div>;
@@ -1596,6 +1652,28 @@ function CalendarScreen({ t }) {
   const monthName = (t.months && t.months[month]) ? cap(t.months[month]) : MONTH_NAMES[month];
   const wdays = t.weekdays || WEEKDAYS;
 
+  // ---- EventPickerSheet: opent als je op een datum klikt ----
+  const [pickerDate, setPickerDate] = React.useState(null); // date string YYYY-MM-DD
+
+  const EVENT_OPTIONS = [
+    { id: 'task',    emoji: '✅', label: t.addTask     || 'Task',         color: CAL_EVENT_TYPES.task?.color   || C.amber,  action: (ds) => { go('tasks');   setPickerDate(null); } },
+    { id: 'health',  emoji: '🩺', label: t.addRecord   || 'Health',       color: CAL_EVENT_TYPES.health?.color || C.coral,  action: (ds) => { go('health');  setPickerDate(null); } },
+    { id: 'booking', emoji: '📅', label: t.add         || 'Booking',      color: C.sky,   action: (ds) => { go('bookings'); setPickerDate(null); } },
+    { id: 'supply',  emoji: '📦', label: t.addSupply   || 'Supply',       color: C.mint,  action: (ds) => { go('supplies'); setPickerDate(null); } },
+    { id: 'finance', emoji: '💰', label: t.addTxn      || 'Finance',      color: C.amber, action: (ds) => { go('finance');  setPickerDate(null); } },
+    { id: 'contact', emoji: '👤', label: t.addContact  || 'Contact',      color: C.lilac || '#9B7FD4', action: (ds) => { go('contacts'); setPickerDate(null); } },
+  ];
+
+  // When a day cell is clicked: if already selected open picker, else just select
+  const handleDayClick = (d) => {
+    const ds = dayStr(d);
+    if (selDay === d) {
+      setPickerDate(ds); // open picker on second click or direct
+    } else {
+      setSelDay(d);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, background: '#fff', borderRadius: 24, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', minHeight: 'calc(100vh - 160px)' }}>
 
@@ -1616,6 +1694,11 @@ function CalendarScreen({ t }) {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button onClick={goToday} className="ev-tap" style={{ padding: '8px 16px', borderRadius: 10, border: `1px solid ${C.line}`, background: 'transparent', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: C.mint, fontFamily: 'inherit' }}>
             {t.today || 'Today'}
+          </button>
+          {/* ADD EVENT BUTTON */}
+          <button onClick={() => { if (selDay) setPickerDate(dayStr(selDay)); else setPickerDate(todayStr); }} className="ev-tap"
+            style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: C.mint, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Plus size={14} /> {t.add || 'Add'}
           </button>
           {!notifEnabled && 'Notification' in window && (
             <button onClick={enableNotifications} className="ev-tap" style={{ padding: '8px 14px', borderRadius: 10, border: `1px solid ${C.amber}`, background: `${C.amber}18`, cursor: 'pointer', fontSize: 13, fontWeight: 700, color: C.amber, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1661,12 +1744,9 @@ function CalendarScreen({ t }) {
               const isToday = ds === todayStr;
               const isSel = selDay === d;
               const evs = events[ds] || [];
-              const isDone = evs.length > 0 && evs.every(ev => ev.done);
-              // Unique event type colors for density dots
-              const uniqueColors = [...new Set(evs.map(ev => ev.color))].slice(0, 4);
               const isWeekend = (firstDow + d - 1) % 7 >= 5;
               return (
-                <button key={d} onClick={() => setSelDay(d === selDay ? null : d)} className="ev-tap" style={{
+                <button key={d} onClick={() => handleDayClick(d)} className="ev-tap" style={{
                   border: isSel ? `2px solid ${C.mint}` : isToday ? `2px solid ${C.mint}55` : '1px solid transparent',
                   borderRadius: 14,
                   padding: '8px 4px 10px',
@@ -1699,6 +1779,10 @@ function CalendarScreen({ t }) {
                       )}
                     </div>
                   )}
+                  {/* "+ Toevoegen" hint on selected day */}
+                  {isSel && (
+                    <div style={{ fontSize: 9, color: C.mint, fontWeight: 700, marginTop: 2 }}>+ voeg toe</div>
+                  )}
                 </button>
               );
             })}
@@ -1719,6 +1803,14 @@ function CalendarScreen({ t }) {
               <div style={{ fontSize: 13, color: C.sub, marginTop: 4 }}>
                 {selEvents.length === 0 ? (t.nothingPlanned || 'Nothing planned') : `${selEvents.length} event${selEvents.length > 1 ? 's' : ''}`}
               </div>
+            </div>
+
+            {/* ADD button in panel */}
+            <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.line}` }}>
+              <button onClick={() => setPickerDate(dayStr(selDay))} className="ev-tap"
+                style={{ width: '100%', padding: '12px', borderRadius: 14, border: `1.5px dashed ${C.mint}`, background: `${C.mint}08`, color: C.mint, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <Plus size={18} /> {t.addActivity}
+              </button>
             </div>
 
             {/* Event list */}
@@ -1750,10 +1842,8 @@ function CalendarScreen({ t }) {
                         {ev.subtitle && <div style={{ fontSize: 12, color: C.sub, marginTop: 1 }}>🐴 {ev.subtitle}</div>}
                         {ev.time && <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>🕐 {ev.time}</div>}
                         {ev.performedBy && <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>👤 {ev.performedBy}</div>}
-                        {ev.assignedTo && <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>👤 {ev.assignedTo}</div>}
                         {ev.location && (
-                          <a
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}`}
+                          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}`}
                             target="_blank" rel="noreferrer"
                             style={{ fontSize: 12, color: ev.color, fontWeight: 700, textDecoration: 'none', marginTop: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
                             <MapPin size={11} /> {ev.location}
@@ -1794,6 +1884,44 @@ function CalendarScreen({ t }) {
           })()}
         </div>
       </div>
+
+      {/* ---- EVENT PICKER SHEET ---- */}
+      {pickerDate && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(14,21,30,0.55)', zIndex: 1000,
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+          animation: 'evFade .15s ease'
+        }} onClick={() => setPickerDate(null)}>
+          <div style={{
+            width: '100%', maxWidth: 520, background: '#fff', borderRadius: '28px 28px 0 0',
+            padding: '28px 24px 40px', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)',
+            animation: 'evSlideUp .22s cubic-bezier(.4,0,.2,1)'
+          }} onClick={e => e.stopPropagation()}>
+            {/* Handle */}
+            <div style={{ width: 40, height: 5, borderRadius: 3, background: C.line, margin: '0 auto 20px' }} />
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>
+              {pickerDate}
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: C.ink, marginBottom: 20 }}>
+              {t.whatToAdd || 'Wat wil je toevoegen?'}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {EVENT_OPTIONS.map(opt => (
+                <button key={opt.id} onClick={() => opt.action(pickerDate)} className="ev-tap"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px',
+                    borderRadius: 18, border: `1.5px solid ${opt.color}33`,
+                    background: `${opt.color}0e`, cursor: 'pointer', fontFamily: 'inherit',
+                    textAlign: 'left', transition: 'all .15s',
+                  }}>
+                  <span style={{ fontSize: 28, flexShrink: 0 }}>{opt.emoji}</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: opt.color }}>{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2308,7 +2436,7 @@ function FeedingScreen({ t, go, setRoute }) {
                         {horseHasFeed
                           ? SLOTS.filter(s => (feed[h.id]?.[s] || []).length > 0)
                               .map(s => `${SLOT_EMOJIS[s]} ${t[s] || s}`).join("  ")
-                          : t.noSchedule}
+                          : "⚠️ Geen schema"}
                       </div>
                     </div>
                     <button onClick={() => setAddFor(h.id)} className="ev-tap" style={{
@@ -2322,7 +2450,7 @@ function FeedingScreen({ t, go, setRoute }) {
                   {!horseHasFeed && (
                     <div style={{ padding: "16px 18px", background: `${C.amber}08`, borderBottom: `1px solid ${C.amber}22` }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: C.amber, marginBottom: 10 }}>
-                        {t.noScheduleBanner}
+                        🥕 Geen voedingsschema — zet er snel één op!
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
                         {["morning", "noon", "evening"].map(sl => (
@@ -2346,7 +2474,7 @@ function FeedingScreen({ t, go, setRoute }) {
                           background: settingUp === h.id ? C.sub : C.amber, color: "#fff",
                           fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
                           display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                        {settingUp === h.id ? t.settingUpSchedule : t.setupSchedule(h.name)}
+                        {settingUp === h.id ? "Bezig..." : `⚡ Schema instellen voor ${h.name}`}
                       </button>
                     </div>
                   )}
@@ -2904,79 +3032,393 @@ function SupplyModal({ t, lang, onClose, onSave }) {
    MILESTONE 1: GROOM "MY DAY" & QUICK REPORTS
    ============================================================ */
 
-function MyDayScreen({ t }) {
-  const { tasks, horses, toggleTask } = useStore();
-  const todayStr = new Date().toISOString().split("T")[0];
-  
-  const myTasks = tasks
-    .filter(tk => tk.due_date === todayStr || (!tk.due_date && !tk.is_completed))
-    .sort((a, b) => {
-      if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
-      return (a.start_time || "23:59").localeCompare(b.start_time || "23:59");
-    });
+/* ================================================================
+   DASHBOARDS — Groom & Manager
+   ================================================================ */
+function MyDayScreen({ t, mode, go, setRoute }) {
+  if (mode === 'manager') return <ManagerDashboard t={t} go={go} setRoute={setRoute} />;
+  return <GroomDashboard t={t} go={go} setRoute={setRoute} />;
+}
 
+/* ---- GROOM DASHBOARD ---- */
+function GroomDashboard({ t, go }) {
+  const { tasks, horses, healthRecords, feed, toggleTask, addSupply } = useStore();
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const hour = now.getHours();
+  const greeting = hour < 12 ? '🌅 Goedemorgen' : hour < 18 ? '☀️ Goedemiddag' : '🌙 Goedenavond';
   const [reportModal, setReportModal] = useState(false);
-  const { addSupply } = useStore();
+
+  const todayTasks = tasks
+    .filter(tk => tk.due_date === todayStr || (!tk.due_date && !tk.is_completed))
+    .sort((a,b) => (a.start_time||'23:59').localeCompare(b.start_time||'23:59'));
+  const done = todayTasks.filter(t => t.is_completed).length;
+  const pct = todayTasks.length ? Math.round(done / todayTasks.length * 100) : 0;
+
+  // Today health records
+  const todayHealth = healthRecords.filter(hr => hr.scheduled_date?.slice(0,10) === todayStr);
+
+  // Morning feed (quick snapshot)
+  const morningFeed = horses.flatMap(h => (feed[h.id]?.morning || []).map(it => ({ ...it, horseName: h.name, color: h.color_hex })));
+
+  // This week (Mon–Sun)
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  const weekTasks = tasks.filter(tk => {
+    if (!tk.due_date) return false;
+    const d = new Date(tk.due_date);
+    const end = new Date(startOfWeek); end.setDate(end.getDate() + 7);
+    return d >= startOfWeek && d < end;
+  });
 
   return (
-    <div className="ev-card">
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 className="ev-display" style={{ margin: 0, fontSize: 26, fontWeight: 800, color: C.ink }}>{t.myDay}</h2>
-          <button onClick={() => setReportModal(true)} className="ev-tap" style={{ display: "flex", alignItems: "center", gap: 6, background: C.coral, color: "#fff", border: "none", padding: "8px 14px", borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: `0 4px 12px ${C.coral}40` }}>
-            <AlertTriangle size={18} strokeWidth={2.5} /> Report Issue
-          </button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* ---- Greeting + Progress ---- */}
+      <div style={{ background: 'linear-gradient(135deg, #FFB03A 0%, #FF8C70 100%)', borderRadius: 24, padding: '24px 22px', color: '#fff', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginBottom: 4 }}>{greeting}</div>
+        <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.2, marginBottom: 16 }}>{t.dashboardTitle}</div>
+        {/* Progress bar */}
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, marginBottom: 8, opacity: 0.9 }}>
+            <span>{t.tasksDoneToday}</span>
+            <span>{done}/{todayTasks.length}</span>
+          </div>
+          <div style={{ height: 10, borderRadius: 8, background: 'rgba(255,255,255,0.3)' }}>
+            <div style={{ height: '100%', borderRadius: 8, background: '#fff', width: `${pct}%`, transition: 'width .6s ease' }} />
+          </div>
         </div>
-        <p style={{ margin: 0, color: C.sub, fontSize: 15 }}>{t.myDaySub}</p>
+        <div style={{ fontSize: 13, opacity: 0.85 }}>{pct === 100 ? t.allDone : t.remaining(todayTasks.length - done)}</div>
+        {/* Report Issue button */}
+        <button onClick={() => setReportModal(true)} className="ev-tap"
+          style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,0.25)', border: 'none', borderRadius: 12, padding: '8px 14px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <AlertTriangle size={15} /> {t.reportIssue}
+        </button>
       </div>
 
-      {reportModal && <QuickReportEditor t={t} onClose={() => setReportModal(false)} onSave={(report) => { addSupply(report); setReportModal(false); }} />}
+      {reportModal && <QuickReportEditor t={t} onClose={() => setReportModal(false)} onSave={(r) => { addSupply(r); setReportModal(false); }} />}
 
-      {myTasks.length === 0 ? (
-        <EmptyHero accent={C.amber} icon={<CheckSquare size={46} />} title={t.noTasksToday} sub="" cta="" onClick={() => {}} />
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {myTasks.map(tk => {
+      {/* ---- Ochtendvoeding snapshot ---- */}
+      {morningFeed.length > 0 && (
+        <div style={{ background: '#fff', borderRadius: 20, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+          <div style={{ padding: '16px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.ink }}>{t.morningFeed}</div>
+            <button onClick={() => go('feeding')} style={{ fontSize: 12, color: C.amber, background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer' }}>{t.seeAll}</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {morningFeed.slice(0, 4).map((it, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 18px', borderTop: `1px solid ${C.line}` }}>
+                <div style={{ width: 32, height: 32, borderRadius: 10, background: it.color || C.amber, display: 'grid', placeItems: 'center', fontSize: 16, flexShrink: 0 }}>🥕</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{it.horseName}</div>
+                  <div style={{ fontSize: 12, color: C.sub }}>{it.product}</div>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.amber }}>{it.qty}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ---- Taken vandaag ---- */}
+      <div style={{ background: '#fff', borderRadius: 20, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+        <div style={{ padding: '16px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: C.ink }}>{t.todayTasks}</div>
+          <button onClick={() => go('tasks')} style={{ fontSize: 12, color: C.amber, background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer' }}>{t.allTasks} →</button>
+        </div>
+        {todayTasks.length === 0 ? (
+          <div style={{ padding: '24px 18px', textAlign: 'center', color: C.sub, fontSize: 14 }}>{t.noTasksToday}</div>
+        ) : (
+          todayTasks.map(tk => {
             const horse = horses.find(h => h.id === tk.horse_id);
             return (
-              <button key={tk.id} onClick={() => toggleTask(tk.id)} className="ev-tap" style={{
-                display: "flex", alignItems: "center", gap: 16, width: "100%", textAlign: "left",
-                background: tk.is_completed ? C.bg : C.surface,
-                border: `1.5px solid ${tk.is_completed ? C.line : C.amber + '44'}`,
-                borderRadius: 20, padding: 18, cursor: "pointer",
-                opacity: tk.is_completed ? 0.6 : 1, transition: "all .2s ease"
+              <button key={tk.id} onClick={() => go('tasks')} className="ev-tap" style={{
+                display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
+                padding: '13px 18px', borderTop: `1px solid ${C.line}`,
+                background: tk.is_completed ? C.bg : '#fff', cursor: 'pointer',
+                opacity: tk.is_completed ? 0.6 : 1,
               }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-                  border: `2px solid ${tk.is_completed ? C.sub : C.amber}`,
-                  background: tk.is_completed ? C.sub : "transparent",
-                  display: "grid", placeItems: "center", color: "#fff"
-                }}>
-                  {tk.is_completed && <Check size={20} strokeWidth={3} />}
+                <div style={{ width: 26, height: 26, borderRadius: 8, border: `2px solid ${tk.is_completed ? C.mint : C.amber}`, background: tk.is_completed ? C.mintSoft : 'transparent', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  {tk.is_completed && <Check size={14} strokeWidth={3} color={C.mint} />}
                 </div>
-                
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: tk.is_completed ? C.sub : C.ink,
-                    textDecoration: tk.is_completed ? "line-through" : "none" }}>{tk.title}</div>
-                  
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
-                    {(tk.start_time || tk.end_time) && (
-                      <span style={{ fontSize: 13, fontWeight: 600, color: C.amber, background: `${C.amber}1f`, padding: "4px 10px", borderRadius: 8 }}>
-                        {tk.start_time?.slice(0,5) || "-"} {tk.end_time ? `- ${tk.end_time.slice(0,5)}` : ""}
-                      </span>
-                    )}
-                    {horse && (
-                      <span style={{ fontSize: 13, fontWeight: 600, color: C.mint, background: C.mintSoft, padding: "4px 10px", borderRadius: 8 }}>
-                        🐴 {horse.name}
-                      </span>
-                    )}
+                  <div style={{ fontSize: 15, fontWeight: 700, color: tk.is_completed ? C.sub : C.ink, textDecoration: tk.is_completed ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tk.title}</div>
+                  <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>
+                    {tk.start_time && <span style={{ marginRight: 8 }}>🕐 {tk.start_time.slice(0,5)}{tk.end_time ? `–${tk.end_time.slice(0,5)}` : ''}</span>}
+                    {horse && <span>🐴 {horse.name}</span>}
                   </div>
                 </div>
               </button>
             );
+          })
+        )}
+      </div>
+
+      {/* ---- Gezondheid vandaag ---- */}
+      {todayHealth.length > 0 && (
+        <div style={{ background: '#fff', borderRadius: 20, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+          <div style={{ padding: '16px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.ink }}>{t.upcomingHealth}</div>
+            <button onClick={() => go('health')} style={{ fontSize: 12, color: C.coral, background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer' }}>{t.seeAll}</button>
+          </div>
+          {todayHealth.map(hr => {
+            const horse = horses.find(h => h.id === hr.horse_id);
+            return (
+              <div key={hr.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px', borderTop: `1px solid ${C.line}` }}>
+                <span style={{ width: 34, height: 34, borderRadius: 10, background: `${C.coral}18`, display: 'grid', placeItems: 'center', fontSize: 18 }}>🩺</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{t[hr.category] || hr.category}</div>
+                  {horse && <div style={{ fontSize: 12, color: C.sub }}>🐴 {horse.name}</div>}
+                </div>
+              </div>
+            );
           })}
         </div>
       )}
+
+      {/* ---- Week overzicht ---- */}
+      <div style={{ background: '#fff', borderRadius: 20, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+        <div style={{ padding: '16px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: C.ink }}>{t.thisWeek}</div>
+          <button onClick={() => go('calendar')} style={{ fontSize: 12, color: C.sky, background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer' }}>{t.calendar} →</button>
+        </div>
+        <div className="ev-scroll" style={{ display: 'flex', overflowX: 'auto', gap: 10, padding: '8px 18px 16px' }}>
+          {Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(startOfWeek); d.setDate(d.getDate() + i);
+            const ds = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+            const isToday = ds === todayStr;
+            const dayTasks = weekTasks.filter(tk => tk.due_date === ds);
+            return (
+              <div key={i} style={{ flexShrink: 0, width: 70, textAlign: 'center' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.sub, textTransform: 'uppercase', marginBottom: 4 }}>
+                  {(t.weekdays || ['Mo','Tu','We','Th','Fr','Sa','Su'])[i]}
+                </div>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 12, margin: '0 auto 6px',
+                  background: isToday ? C.amber : dayTasks.length ? `${C.sky}20` : C.bg,
+                  border: isToday ? 'none' : `1.5px solid ${dayTasks.length ? C.sky : C.line}`,
+                  display: 'grid', placeItems: 'center', fontSize: 14, fontWeight: 800,
+                  color: isToday ? '#fff' : dayTasks.length ? C.sky : C.sub,
+                }}>{d.getDate()}</div>
+                <div style={{ fontSize: 11, color: C.sub }}>{dayTasks.length ? `${dayTasks.length} ${t.tasks?.toLowerCase() || 'tasks'}` : '–'}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ---- Snelle acties ---- */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        {[
+          { emoji: '✅', label: t.addTask,    color: C.amber, action: () => go('tasks') },
+          { emoji: '📅', label: t.calendar,   color: C.sky,   action: () => go('calendar') },
+          { emoji: '🩺', label: t.health,     color: C.coral, action: () => go('health') },
+          { emoji: '🥕', label: t.feeding,    color: C.mint,  action: () => go('feeding') },
+        ].map(a => (
+          <button key={a.label} onClick={a.action} className="ev-tap" style={{
+            display: 'flex', alignItems: 'center', gap: 12, padding: '16px 18px',
+            borderRadius: 18, border: `1.5px solid ${a.color}33`, background: `${a.color}0d`,
+            cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+          }}>
+            <span style={{ fontSize: 26 }}>{a.emoji}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: a.color }}>{a.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---- MANAGER DASHBOARD ---- */
+function ManagerDashboard({ t, go }) {
+  const { tasks, horses, healthRecords, transactions, supplies } = useStore();
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const hour = now.getHours();
+  const greeting = hour < 12 ? '🌅 Goedemorgen' : hour < 18 ? '☀️ Goedemiddag' : '🌙 Goedenavond';
+
+  // KPIs
+  const openTasks = tasks.filter(t => !t.is_completed);
+  const todayTasks = tasks.filter(tk => tk.due_date === todayStr);
+  const activeHorses = horses.filter(h => !h.archived);
+  const monthIncome = transactions.filter(tx => tx.type === 'income' && tx.date?.startsWith(todayStr.slice(0,7))).reduce((s,tx) => s + Number(tx.amount||0), 0);
+  const monthExpense = transactions.filter(tx => tx.type === 'expense' && tx.date?.startsWith(todayStr.slice(0,7))).reduce((s,tx) => s + Number(tx.amount||0), 0);
+  const pendingSupplies = supplies.filter(s => s.status === 'needed').length;
+
+  // Health upcoming 7 days
+  const upcoming7 = healthRecords.filter(hr => {
+    if (!hr.scheduled_date) return false;
+    const d = new Date(hr.scheduled_date);
+    const diff = (d - now) / 86400000;
+    return diff >= 0 && diff < 7 && !hr.completed;
+  });
+
+  // This week tasks
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  const weekTasks = tasks.filter(tk => {
+    if (!tk.due_date) return false;
+    const d = new Date(tk.due_date);
+    const end = new Date(startOfWeek); end.setDate(end.getDate() + 7);
+    return d >= startOfWeek && d < end;
+  });
+
+  const KPI = ({ emoji, label, value, color, onClick }) => (
+    <button onClick={onClick} className="ev-tap" style={{
+      display: 'flex', flexDirection: 'column', gap: 8, padding: '18px 16px',
+      borderRadius: 18, border: `1.5px solid ${color}22`, background: `${color}0a`,
+      cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+    }}>
+      <span style={{ fontSize: 24 }}>{emoji}</span>
+      <span style={{ fontSize: 26, fontWeight: 800, color }}>{value}</span>
+      <span style={{ fontSize: 12, fontWeight: 700, color: C.sub }}>{label}</span>
+    </button>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* ---- Header ---- */}
+      <div style={{ background: 'linear-gradient(135deg, #2FB6A0 0%, #5AB2FF 100%)', borderRadius: 24, padding: '24px 22px', color: '#fff' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginBottom: 4 }}>{greeting}, {t.manager}</div>
+        <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.2, marginBottom: 8 }}>{t.stableOverview}</div>
+        <div style={{ fontSize: 14, opacity: 0.85 }}>
+          {new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
+        </div>
+      </div>
+
+      {/* ---- KPI Grid ---- */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+        <KPI emoji="🐴" label={t.activeHorses} value={activeHorses.length} color={C.mint} onClick={() => go('horses')} />
+        <KPI emoji="✅" label={t.openTasks} value={openTasks.length} color={C.amber} onClick={() => go('tasks')} />
+        <KPI emoji="💰" label={t.monthlyIncome} value={`€${monthIncome.toFixed(0)}`} color={C.sky} onClick={() => go('finance')} />
+        <KPI emoji="📦" label={t.toOrder} value={pendingSupplies} color={C.coral} onClick={() => go('supplies')} />
+      </div>
+
+      {/* ---- Vandaag ---- */}
+      <div style={{ background: '#fff', borderRadius: 20, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+        <div style={{ padding: '16px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: C.ink }}>{t.todayN(todayTasks.length)}</div>
+          <button onClick={() => go('tasks')} style={{ fontSize: 12, color: C.amber, background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer' }}>{t.allTasks}</button>
+        </div>
+        {todayTasks.length === 0 ? (
+          <div style={{ padding: '20px 18px', color: C.sub, fontSize: 14 }}>{t.noTasksScheduled}</div>
+        ) : (
+          todayTasks.slice(0, 5).map(tk => {
+            const horse = horses.find(h => h.id === tk.horse_id);
+            return (
+              <div key={tk.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px', borderTop: `1px solid ${C.line}`, opacity: tk.is_completed ? 0.5 : 1 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: tk.is_completed ? C.mint : C.amber, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: tk.is_completed ? 'line-through' : 'none' }}>{tk.title}</div>
+                  {horse && <div style={{ fontSize: 12, color: C.sub }}>🐴 {horse.name}</div>}
+                </div>
+                {tk.start_time && <span style={{ fontSize: 12, color: C.sub, fontWeight: 600, flexShrink: 0 }}>{tk.start_time.slice(0,5)}</span>}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* ---- Week planning ---- */}
+      <div style={{ background: '#fff', borderRadius: 20, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+        <div style={{ padding: '16px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: C.ink }}>{t.weekPlan}</div>
+          <button onClick={() => go('calendar')} style={{ fontSize: 12, color: C.sky, background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer' }}>{t.calendar} →</button>
+        </div>
+        <div className="ev-scroll" style={{ display: 'flex', overflowX: 'auto', gap: 10, padding: '8px 18px 16px' }}>
+          {Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(startOfWeek); d.setDate(d.getDate() + i);
+            const ds = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+            const isToday = ds === todayStr;
+            const dayTasks = weekTasks.filter(tk => tk.due_date === ds);
+            const dayHealth = healthRecords.filter(hr => hr.scheduled_date?.slice(0,10) === ds);
+            return (
+              <div key={i} style={{ flexShrink: 0, width: 76, textAlign: 'center' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.sub, textTransform: 'uppercase', marginBottom: 4 }}>
+                  {(t.weekdays || ['Mo','Tu','We','Th','Fr','Sa','Su'])[i]}
+                </div>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 13, margin: '0 auto 6px',
+                  background: isToday ? C.mint : (dayTasks.length || dayHealth.length) ? `${C.sky}18` : C.bg,
+                  border: isToday ? 'none' : `1.5px solid ${(dayTasks.length||dayHealth.length) ? C.sky : C.line}`,
+                  display: 'grid', placeItems: 'center', fontSize: 15, fontWeight: 800,
+                  color: isToday ? '#fff' : (dayTasks.length||dayHealth.length) ? C.sky : C.sub,
+                }}>{d.getDate()}</div>
+                {dayTasks.length > 0 && <div style={{ fontSize: 10, color: C.amber, fontWeight: 700 }}>{dayTasks.length} {t.tasks?.toLowerCase()}</div>}
+                {dayHealth.length > 0 && <div style={{ fontSize: 10, color: C.coral, fontWeight: 700 }}>{dayHealth.length} {t.health?.toLowerCase()}</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ---- Komende gezondheidsafspraken ---- */}
+      {upcoming7.length > 0 && (
+        <div style={{ background: '#fff', borderRadius: 20, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+          <div style={{ padding: '16px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.ink }}>{t.upcomingHealth}</div>
+            <button onClick={() => go('health')} style={{ fontSize: 12, color: C.coral, background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer' }}>{t.seeAll}</button>
+          </div>
+          {upcoming7.slice(0, 4).map(hr => {
+            const horse = horses.find(h => h.id === hr.horse_id);
+            const daysLeft = Math.ceil((new Date(hr.scheduled_date) - now) / 86400000);
+            return (
+              <div key={hr.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px', borderTop: `1px solid ${C.line}` }}>
+                <span style={{ width: 34, height: 34, borderRadius: 10, background: `${C.coral}18`, display: 'grid', placeItems: 'center', fontSize: 18 }}>🩺</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{t[hr.category] || hr.category}</div>
+                  {horse && <div style={{ fontSize: 12, color: C.sub }}>🐴 {horse.name}</div>}
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 700, color: daysLeft === 0 ? C.coral : C.sub, background: daysLeft === 0 ? `${C.coral}18` : C.bg, padding: '4px 10px', borderRadius: 8 }}>
+                  {t.daysLeftN(daysLeft)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ---- Financieel samenvatting ---- */}
+      <div style={{ background: '#fff', borderRadius: 20, border: `1px solid ${C.line}`, padding: '18px' }}>
+        <div style={{ fontSize: 16, fontWeight: 800, color: C.ink, marginBottom: 14 }}>{t.monthlyFinance}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ background: `${C.mint}0d`, borderRadius: 14, padding: '14px', border: `1px solid ${C.mint}22` }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 6 }}>{t.income?.toUpperCase()}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: C.mint }}>€{monthIncome.toFixed(2)}</div>
+          </div>
+          <div style={{ background: `${C.coral}0d`, borderRadius: 14, padding: '14px', border: `1px solid ${C.coral}22` }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 6 }}>{t.expenses?.toUpperCase()}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: C.coral }}>€{monthExpense.toFixed(2)}</div>
+          </div>
+        </div>
+        <button onClick={() => go('finance')} style={{ width: '100%', marginTop: 12, padding: '12px', borderRadius: 12, border: 'none', background: C.bg, color: C.sub, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>
+          {t.toFinance}
+        </button>
+      </div>
+
+      {/* ---- Snelle acties Manager ---- */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+        {[
+          { emoji: '🐴', label: t.horses,    color: C.mint,  action: () => go('horses') },
+          { emoji: '📅', label: t.calendar,  color: C.sky,   action: () => go('calendar') },
+          { emoji: '💼', label: t.finance,   color: C.amber, action: () => go('finance') },
+          { emoji: '🩺', label: t.health,    color: C.coral, action: () => go('health') },
+          { emoji: '👤', label: t.contacts,  color: '#9B7FD4', action: () => go('contacts') },
+          { emoji: '📦', label: t.supplies,  color: C.mint,  action: () => go('supplies') },
+        ].map(a => (
+          <button key={a.label} onClick={a.action} className="ev-tap" style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '16px 8px',
+            borderRadius: 16, border: `1.5px solid ${a.color}22`, background: `${a.color}0a`,
+            cursor: 'pointer', fontFamily: 'inherit',
+          }}>
+            <span style={{ fontSize: 24 }}>{a.emoji}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: a.color }}>{a.label}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
