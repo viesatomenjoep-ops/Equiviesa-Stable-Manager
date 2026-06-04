@@ -2519,12 +2519,22 @@ function MyDayScreen({ t }) {
       return (a.start_time || "23:59").localeCompare(b.start_time || "23:59");
     });
 
+  const [reportModal, setReportModal] = useState(false);
+  const { addSupply } = useStore();
+
   return (
     <div className="ev-card">
       <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 24 }}>
-        <h2 className="ev-display" style={{ margin: 0, fontSize: 26, fontWeight: 800, color: C.ink }}>{t.myDay}</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 className="ev-display" style={{ margin: 0, fontSize: 26, fontWeight: 800, color: C.ink }}>{t.myDay}</h2>
+          <button onClick={() => setReportModal(true)} className="ev-tap" style={{ display: "flex", alignItems: "center", gap: 6, background: C.coral, color: "#fff", border: "none", padding: "8px 14px", borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: `0 4px 12px ${C.coral}40` }}>
+            <AlertTriangle size={18} strokeWidth={2.5} /> Report Issue
+          </button>
+        </div>
         <p style={{ margin: 0, color: C.sub, fontSize: 15 }}>{t.myDaySub}</p>
       </div>
+
+      {reportModal && <QuickReportEditor t={t} onClose={() => setReportModal(false)} onSave={(report) => { addSupply(report); setReportModal(false); }} />}
 
       {myTasks.length === 0 ? (
         <EmptyHero accent={C.amber} icon={<CheckSquare size={46} />} title={t.noTasksToday} sub="" cta="" onClick={() => {}} />
@@ -2572,23 +2582,5 @@ function MyDayScreen({ t }) {
         </div>
       )}
     </div>
-  );
-}
-
-function GroomFab({ t }) {
-  const [open, setOpen] = useState(false);
-  const { addSupply } = useStore();
-  return (
-    <>
-      <button onClick={() => setOpen(true)} className="ev-tap" style={{
-        position: "fixed", bottom: 84, right: 20, zIndex: 40,
-        width: 64, height: 64, borderRadius: 24, background: C.coral, color: "#fff",
-        display: "grid", placeItems: "center", border: "none", cursor: "pointer",
-        boxShadow: `0 12px 30px ${C.coral}66`,
-      }}>
-        <AlertTriangle size={30} strokeWidth={2.2} />
-      </button>
-      {open && <QuickReportEditor t={t} onClose={() => setOpen(false)} onSave={(report) => { addSupply(report); setOpen(false); }} />}
-    </>
   );
 }

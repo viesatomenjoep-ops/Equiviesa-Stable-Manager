@@ -223,17 +223,31 @@ export function SupplyEditor({ t, initialData, lang, onClose, onSave, onDelete }
         </div>
         <input value={f.item_name} onChange={(e) => { setF({...f, item_name: e.target.value}); setErr(false); }} placeholder="Or type custom item..." style={inputStyle(err)} />
       </Field>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label={t.qty || "Qty"}><input value={f.quantity || ""} onChange={(e) => setF({...f, quantity: e.target.value})} placeholder="Amount" style={inputStyle()} /></Field>
-        <Field label={t.requestedBy || "Requested By"}><input value={f.requested_by || ""} onChange={(e) => setF({...f, requested_by: e.target.value})} placeholder="Name" style={inputStyle()} /></Field>
-      </div>
-      <Field label="Amazon / Webshop Link">
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 14, background: `${C.coral}14`, display: "grid", placeItems: "center", color: C.coral, flexShrink: 0 }}><LinkIcon size={20} /></div>
-          <input value={f.amazon_link || ""} onChange={(e) => setF({...f, amazon_link: e.target.value})} placeholder="https://amazon..." style={{ ...inputStyle(), flex: 1 }} />
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label={t.qty || "Qty"}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button type="button" onClick={() => setF({...f, quantity: Math.max(1, (parseInt(f.quantity) || 1) - 1).toString()})} style={{ width: 48, height: 48, borderRadius: 14, border: `1px solid ${C.line}`, background: C.surface, cursor: "pointer", fontSize: 20 }}>-</button>
+              <input value={f.quantity || "1"} onChange={(e) => setF({...f, quantity: e.target.value})} style={{ ...inputStyle(), textAlign: "center", padding: "14px 0", flex: 1, background: C.surface }} />
+              <button type="button" onClick={() => setF({...f, quantity: ((parseInt(f.quantity) || 0) + 1).toString()})} style={{ width: 48, height: 48, borderRadius: 14, border: `1px solid ${C.line}`, background: C.surface, cursor: "pointer", fontSize: 20 }}>+</button>
+            </div>
+          </Field>
+          <Field label={t.requestedBy || "Requested By"}>
+            <input value={f.requested_by || ""} onChange={(e) => setF({...f, requested_by: e.target.value})} placeholder="Your name..." style={{...inputStyle(), background: C.surface}} />
+          </Field>
         </div>
-      </Field>
-      <Field label={t.notes || "Notes"}><textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical" }} placeholder="Extra info..." /></Field>
+
+        <Field label="Amazon / Webshop Link">
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: `${C.coral}14`, display: "grid", placeItems: "center", color: C.coral, flexShrink: 0 }}><LinkIcon size={20} /></div>
+            <input value={f.amazon_link || ""} onChange={(e) => setF({...f, amazon_link: e.target.value})} placeholder="https://amazon..." style={{ ...inputStyle(), flex: 1, background: C.surface }} />
+          </div>
+        </Field>
+      </div>
+
+      <Field label={t.notes || "Notes"}><textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical", background: C.field }} placeholder="Extra info..." /></Field>
+
     </EditorLayout>
   );
 }
