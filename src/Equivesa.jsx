@@ -1069,10 +1069,15 @@ function TopBar({ t, active, route, setRoute, onMenu, lang, setLang }) {
         </div>
       )}
       <style>{`@media (max-width: 860px){ .ev-burger{ display:grid !important; } }`}</style>
-      <div style={{ width: 1, height: 24, background: C.line, margin: "0 4px" }} />
-      <h1 className="ev-display" style={{ margin: 0, fontSize: 24, fontWeight: 700, flex: 1, letterSpacing: -0.4 }}>
-        {inSub ? (route.name === "add" ? t.add : t.profile) : title}
-      </h1>
+      {inSub && (
+        <>
+          <div style={{ width: 1, height: 24, background: C.line, margin: "0 4px" }} />
+          <h1 className="ev-display" style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.4 }}>
+            {route.name === "add" ? t.add : t.profile}
+          </h1>
+        </>
+      )}
+      <div style={{ flex: 1 }} />
       <LangMenu lang={lang} setLang={setLang} t={t} />
       <button className="ev-tap" style={iconBtn}><Bell size={20} /></button>
       {active === "horses" && route.name === "list" && (
