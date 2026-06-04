@@ -1763,6 +1763,10 @@ function CalendarScreen({ t, go }) {
         </div>
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'flex', background: C.surface, borderRadius: 10, border: `1px solid ${C.line}`, padding: 2 }}>
+            <button onClick={() => setView('week')} className="ev-tap" style={{ background: view === 'week' ? '#fff' : 'transparent', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 700, color: view === 'week' ? C.ink : C.sub, cursor: 'pointer', boxShadow: view === 'week' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}>Week</button>
+            <button onClick={() => setView('month')} className="ev-tap" style={{ background: view === 'month' ? '#fff' : 'transparent', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 700, color: view === 'month' ? C.ink : C.sub, cursor: 'pointer', boxShadow: view === 'month' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}>Maand</button>
+          </div>
           <button onClick={goToday} className="ev-tap" style={{ padding: '8px 16px', borderRadius: 10, border: `1px solid ${C.line}`, background: 'transparent', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: C.mint, fontFamily: 'inherit' }}>
             {t.today || 'Today'}
           </button>
@@ -1797,66 +1801,86 @@ function CalendarScreen({ t, go }) {
       {/* ---- Main Body: Grid + Detail ---- */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
 
-        {/* ---- Month Grid ---- */}
-        <div style={{ flex: 1, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {/* ---- Calendar Grid (Scrollable horizontally on mobile) ---- */}
+        <div className="ev-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowX: 'auto' }}>
+          <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 4, minWidth: view === 'month' ? 600 : '100%', flex: 1 }}>
+            
+            {/* Weekday headers */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', marginBottom: 4 }}>
+              {wdays.map((d, i) => (
+                <div key={i} style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, color: (i >= 5 ? C.coral : C.sub), textTransform: 'uppercase', letterSpacing: 0.6, padding: '4px 0' }}>{d}</div>
+              ))}
+            </div>
 
-          {/* Weekday headers */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', marginBottom: 4 }}>
-            {wdays.map((d, i) => (
-              <div key={i} style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, color: (i >= 5 ? C.coral : C.sub), textTransform: 'uppercase', letterSpacing: 0.6, padding: '4px 0' }}>{d}</div>
-            ))}
-          </div>
-
-          {/* Day cells */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 3, flex: 1 }}>
-            {cells.map((d, i) => {
-              if (d === null) return <div key={`e${i}`} />;
-              const ds = dayStr(d);
-              const isToday = ds === todayStr;
-              const isSel = selDay === d;
-              const evs = events[ds] || [];
-              const isWeekend = (firstDow + d - 1) % 7 >= 5;
-              return (
-                <button key={d} onClick={() => handleDayClick(d)} className="ev-tap" style={{
-                  border: isSel ? `2px solid ${C.mint}` : isToday ? `2px solid ${C.mint}55` : '1px solid transparent',
-                  borderRadius: 14,
-                  padding: '8px 4px 10px',
-                  background: isSel ? `${C.mint}0f` : isToday ? `${C.mint}08` : 'transparent',
-                  cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                  minHeight: 72, position: 'relative',
-                  transition: 'all .15s',
-                }}>
-                  {/* Date number */}
-                  <span style={{
-                    fontSize: 14, fontWeight: isToday ? 800 : 500,
-                    width: 28, height: 28, lineHeight: '28px', borderRadius: '50%', display: 'inline-block',
-                    background: isToday ? C.mint : 'transparent',
-                    color: isToday ? '#fff' : isWeekend ? C.coral : C.ink,
-                  }}>{d}</span>
-
-                  {/* Event density bars */}
-                  {evs.length > 0 && (
-                    <div style={{ width: '100%', padding: '0 3px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {evs.slice(0, 3).map((ev, j) => (
-                        <div key={j} style={{
-                          height: 3, borderRadius: 2,
-                          background: ev.done ? `${ev.color}55` : ev.color,
-                          width: '100%'
-                        }} />
-                      ))}
-                      {evs.length > 3 && (
-                        <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, textAlign: 'center' }}>+{evs.length - 3}</div>
-                      )}
-                    </div>
-                  )}
-                  {/* "+ Toevoegen" hint on selected day */}
-                  {isSel && (
-                    <div style={{ fontSize: 9, color: C.mint, fontWeight: 700, marginTop: 2 }}>+ voeg toe</div>
-                  )}
-                </button>
-              );
-            })}
+            {/* Day cells */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 3, flex: 1 }}>
+              {(() => {
+                if (view === 'month') {
+                  return cells.map((d, i) => {
+                    if (d === null) return <div key={`e${i}`} />;
+                    const ds = dayStr(d);
+                    const isToday = ds === todayStr;
+                    const isSel = selDay === d;
+                    const evs = events[ds] || [];
+                    const isWeekend = (firstDow + d - 1) % 7 >= 5;
+                    return (
+                      <button key={d} onClick={() => handleDayClick(d)} className="ev-tap" style={{
+                        border: isSel ? `2px solid ${C.mint}` : isToday ? `2px solid ${C.mint}55` : '1px solid transparent',
+                        borderRadius: 14, padding: '8px 4px 10px',
+                        background: isSel ? `${C.mint}0f` : isToday ? `${C.mint}08` : 'transparent',
+                        cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                        minHeight: 72, position: 'relative', transition: 'all .15s',
+                      }}>
+                        <span style={{ fontSize: 14, fontWeight: isToday ? 800 : 500, width: 28, height: 28, lineHeight: '28px', borderRadius: '50%', display: 'inline-block', background: isToday ? C.mint : 'transparent', color: isToday ? '#fff' : isWeekend ? C.coral : C.ink }}>{d}</span>
+                        {evs.length > 0 && (
+                          <div style={{ width: '100%', padding: '0 3px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {evs.slice(0, 3).map((ev, j) => (<div key={j} style={{ height: 3, borderRadius: 2, background: ev.done ? `${ev.color}55` : ev.color, width: '100%' }} />))}
+                            {evs.length > 3 && <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, textAlign: 'center' }}>+{evs.length - 3}</div>}
+                          </div>
+                        )}
+                        {isSel && <div style={{ fontSize: 9, color: C.mint, fontWeight: 700, marginTop: 2 }}>+ voeg toe</div>}
+                      </button>
+                    );
+                  });
+                } else {
+                  // WEEK VIEW
+                  const weekStart = new Date(year, month, selDay || now.getDate());
+                  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+                  return Array.from({length: 7}, (_, i) => {
+                    const dt = new Date(weekStart);
+                    dt.setDate(dt.getDate() + i);
+                    const ds = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+                    const isToday = ds === todayStr;
+                    const isSel = ds === (selDay ? dayStr(selDay) : null);
+                    const evs = events[ds] || [];
+                    return (
+                      <button key={ds} onClick={() => { setYear(dt.getFullYear()); setMonth(dt.getMonth()); handleDayClick(dt.getDate()); }} className="ev-tap" style={{
+                        border: isSel ? `2px solid ${C.mint}` : isToday ? `2px solid ${C.mint}55` : '1px solid transparent',
+                        borderRadius: 14, padding: '8px 4px 10px',
+                        background: isSel ? `${C.mint}0f` : isToday ? `${C.mint}08` : 'transparent',
+                        cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                        minHeight: 120, position: 'relative', transition: 'all .15s',
+                      }}>
+                        <span style={{ fontSize: 14, fontWeight: isToday ? 800 : 500, width: 28, height: 28, lineHeight: '28px', borderRadius: '50%', display: 'inline-block', background: isToday ? C.mint : 'transparent', color: isToday ? '#fff' : (i>=5 ? C.coral : C.ink) }}>{dt.getDate()}</span>
+                        {evs.length > 0 && (
+                          <div style={{ width: '100%', padding: '0 3px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {evs.slice(0, 5).map((ev, j) => (
+                              <div key={j} style={{ padding: '4px', borderRadius: 4, background: ev.done ? `${ev.color}22` : ev.color, color: ev.done ? ev.color : '#fff', fontSize: 10, fontWeight: 700, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                                {ev.emoji} {ev.title}
+                              </div>
+                            ))}
+                            {evs.length > 5 && <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, textAlign: 'center' }}>+{evs.length - 5} meer</div>}
+                          </div>
+                        )}
+                        {isSel && <div style={{ fontSize: 9, color: C.mint, fontWeight: 700, marginTop: 'auto' }}>+ voeg toe</div>}
+                      </button>
+                    );
+                  });
+                }
+              })()}
+            </div>
           </div>
         </div>
 

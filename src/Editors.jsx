@@ -827,6 +827,60 @@ export function InvoiceEditor({ t, initialData, onClose, onSave, onDelete }) {
           <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Totaal incl. BTW</span>
           <span style={{ color: "#fff", fontWeight: 800, fontSize: 22 }}>€ {totalNum.toFixed(2)}</span>
         </div>
+        <button type="button" onClick={() => {
+          const inv = { ...f, total: totalNum, tax_amount: taxAmt };
+          const win = window.open('', '_blank');
+          win.document.write(`
+            <html>
+              <head>
+                <title>Invoice ${inv.invoice_number}</title>
+                <style>
+                  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; }
+                  .header { display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 40px; }
+                  h1 { margin: 0; color: #1f2d3a; }
+                  .details { margin-bottom: 40px; display: flex; justify-content: space-between; }
+                  .box { background: #f9f9f9; padding: 15px; border-radius: 8px; width: 45%; }
+                  table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+                  th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+                  th { background: #f4f4f4; }
+                  .totals { text-align: right; font-size: 18px; }
+                  .totals div { margin-bottom: 8px; }
+                  .total { font-size: 24px; font-weight: bold; color: #2FB6A0; }
+                  @media print { body { padding: 0; } @page { margin: 1cm; } }
+                </style>
+              </head>
+              <body>
+                <div class="header">
+                  <div><h1>Equiviesa</h1><p>Stable Management</p></div>
+                  <div style="text-align: right"><h2 style="margin:0; color:#555">INVOICE</h2><strong>${inv.invoice_number || 'DRAFT'}</strong></div>
+                </div>
+                <div class="details">
+                  <div class="box"><p style="margin:0 0 5px; color:#777">Billed To:</p><strong style="font-size:18px">${inv.client_name || 'Client'}</strong></div>
+                  <div class="box" style="text-align: right">
+                    <div><span style="color:#777">Date:</span> <strong>${inv.invoice_date}</strong></div>
+                    <div><span style="color:#777">Due Date:</span> <strong>${inv.due_date}</strong></div>
+                    <div><span style="color:#777">Status:</span> <strong style="text-transform:uppercase">${inv.status}</strong></div>
+                  </div>
+                </div>
+                <table>
+                  <thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
+                  <tbody><tr><td>Services rendered</td><td style="text-align:right">€ ${parseFloat(inv.subtotal || 0).toFixed(2)}</td></tr></tbody>
+                </table>
+                <div class="totals">
+                  <div>Subtotal: € ${parseFloat(inv.subtotal || 0).toFixed(2)}</div>
+                  <div>BTW (${inv.tax_rate || 21}%): € ${parseFloat(inv.tax_amount || 0).toFixed(2)}</div>
+                  <div class="total">Total: € ${parseFloat(inv.total || 0).toFixed(2)}</div>
+                </div>
+                ${inv.notes ? `<div style="margin-top:50px; padding:15px; background:#f9f9f9; border-left:4px solid #ccc"><p style="margin:0;color:#555"><strong>Notes:</strong><br/>${inv.notes.replace(/\n/g, '<br/>')}</p></div>` : ''}
+                <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
+              </body>
+            </html>
+          `);
+          win.document.close();
+        }} className="ev-tap" style={{ width: "100%", padding: "14px", background: `${C.sky}1a`, color: C.sky, border: `1.5px solid ${C.sky}`, borderRadius: 14, fontWeight: 700, fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <Printer size={18} />
+          Print / Save PDF
+        </button>
       </div>
 
       <Field label={t.notes || "Notes"}>

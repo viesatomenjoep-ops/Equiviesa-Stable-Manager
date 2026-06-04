@@ -12,6 +12,7 @@ export function MapEditor({ locationId }) {
   const { stalls, addStall, editStall, deleteStall, horses } = useStore();
   const locationStalls = stalls.filter(s => s.location_id === locationId);
   const [selected, setSelected] = useState(null);
+  const [dragging, setDragging] = useState(null);
   
   const handleAdd = () => {
     addStall({
@@ -23,6 +24,44 @@ export function MapEditor({ locationId }) {
       height: 2,
       horse_id: null
     });
+  };
+
+  const handlePointerDown = (e, stall) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.target.setPointerCapture(e.pointerId);
+    setDragging({
+      id: stall.id,
+      startX: e.clientX,
+      startY: e.clientY,
+      origGridX: stall.grid_x,
+      origGridY: stall.grid_y,
+      currentX: stall.grid_x,
+      currentY: stall.grid_y
+    });
+    setSelected(stall);
+  };
+
+  const handlePointerMove = (e, stall) => {
+    if (!dragging || dragging.id !== stall.id) return;
+    const dx = e.clientX - dragging.startX;
+    const dy = e.clientY - dragging.startY;
+    const gridDx = Math.round(dx / 40);
+    const gridDy = Math.round(dy / 40);
+    setDragging(prev => ({
+      ...prev,
+      currentX: Math.max(0, prev.origGridX + gridDx),
+      currentY: Math.max(0, prev.origGridY + gridDy)
+    }));
+  };
+
+  const handlePointerUp = (e, stall) => {
+    if (!dragging || dragging.id !== stall.id) return;
+    e.target.releasePointerCapture(e.pointerId);
+    if (dragging.currentX !== dragging.origGridX || dragging.currentY !== dragging.origGridY) {
+      editStall(stall.id, { grid_x: dragging.currentX, grid_y: dragging.currentY });
+    }
+    setDragging(null);
   };
 
   return (
@@ -38,25 +77,33 @@ export function MapEditor({ locationId }) {
         {/* Basic CSS Grid system for drag/drop feel. For simplicity in this demo, we'll render absolutely positioned blocks that act like grid items */}
         {locationStalls.map(stall => {
           const isSel = selected?.id === stall.id;
+          const isDrag = dragging?.id === stall.id;
+          const gx = isDrag ? dragging.currentX : stall.grid_x;
+          const gy = isDrag ? dragging.currentY : stall.grid_y;
           const horse = horses.find(h => h.id === stall.horse_id);
           return (
             <div key={stall.id}
               onClick={() => setSelected(stall)}
+              onPointerDown={(e) => handlePointerDown(e, stall)}
+              onPointerMove={(e) => handlePointerMove(e, stall)}
+              onPointerUp={(e) => handlePointerUp(e, stall)}
+              onPointerCancel={(e) => handlePointerUp(e, stall)}
               style={{
                 position: "absolute",
-                left: stall.grid_x * 40,
-                top: stall.grid_y * 40,
+                left: gx * 40,
+                top: gy * 40,
                 width: stall.width * 40,
                 height: stall.height * 40,
                 background: isSel ? C.amber : C.surface,
                 border: `2px solid ${isSel ? "#fff" : C.line}`,
                 borderRadius: 12,
-                boxShadow: isSel ? `0 8px 20px ${C.amber}66` : "0 2px 8px rgba(0,0,0,0.05)",
+                boxShadow: isDrag ? `0 12px 30px ${C.amber}80` : isSel ? `0 8px 20px ${C.amber}66` : "0 2px 8px rgba(0,0,0,0.05)",
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", transition: "all .2s", zIndex: isSel ? 10 : 1, padding: 8, color: isSel ? "#fff" : C.ink
+                cursor: isDrag ? "grabbing" : "grab", transition: isDrag ? "none" : "all .2s", zIndex: isSel ? 10 : 1, padding: 8, color: isSel ? "#fff" : C.ink,
+                touchAction: "none"
               }}>
-              <div style={{ fontWeight: 700, fontSize: 14 }}>{stall.name}</div>
-              {horse && <div style={{ fontSize: 11, background: "rgba(0,0,0,0.1)", padding: "2px 6px", borderRadius: 6, marginTop: 4 }}>{horse.name}</div>}
+              <div style={{ fontWeight: 700, fontSize: 14, pointerEvents: "none" }}>{stall.name}</div>
+              {horse && <div style={{ fontSize: 11, background: "rgba(0,0,0,0.1)", padding: "2px 6px", borderRadius: 6, marginTop: 4, pointerEvents: "none" }}>{horse.name}</div>}
             </div>
           );
         })}
