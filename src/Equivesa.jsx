@@ -879,7 +879,7 @@ function ModeGate({ t, onPick, lang, setLang }) {
       <div style={{ display: "flex", justifyContent: "flex-end", padding: "20px 22px" }}>
         <LangMenu lang={lang} setLang={setLang} t={t} />
       </div>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 18px 40px" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 18px 100px" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 32, transform: "scale(1.2)" }}>
           <Brand />
         </div>
