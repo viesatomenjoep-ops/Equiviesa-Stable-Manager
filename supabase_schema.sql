@@ -526,64 +526,64 @@ alter table public.staff_members enable row level security;
 -- Altijd drop + create zodat heruitvoeren nooit faalt
 -- ============================================================
 drop policy if exists "Allow authenticated CRUD" on public.profiles;
-create policy "Allow authenticated CRUD" on public.profiles for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.profiles for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.horses;
-create policy "Allow authenticated CRUD" on public.horses for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.horses for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.feed_schedules;
-create policy "Allow authenticated CRUD" on public.feed_schedules for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.feed_schedules for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.transactions;
-create policy "Allow authenticated CRUD" on public.transactions for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.transactions for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.tasks;
-create policy "Allow authenticated CRUD" on public.tasks for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.tasks for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.health_records;
-create policy "Allow authenticated CRUD" on public.health_records for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.health_records for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.documents;
-create policy "Allow authenticated CRUD" on public.documents for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.documents for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.mares_breeding;
-create policy "Allow authenticated CRUD" on public.mares_breeding for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.mares_breeding for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.embryos;
-create policy "Allow authenticated CRUD" on public.embryos for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.embryos for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.foals;
-create policy "Allow authenticated CRUD" on public.foals for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.foals for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.locations;
-create policy "Allow authenticated CRUD" on public.locations for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.locations for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.contacts;
-create policy "Allow authenticated CRUD" on public.contacts for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.contacts for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.supplies_needed;
-create policy "Allow authenticated CRUD" on public.supplies_needed for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.supplies_needed for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.clients;
-create policy "Allow authenticated CRUD" on public.clients for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.clients for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.bookings;
-create policy "Allow authenticated CRUD" on public.bookings for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.bookings for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.company_settings;
-create policy "Allow authenticated CRUD" on public.company_settings for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.company_settings for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.invoices;
-create policy "Allow authenticated CRUD" on public.invoices for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.invoices for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.catalog;
-create policy "Allow authenticated CRUD" on public.catalog for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.catalog for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.stalls;
-create policy "Allow authenticated CRUD" on public.stalls for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.stalls for all using (auth.role() in ('authenticated', 'anon'));
 
 drop policy if exists "Allow authenticated CRUD" on public.staff_members;
-create policy "Allow authenticated CRUD" on public.staff_members for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.staff_members for all using (auth.role() in ('authenticated', 'anon'));
 
 -- ============================================================
 -- TRIGGER: Automatisch profiel aanmaken bij nieuwe gebruiker

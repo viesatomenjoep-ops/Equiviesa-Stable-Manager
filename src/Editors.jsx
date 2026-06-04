@@ -400,7 +400,8 @@ export function FinanceEditor({ t, initialData, horses, onClose, onSave, onDelet
 }
 
 export function TaskEditor({ t, initialData, horses, onClose, onSave, onDelete }) {
-  const [f, setF] = useState(initialData || { title: "", description: "", due_date: "", start_time: "", end_time: "", category: "general", horse_id: null, photo_url: "" });
+  const today = new Date().toISOString().slice(0, 10);
+  const [f, setF] = useState(initialData || { title: "", description: "", due_date: today, start_time: "09:00", end_time: "10:00", category: "general", horse_id: null, photo_url: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -476,18 +477,21 @@ export function TaskEditor({ t, initialData, horses, onClose, onSave, onDelete }
 }
 
 export function HealthEditor({ t, initialData, horses, onClose, onSave, onDelete }) {
-  const [f, setF] = useState(initialData || { horse_id: "", scheduled_date: "", notes: "", performed_by: "", cost: "", category: "generalCare", photo_url: "" });
+  const today = new Date().toISOString().slice(0, 10);
+  const [f, setF] = useState(initialData || { horse_id: "", scheduled_date: today, notes: "", performed_by: "", cost: "", category: "generalCare", photo_url: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Health Categories
+  // Health Categories — IDs must match DB check constraint exactly
   const HEALTH_CATS = [
-    { id: "generalCare", label: t?.generalCare || "General Care", emoji: "🩺" },
-    { id: "vaccination", label: t?.vaccination || "Vaccine", emoji: "💉" },
-    { id: "deworming", label: t?.deworming || "Deworming", emoji: "🐛" },
-    { id: "farrier", label: t?.farrier || "Farrier", emoji: "🔨" },
-    { id: "dentist", label: t?.dentist || "Dentist", emoji: "🦷" },
-    { id: "injury", label: t?.injury || "Injury", emoji: "🩹" }
+    { id: "generalCare",   label: t?.generalCare   || "General Care", emoji: "🩺" },
+    { id: "vaccinations",  label: t?.vaccinations  || "Vaccine",      emoji: "💉" },
+    { id: "deworming",     label: t?.deworming     || "Deworming",    emoji: "🐛" },
+    { id: "farrier",       label: t?.farrier       || "Farrier",      emoji: "🔨" },
+    { id: "dental",        label: t?.dentist       || "Dental",       emoji: "🦷" },
+    { id: "treatments",    label: t?.treatments    || "Treatment",    emoji: "🩹" },
+    { id: "appointments",  label: t?.appointments  || "Appointment",  emoji: "📋" },
+    { id: "medication",    label: t?.medication    || "Medication",   emoji: "💊" },
   ];
 
   return (
