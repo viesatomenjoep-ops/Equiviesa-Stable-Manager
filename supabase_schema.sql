@@ -302,6 +302,7 @@ create table if not exists public.supplies_needed (
     status text not null default 'pending' check (status in ('pending', 'purchased', 'resolved')),
     report_type text not null default 'supply' check (report_type in ('supply', 'defect')),
     photo_url text, -- Cloudinary photo link for defects/supplies
+    amazon_link text, -- Link to buy the item
     notes text,
     completed_at timestamptz,
     completed_by uuid references public.profiles(id) on delete set null

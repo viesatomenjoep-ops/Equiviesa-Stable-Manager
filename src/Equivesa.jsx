@@ -6,6 +6,11 @@ import {
   Package, Baby, ShoppingCart, Sparkles, Trash2, Camera, MoreHorizontal, Globe, Wallet, ArrowUpRight, ArrowDownRight, Paperclip, ChevronDown, LogOut, Edit2, AlertTriangle, AlertOctagon
 } from "lucide-react";
 import { supabase } from "./supabaseClient";
+import { 
+  EditorLayout, PhotoUpload, ContactEditor, ClientEditor, LocationEditor, 
+  DocumentEditor, SupplyEditor, FinanceEditor, TaskEditor, HealthEditor, 
+  BookingEditor, InvoiceEditor, CatalogEditor 
+} from "./Editors";
 
 /* ============================================================
    EQUIVESA — All-in stable manager
@@ -368,7 +373,7 @@ const BOTTOM = ["horses", "calendar", "tasks", "health", "menu"];
 
 /* ---------- shared data store ---------- */
 const Store = createContext(null);
-const useStore = () => useContext(Store);
+export const useStore = () => useContext(Store);
 
 const HORSE_TINTS = [C.mint, C.sky, C.coral, C.amber, C.pink, C.lilac];
 
@@ -1590,83 +1595,16 @@ function TasksScreen({ t }) {
         </div>
       )}
 
-      {modal && <TaskModal t={t} horses={horses} onClose={() => setModal(false)}
-        onSave={(task) => { addTask(task); setModal(false); }} />}
-      {editObj && <TaskModal t={t} initialData={editObj} horses={horses} onClose={() => setEditObj(null)}
-        onSave={(task) => { editTask(editObj.id, task); setEditObj(null); }} />}
+      {modal && (
+        <TaskEditor t={t} horses={horses} onClose={() => setModal(false)}
+          onSave={(task) => { addTask(task); setModal(false); }} />
+      )}
+      {editObj && (
+        <TaskEditor t={t} horses={horses} initialData={editObj} onClose={() => setEditObj(null)}
+          onSave={(task) => { editTask(editObj.id, task); setEditObj(null); }}
+          onDelete={() => { deleteTask(editObj.id); setEditObj(null); }} />
+      )}
     </div>
-  );
-}
-
-function TaskModal({ t, initialData, horses, onClose, onSave }) {
-  const [f, setF] = useState(initialData || { title: "", description: "", due_date: "", start_time: "", end_time: "", category: "general", horse_id: null });
-  const [err, setErr] = useState(false);
-
-  const save = () => {
-    if (!f.title.trim()) { setErr(true); return; }
-    onSave({ ...f, start_time: f.start_time || null, end_time: f.end_time || null });
-  };
-
-  return (
-    <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<CheckSquare size={22} />} title={initialData ? t.editTask || "Edit Task" : t.addTask}
-      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
-      <Field label={t.taskTitle} required>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-          {(t.taskCommon || []).map(s => (
-            <button key={s} type="button" onClick={() => { setF({...f, title: s}); setErr(false); }}
-              className="ev-tap"
-              style={{
-                padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.title === s ? C.amber : C.line}`,
-                background: f.title === s ? C.amber : C.surface,
-                color: f.title === s ? "#fff" : C.sub,
-                fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
-              }}>
-              {s}
-            </button>
-          ))}
-        </div>
-        <input value={f.title} onChange={(e) => { setF({...f, title: e.target.value}); setErr(false); }}
-          placeholder={t.taskTitle} style={inputStyle(err)} />
-      </Field>
-      {err && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.taskTitle} {t.required}</div>}
-
-      <Field label={t.taskDesc}>
-        <textarea value={f.description} onChange={(e) => setF({...f, description: e.target.value})}
-          style={{ ...inputStyle(), resize: "vertical", minHeight: 140 }} placeholder={t.notesHint} />
-      </Field>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <Field label={t.taskDue}>
-          <input type="date" value={f.due_date} onChange={(e) => setF({...f, due_date: e.target.value})}
-            style={inputStyle()} />
-        </Field>
-        <Field label={t.taskHorse}>
-          <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, marginBottom: 4 }}>
-            <button type="button" onClick={() => setF({...f, horse_id: null, category: "general"})} className="ev-tap"
-              style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${!f.horse_id ? C.amber : C.line}`, background: !f.horse_id ? C.amber : C.surface, color: !f.horse_id ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-              {t.general}
-            </button>
-            {horses.map(h => (
-              <button key={h.id} type="button" onClick={() => setF({...f, horse_id: h.id, category: "horse"})} className="ev-tap"
-                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.horse_id === h.id ? C.amber : C.line}`, background: f.horse_id === h.id ? C.amber : C.surface, color: f.horse_id === h.id ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-                {h.name}
-              </button>
-            ))}
-          </div>
-        </Field>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <Field label={t.timeStart}>
-          <input type="time" value={f.start_time} onChange={(e) => setF({...f, start_time: e.target.value})}
-            style={inputStyle()} />
-        </Field>
-        <Field label={t.timeEnd}>
-          <input type="time" value={f.end_time} onChange={(e) => setF({...f, end_time: e.target.value})}
-            style={inputStyle()} />
-        </Field>
-      </div>
-    </ModalShell>
   );
 }
 
@@ -1760,12 +1698,15 @@ function HealthScreen({ t }) {
           </div>
         )}
 
-        {modal && <HealthModal t={t} category={modal} horses={horses}
-          onClose={() => setModal(null)}
-          onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />}
-        {editRecord && <HealthModal t={t} initialData={editRecord} horses={horses}
-          onClose={() => setEditRecord(null)}
-          onSave={(rec) => { editHealthRecord(editRecord.id, rec); setEditRecord(null); }} />}
+        {modal && (
+          <HealthEditor t={t} category={modal} horses={horses} onClose={() => setModal(null)}
+            onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />
+        )}
+        {editRecord && (
+          <HealthEditor t={t} horses={horses} initialData={editRecord} onClose={() => setEditRecord(null)}
+            onSave={(rec) => { editHealthRecord(editRecord.id, rec); setEditRecord(null); }}
+            onDelete={() => { deleteHealthRecord(editRecord.id); setEditRecord(null); }} />
+        )}
       </div>
     );
   }
@@ -1799,80 +1740,16 @@ function HealthScreen({ t }) {
         ))}
       </div>
 
-      {modal && <HealthModal t={t} category={modal} horses={horses}
-        onClose={() => setModal(null)}
-        onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />}
-      {editRecord && <HealthModal t={t} initialData={editRecord} horses={horses}
-        onClose={() => setEditRecord(null)}
-        onSave={(rec) => { editHealthRecord(editRecord.id, rec); setEditRecord(null); }} />}
+      {modal && (
+        <HealthEditor t={t} category={modal} horses={horses} onClose={() => setModal(null)}
+          onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />
+      )}
+      {editRecord && (
+        <HealthEditor t={t} horses={horses} initialData={editRecord} onClose={() => setEditRecord(null)}
+          onSave={(rec) => { editHealthRecord(editRecord.id, rec); setEditRecord(null); }}
+          onDelete={() => { deleteHealthRecord(editRecord.id); setEditRecord(null); }} />
+      )}
     </div>
-  );
-}
-
-function HealthModal({ t, category, initialData, horses, onClose, onSave }) {
-  const [f, setF] = useState(initialData || { horse_id: "", scheduled_date: "", notes: "", performed_by: "", cost: "", category: category || "generalCare" });
-  const [err, setErr] = useState(false);
-  const [catSel, setCatSel] = useState(initialData ? initialData.category : category);
-
-  const save = () => {
-    if (!f.horse_id || !f.scheduled_date) { setErr(true); return; }
-    onSave({ ...f, category: catSel, cost: f.cost ? parseFloat(f.cost) : null });
-  };
-
-  return (
-    <ModalShell t={t} onClose={onClose} accent={C.coral} icon={<Heart size={22} />} title={initialData ? t.editRecord || "Edit Record" : t.addRecord}
-      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.coral} saveLabel={t.save} saveIcon={<Check size={20} />} />}>
-      {/* Category pills */}
-      <div style={{ display: "flex", overflowX: "auto", gap: 8, marginBottom: 16, paddingBottom: 8, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }}>
-        {HEALTH_CATS.map(([key, , color]) => (
-          <button key={key} type="button" onClick={() => setCatSel(key)} className="ev-tap"
-            style={{
-              flexShrink: 0, padding: "12px 18px", borderRadius: 16, border: `1px solid ${catSel === key ? color : C.line}`,
-              background: catSel === key ? color : C.field,
-              color: catSel === key ? "#fff" : C.sub,
-              fontSize: 14.5, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
-            }}>
-            {t[key]}
-          </button>
-        ))}
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <Field label={t.selectHorse} required>
-          <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, marginBottom: 4 }}>
-            {horses.map(h => (
-              <button key={h.id} type="button" onClick={() => { setF({...f, horse_id: h.id}); setErr(false); }} className="ev-tap"
-                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.horse_id === h.id ? C.coral : C.line}`, background: f.horse_id === h.id ? C.coral : C.surface, color: f.horse_id === h.id ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-                {h.name}
-              </button>
-            ))}
-          </div>
-          {err && !f.horse_id && <div style={{ color: C.coral, fontSize: 13, marginTop: 4 }}>{t.selectHorse} {t.required}</div>}
-        </Field>
-        <Field label={t.recordDate} required>
-          <input type="date" value={f.scheduled_date} onChange={(e) => { setF({...f, scheduled_date: e.target.value}); setErr(false); }}
-            style={inputStyle(err && !f.scheduled_date)} />
-        </Field>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <Field label={t.performedBy}>
-          <input value={f.performed_by} onChange={(e) => setF({...f, performed_by: e.target.value})}
-            placeholder={t.performedBy} style={inputStyle()} />
-        </Field>
-        <Field label={t.cost}>
-          <input type="number" step="0.01" value={f.cost} onChange={(e) => setF({...f, cost: e.target.value})}
-            placeholder="0.00" style={inputStyle()} />
-        </Field>
-      </div>
-
-      <Field label={t.recordNotes}>
-        <textarea value={f.notes} onChange={(e) => setF({...f, notes: e.target.value})}
-          style={{ ...inputStyle(), resize: "vertical", minHeight: 140 }} placeholder={t.notesHint} />
-      </Field>
-
-      {err && <div style={{ color: C.coral, fontSize: 13, marginBottom: 10 }}>{t.selectHorse} & {t.recordDate} {t.required}</div>}
-    </ModalShell>
   );
 }
 
@@ -1914,7 +1791,9 @@ function FinanceScreen({ t }) {
         </div>
       )}
 
-      {modal && <TxnModal type={modal} t={t} onClose={() => setModal(null)} />}
+      {modal && (
+        <FinanceEditor type={modal} t={t} onClose={() => setModal(null)} onSave={() => setModal(null)} />
+      )}
     </div>
   );
 }
@@ -1966,185 +1845,6 @@ function addBtn(color) {
   };
 }
 
-function TxnModal({ type, t, onClose }) {
-  const { addTxn, horses } = useStore();
-  const inc = type === "income";
-  const accent = inc ? C.mint : C.coral;
-  const [step, setStep] = useState(1);
-  const today = "06/02/2026";
-  const [f, setF] = useState({ when: today, category: "", who: "", reference: "", description: "", amount: "", horseId: "", attachment_url: "" });
-  const [uploading, setUploading] = useState(false);
-
-  const handleUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "equivesa_uploads");
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "daj1lyfgk";
-
-    try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.secure_url) {
-        setF(prev => ({ ...prev, attachment_url: data.secure_url }));
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Upload failed.");
-    } finally {
-      setUploading(false);
-    }
-  };
-  const [err, setErr] = useState(false);
-  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
-
-  const next = () => { if (!f.category) { setErr(true); return; } setStep(2); };
-  const save = () => { addTxn({ type, ...f, horseId: f.horseId ? Number(f.horseId) : null }); onClose(); };
-
-  const footer = (
-    <div style={{ display: "flex", gap: 12 }}>
-      {step === 2 && (
-        <button onClick={() => setStep(1)} className="ev-tap" style={{
-          padding: "18px", borderRadius: 16, border: `1px solid ${C.line}`, background: C.surface,
-          color: C.ink, fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{t.back}</button>
-      )}
-      <button onClick={onClose} className="ev-tap" style={{
-        flex: step === 1 ? 1 : "none", padding: "18px", borderRadius: 16, border: `1px solid ${C.line}`, background: C.surface,
-        color: C.ink, fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{t.cancel}</button>
-      {step === 1 ? (
-        <button onClick={next} className="ev-tap" style={{
-          flex: 2, padding: "18px", borderRadius: 16, border: "none", background: accent, color: "#fff",
-          fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: `0 8px 22px ${accent}55` }}>
-          {t.next} <ChevronRight size={20} />
-        </button>
-      ) : (
-        <button onClick={save} className="ev-tap" style={{
-          flex: 2, padding: "18px", borderRadius: 16, border: "none", background: accent, color: "#fff",
-          fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: `0 8px 22px ${accent}55` }}>
-          <Check size={20} /> {t.finish}
-        </button>
-      )}
-    </div>
-  );
-
-  return (
-    <ModalShell t={t} onClose={onClose} accent={accent}
-      icon={inc ? <ArrowUpRight size={22} /> : <ArrowDownRight size={22} />}
-      title={inc ? t.newIncome : t.newExpense}
-      footer={footer}>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-        {[[1, t.reference], [2, t.amount]].map(([n, label], i) => (
-          <React.Fragment key={n}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ width: 28, height: 28, borderRadius: "50%", display: "grid", placeItems: "center",
-                fontSize: 13, fontWeight: 700, background: step >= n ? accent : C.bg,
-                color: step >= n ? "#fff" : C.sub }}>{n}</span>
-              <span style={{ fontSize: 15, fontWeight: step === n ? 700 : 500, color: step === n ? C.ink : C.sub }}>{label}</span>
-            </div>
-            {i === 0 && <div style={{ flex: 1, height: 2, background: C.line }} />}
-          </React.Fragment>
-        ))}
-      </div>
-
-      {step === 1 ? (
-          <div>
-            <Field label={t.fWhen} required>
-              <input value={f.when} onChange={set("when")} style={inputStyle()} />
-            </Field>
-            <Field label={t.fCategory} required>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                {FIN_CATS.map((c) => (
-                  <button key={c} type="button" onClick={() => { set("category")({ target: { value: c } }); setErr(false); }} className="ev-tap"
-                    style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.category === c ? accent : C.line}`, background: f.category === c ? accent : C.surface, color: f.category === c ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-                    {t[c]}
-                  </button>
-                ))}
-              </div>
-            </Field>
-            {err && !f.category && <div style={{ color: C.coral, fontSize: 13, marginTop: -8, marginBottom: 10 }}>{t.fCategory} *</div>}
-            
-            <Field label={t.fHorse}>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                <button type="button" onClick={() => set("horseId")({ target: { value: "" } })} className="ev-tap"
-                  style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${!f.horseId ? accent : C.line}`, background: !f.horseId ? accent : C.surface, color: !f.horseId ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-                  {t.allHorsesShort}
-                </button>
-                {horses.map(h => (
-                  <button key={h.id} type="button" onClick={() => set("horseId")({ target: { value: h.id } })} className="ev-tap"
-                    style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.horseId === String(h.id) ? accent : C.line}`, background: f.horseId === String(h.id) ? accent : C.surface, color: f.horseId === String(h.id) ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-                    {h.name}
-                  </button>
-                ))}
-              </div>
-            </Field>
-            <Field label={t.fWho}><input value={f.who} onChange={set("who")} placeholder={t.noContact} style={inputStyle()} /></Field>
-            <Field label={t.fReference}>
-              <input value={f.reference} onChange={(e) => e.target.value.length <= 60 && set("reference")(e)} style={inputStyle()} />
-              <div style={{ textAlign: "right", fontSize: 12, color: C.sub, marginTop: 4 }}>{f.reference.length} / 60</div>
-            </Field>
-            <Field label={t.fDescription}>
-              <textarea value={f.description} onChange={(e) => e.target.value.length <= 255 && set("description")(e)}
-                rows={2} style={{ ...inputStyle(), resize: "none" }} />
-              <div style={{ textAlign: "right", fontSize: 12, color: C.sub, marginTop: 4 }}>{f.description.length} / 255</div>
-            </Field>
-            <Field label={t.fAttachments}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <label className="ev-tap" style={{ display: "flex", alignItems: "center", gap: 8, border: `1px dashed ${C.line}`,
-                  background: C.field, borderRadius: 12, padding: "12px 16px", cursor: "pointer", color: C.sky,
-                  fontFamily: "inherit", fontSize: 15, fontWeight: 600, width: "100%" }}>
-                  <Paperclip size={18} />
-                  <span style={{ color: f.attachment_url ? C.ink : C.sky, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {f.attachment_url ? (f.attachment_url.split('/').pop().substring(0, 20) + "...") : t.upload}
-                  </span>
-                  <input type="file" onChange={handleUpload} accept="*/*" style={{ display: "none" }} />
-                </label>
-                {uploading && <span style={{ fontSize: 14, color: C.sub, fontWeight: 600 }}>Uploading...</span>}
-                {f.attachment_url && !uploading && (
-                  <div style={{ display: "flex", gap: 16 }}>
-                    <a href={f.attachment_url} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: accent, fontWeight: 700, textDecoration: "none" }}>{t.viewFile}</a>
-                    <a href={getDownloadUrl(f.attachment_url)} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: C.sub, fontWeight: 700, textDecoration: "none" }}>{t.downloadFile}</a>
-                  </div>
-                )}
-              </div>
-            </Field>
-          </div>
-        ) : (
-          <div>
-            <Field label={t.fAmountLabel} required>
-              <input type="number" inputMode="decimal" value={f.amount} onChange={set("amount")}
-                placeholder="0,00" autoFocus
-                style={{ ...inputStyle(), fontSize: 28, fontWeight: 700, fontFamily: "'Montserrat',sans-serif",
-                  color: accent, textAlign: "center", padding: "22px 16px" }} />
-            </Field>
-            <div style={{ background: C.field, borderRadius: 14, padding: 16, marginTop: 8 }}>
-              <SummaryRow label={t.fWhen} value={f.when} />
-              <SummaryRow label={t.fCategory} value={t[f.category]} />
-              {f.reference && <SummaryRow label={t.fReference} value={f.reference} />}
-            </div>
-          </div>
-        )}
-    </ModalShell>
-  );
-}
-
-function SummaryRow({ label, value }) {
-  if (!value) return null;
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 14 }}>
-      <span style={{ color: C.sub }}>{label}</span>
-      <span style={{ fontWeight: 600 }}>{value}</span>
-    </div>
-  );
-}
-
 /* ---------- USERS ---------- */
 const ROLE_KEYS = ["roleAdmin", "roleManager", "roleStaff", "roleVet", "roleOwner"];
 const PERM_KEYS = ["permContacts", "permHorses", "permCalendar", "permTasks", "permHealth",
@@ -2175,7 +1875,9 @@ function UsersScreen({ t }) {
         </div>
       )}
 
-      {modal && <UserModal t={t} onClose={() => setModal(false)} />}
+      {modal && (
+        <UserEditor t={t} onClose={() => setModal(false)} />
+      )}
     </div>
   );
 }
@@ -2205,60 +1907,6 @@ function UserRow({ u, t, onDelete }) {
         </div>
       )}
     </div>
-  );
-}
-
-function UserModal({ t, onClose }) {
-  const { addUser } = useStore();
-  const [f, setF] = useState({ name: "", email: "", role: "roleStaff", perms: [] });
-  const [err, setErr] = useState(false);
-  const togglePerm = (p) => setF((s) => ({ ...s, perms: s.perms.includes(p) ? s.perms.filter((x) => x !== p) : [...s.perms, p] }));
-  const allOn = f.perms.length === PERM_KEYS.length;
-  const toggleAll = () => setF((s) => ({ ...s, perms: allOn ? [] : [...PERM_KEYS] }));
-  const save = () => { if (!f.name.trim() || !f.email.trim()) { setErr(true); return; } addUser(f); onClose(); };
-
-  return (
-    <ModalShell t={t} onClose={onClose} accent={C.sky}
-      icon={<Users size={22} />} title={t.addUser}
-      footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.sky} saveLabel={t.invite} saveIcon={<Check size={20} />} />}>
-      <Field label={t.name} required>
-        <input value={f.name} onChange={(e) => { setF({ ...f, name: e.target.value }); setErr(false); }}
-          style={inputStyle(err && !f.name.trim())} />
-      </Field>
-      <Field label={t.email} required>
-        <input value={f.email} onChange={(e) => { setF({ ...f, email: e.target.value }); setErr(false); }}
-          placeholder="naam@mail.com" style={inputStyle(err && !f.email.trim())} />
-      </Field>
-      <Field label={t.role}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-          {ROLE_KEYS.map((r) => (
-            <button key={r} type="button" onClick={() => setF({ ...f, role: r })} className="ev-tap"
-              style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${f.role === r ? C.sky : C.line}`, background: f.role === r ? C.sky : C.surface, color: f.role === r ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-              {t[r]}
-            </button>
-          ))}
-        </div>
-      </Field>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
-        <label style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.sub }}>{t.permissions}</label>
-        <button onClick={toggleAll} className="ev-tap" style={{ border: "none", background: "transparent",
-          cursor: "pointer", color: C.mint, fontWeight: 600, fontSize: 13, fontFamily: "inherit" }}>{t.selectAll}</button>
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-        {PERM_KEYS.map((p) => {
-          const on = f.perms.includes(p);
-          return (
-            <button key={p} onClick={() => togglePerm(p)} className="ev-tap" style={{
-              flexShrink: 0, border: `1.5px solid ${on ? C.sky : C.line}`, cursor: "pointer", fontFamily: "inherit",
-              background: on ? C.sky + "1f" : C.surface, color: on ? C.sky : C.sub,
-              padding: "16px 24px", borderRadius: 16, fontSize: 16, fontWeight: 600,
-              display: "flex", alignItems: "center", gap: 8 }}>
-              {on && <Check size={14} />}{t[p]}
-            </button>
-          );
-        })}
-      </div>
-    </ModalShell>
   );
 }
 
@@ -2365,7 +2013,7 @@ function FeedingScreen({ t, go, setRoute }) {
       )}
 
       {addFor != null && (
-        <FeedModal t={t} slot={slot}
+        <FeedingEditor t={t} slot={slot}
           onClose={() => setAddFor(null)}
           onSave={(item) => { addFeedItem(addFor, slot, item); setAddFor(null); }} />
       )}
@@ -2396,25 +2044,6 @@ function OrderTab({ t, setTab }) {
         </div>
       ))}
     </div>
-  );
-}
-
-function FeedModal({ t, slot, onClose, onSave }) {
-  const [f, setF] = useState({ product: "", qty: "" });
-  const [err, setErr] = useState(false);
-  const save = () => { if (!f.product.trim()) { setErr(true); return; } onSave(f); };
-  return (
-    <ModalShell t={t} onClose={onClose} accent={C.amber} icon={<Carrot size={22} />}
-      title={`${t.addProduct} · ${t[slot]}`} footer={<ModalFooter t={t} onClose={onClose} onSave={save} accent={C.amber} saveLabel={t.finish} saveIcon={<Check size={20} />} />}>
-      <Field label={t.product} required>
-        <input value={f.product} onChange={(e) => { setF({ ...f, product: e.target.value }); setErr(false); }}
-          autoFocus style={inputStyle(err)} />
-      </Field>
-      <Field label={t.qty}>
-        <input value={f.qty} onChange={(e) => setF({ ...f, qty: e.target.value })}
-          placeholder="2 kg" style={inputStyle()} />
-      </Field>
-    </ModalShell>
   );
 }
 
@@ -2494,6 +2123,7 @@ function GenericModuleScreen({ t, active }) {
   const [data, setData] = useState([]);
   const [modal, setModal] = useState(false);
   const [editObj, setEditObj] = useState(null);
+
   const [f, setF] = useState(conf ? (conf.defaultVals || {}) : {});
   const [err, setErr] = useState(false);
   const [uploadingField, setUploadingField] = useState(null);
@@ -2524,36 +2154,16 @@ function GenericModuleScreen({ t, active }) {
     }
   };
 
-  React.useEffect(() => {
-    if (!conf) return;
-    const fetch = async () => {
-      const { data: res } = await supabase.from(conf.table).select('*').order('created_at', { ascending: false });
-      if (res) {
-        if (conf.defaultVals) {
-          const keys = Object.keys(conf.defaultVals);
-          setData(res.filter(x => keys.every(k => x[k] === conf.defaultVals[k])));
-        } else {
-          setData(res);
-        }
-      }
-    };
-    fetch();
-  }, [active, conf]);
-
-  if (!conf) {
-    return (
-      <div className="ev-card">
-        <EmptyHero accent={color} icon={<Icon size={46} strokeWidth={1.6} />} title={t[active] || active} sub={t.comingSoon} cta={t.new} />
-      </div>
-    );
-  }
-
-  const save = async () => {
-    const missing = conf.fields.some(field => field.r && !f[field.n]);
-    if (missing) { setErr(true); return; }
-    
-    const o = { ...f };
-    Object.keys(o).forEach(k => { if (o[k] === "") o[k] = null; });
+  const save = async (customData) => {
+    let o;
+    if (customData) {
+      o = customData;
+    } else {
+      const missing = conf.fields.some(field => field.r && !f[field.n]);
+      if (missing) { setErr(true); return; }
+      o = { ...f };
+      Object.keys(o).forEach(k => { if (o[k] === "") o[k] = null; });
+    }
     delete o.id;
     delete o.created_at;
     
@@ -2575,10 +2185,42 @@ function GenericModuleScreen({ t, active }) {
     }
   };
 
+  React.useEffect(() => {
+    if (!conf) return;
+    const fetch = async () => {
+      const { data: res } = await supabase.from(conf.table).select('*').order('created_at', { ascending: false });
+      if (res) {
+        if (conf.defaultVals) {
+          const keys = Object.keys(conf.defaultVals);
+          setData(res.filter(x => keys.every(k => x[k] === conf.defaultVals[k])));
+        } else {
+          setData(res);
+        }
+      }
+    };
+    fetch();
+  }, [active, conf]);
+
   const del = async (id) => {
     await supabase.from(conf.table).delete().eq('id', id);
     setData(prev => prev.filter(x => x.id !== id));
   };
+
+  if (!conf) {
+    return (
+      <div className="ev-card">
+        <EmptyHero accent={color} icon={<Icon size={46} strokeWidth={1.6} />} title={t[active] || active} sub={t.comingSoon} cta={t.new} />
+      </div>
+    );
+  }
+
+  const Editor = active === 'contacts' ? ContactEditor :
+                 active === 'clients' ? ClientEditor :
+                 active === 'locations' ? LocationEditor :
+                 active === 'documents' ? DocumentEditor :
+                 active === 'bookings' ? BookingEditor :
+                 active === 'invoices' ? InvoiceEditor :
+                 active === 'catalog' ? CatalogEditor : null;
 
   return (
     <div className="ev-card">
@@ -2603,22 +2245,6 @@ function GenericModuleScreen({ t, active }) {
                 background: `${color}1c`, color: color, flexShrink: 0 }}><Icon size={20} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 17, fontWeight: 600 }}>{x.name || x.reference || x.stallion_name || x.title || t[active]}</div>
-                <div style={{ fontSize: 15, color: C.sub, marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
-                  {Object.keys(x).filter(k => k !== 'id' && k !== 'created_at' && k !== 'name' && k !== 'reference' && k !== 'stallion_name' && k !== 'title' && x[k]).map(k => {
-                    const isUrl = String(x[k]).startsWith('http');
-                    return (
-                      <span key={k}>
-                        <strong>{t[k] || k}:</strong>{' '}
-                        {isUrl ? (
-                          <span style={{ display: "inline-flex", gap: 10 }}>
-                            <a href={x[k]} target="_blank" rel="noreferrer" style={{ color: color, textDecoration: "none", fontWeight: 600 }}>{t.viewFile || "View"}</a>
-                            <a href={getDownloadUrl(x[k])} target="_blank" rel="noreferrer" style={{ color: C.sub, textDecoration: "none", fontWeight: 600 }}>{t.downloadFile || "Download"}</a>
-                          </span>
-                        ) : String(x[k])}
-                      </span>
-                    );
-                  })}
-                </div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 <button onClick={() => { setEditObj(x); setF(x); }} className="ev-tap" style={{
@@ -2634,50 +2260,63 @@ function GenericModuleScreen({ t, active }) {
       )}
 
       {(modal || editObj) && (
-        <ModalShell t={t} onClose={() => { setModal(false); setEditObj(null); setF(conf.defaultVals || {}); }} accent={color} icon={<Icon size={22} />} 
-          title={editObj ? t.edit || "Edit" : `${t.add} ${t[active] || active}`}
-          footer={<ModalFooter t={t} onClose={() => { setModal(false); setEditObj(null); setF(conf.defaultVals || {}); }} onSave={save} accent={color} saveLabel={editObj ? t.save : t.add} saveIcon={editObj ? <Check size={20} /> : <Plus size={20} />} />}>
-          {conf.fields.map(field => (
-            <Field key={field.n} label={t[field.n] || field.n} required={field.r}>
-              {field.opts ? (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                  {field.opts.map(opt => (
-                    <button key={opt} type="button" onClick={() => setF({...f, [field.n]: opt})} className="ev-tap"
-                      style={{ flexShrink: 0, padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f[field.n] === opt ? color : C.line}`,
-                        background: f[field.n] === opt ? color : C.surface,
-                        color: f[field.n] === opt ? "#fff" : C.sub,
-                        fontSize: 16, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-                      {t[opt] || opt}
-                    </button>
-                  ))}
-                </div>
-              ) : field.t === "checkbox" ? (
-                <input type="checkbox" checked={!!f[field.n]} onChange={(e) => setF({...f, [field.n]: e.target.checked})} />
-              ) : field.t === "file" ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <label className="ev-tap" style={{ display: "inline-flex", alignItems: "center", gap: 12, cursor: "pointer", ...inputStyle() }}>
-                    <span style={{ background: C.line, padding: "8px 14px", borderRadius: 10, fontSize: 15, fontWeight: 600 }}>{t.chooseFile}</span>
-                    <span style={{ color: f[field.n] ? C.ink : C.sub, fontSize: 15, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {f[field.n] ? (f[field.n].split('/').pop().substring(0, 20) + "...") : t.noFileChosen}
-                    </span>
-                    <input type="file" onChange={(e) => handleUpload(e, field.n)} accept="*/*" style={{ display: "none" }} />
-                  </label>
-                  {uploadingField === field.n && <span style={{ fontSize: 14, color: C.sub, fontWeight: 600 }}>Uploading...</span>}
-                  {f[field.n] && !uploadingField && (
-                    <div style={{ display: "flex", gap: 16 }}>
-                      <a href={f[field.n]} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: color, fontWeight: 700, textDecoration: "none" }}>{t.viewFile}</a>
-                      <a href={getDownloadUrl(f[field.n])} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: C.sub, fontWeight: 700, textDecoration: "none" }}>{t.downloadFile}</a>
+        <>
+          {Editor ? (
+            <Editor t={t} initialData={editObj} 
+              onSave={save} 
+              onClose={() => { setModal(false); setEditObj(null); }}
+              onDelete={editObj ? () => { del(editObj.id); setModal(false); setEditObj(null); } : null} />
+          ) : (
+            <EditorLayout t={t} title={editObj ? t.edit || "Edit" : `${t.add} ${t[active] || active}`} icon={Icon} color={color}
+              onClose={() => { setModal(false); setEditObj(null); setF(conf.defaultVals || {}); }}
+              onSave={() => save()} onDelete={editObj ? () => del(editObj.id) : null}>
+              
+              <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})}
+                uploading={uploadingField === "photo_url"} setUploading={(u) => setUploadingField(u ? "photo_url" : null)} icon={Camera} />
+                
+              {conf.fields.map(field => (
+                <Field key={field.n} label={t[field.n] || field.n} required={field.r}>
+                  {field.opts ? (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                      {field.opts.map(opt => (
+                        <button key={opt} type="button" onClick={() => setF({...f, [field.n]: opt})} className="ev-tap"
+                          style={{ flexShrink: 0, padding: "16px 24px", borderRadius: 16, border: `1.5px solid ${f[field.n] === opt ? color : C.line}`,
+                            background: f[field.n] === opt ? color : C.surface,
+                            color: f[field.n] === opt ? "#fff" : C.sub,
+                            fontSize: 16, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                          {t[opt] || opt}
+                        </button>
+                      ))}
                     </div>
+                  ) : field.t === "checkbox" ? (
+                    <input type="checkbox" checked={!!f[field.n]} onChange={(e) => setF({...f, [field.n]: e.target.checked})} />
+                  ) : field.t === "file" ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <label className="ev-tap" style={{ display: "inline-flex", alignItems: "center", gap: 12, cursor: "pointer", ...inputStyle() }}>
+                        <span style={{ background: C.line, padding: "8px 14px", borderRadius: 10, fontSize: 15, fontWeight: 600 }}>{t.chooseFile}</span>
+                        <span style={{ color: f[field.n] ? C.ink : C.sub, fontSize: 15, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {f[field.n] ? (f[field.n].split('/').pop().substring(0, 20) + "...") : t.noFileChosen}
+                        </span>
+                        <input type="file" onChange={(e) => handleUpload(e, field.n)} accept="*/*" style={{ display: "none" }} />
+                      </label>
+                      {uploadingField === field.n && <span style={{ fontSize: 14, color: C.sub, fontWeight: 600 }}>Uploading...</span>}
+                      {f[field.n] && !uploadingField && (
+                        <div style={{ display: "flex", gap: 16 }}>
+                          <a href={f[field.n]} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: color, fontWeight: 700, textDecoration: "none" }}>{t.viewFile}</a>
+                          <a href={getDownloadUrl(f[field.n])} target="_blank" rel="noreferrer" style={{ fontSize: 15, color: C.sub, fontWeight: 700, textDecoration: "none" }}>{t.downloadFile}</a>
+                        </div>
+                      )}
+                    </div>
+                  ) : field.t === "textarea" || field.n === "notes" || field.n === "description" ? (
+                    <textarea value={f[field.n] || ""} onChange={(e) => setF({...f, [field.n]: e.target.value})} style={{ ...inputStyle(err && field.r && !f[field.n]), minHeight: 120, resize: "vertical" }} />
+                  ) : (
+                    <input type={field.t || "text"} value={f[field.n] || ""} onChange={(e) => setF({...f, [field.n]: e.target.value})} style={inputStyle(err && field.r && !f[field.n])} />
                   )}
-                </div>
-              ) : field.t === "textarea" || field.n === "notes" || field.n === "description" ? (
-                <textarea value={f[field.n] || ""} onChange={(e) => setF({...f, [field.n]: e.target.value})} style={{ ...inputStyle(err && field.r && !f[field.n]), minHeight: 120, resize: "vertical" }} />
-              ) : (
-                <input type={field.t || "text"} value={f[field.n] || ""} onChange={(e) => setF({...f, [field.n]: e.target.value})} style={inputStyle(err && field.r && !f[field.n])} />
-              )}
-            </Field>
-          ))}
-        </ModalShell>
+                </Field>
+              ))}
+            </EditorLayout>
+          )}
+        </>
       )}
     </div>
   );
@@ -2798,7 +2437,7 @@ function SuppliesScreen({ t }) {
       )}
 
       {modal && (
-        <SupplyModal t={t} lang={t.code.toLowerCase()} onClose={() => setModal(false)} onSave={(item) => { addSupply(item); setModal(false); }} />
+        <SupplyEditor t={t} lang={t.code.toLowerCase()} onClose={() => setModal(false)} onSave={(item) => { addSupply(item); setModal(false); }} />
       )}
     </div>
   );
