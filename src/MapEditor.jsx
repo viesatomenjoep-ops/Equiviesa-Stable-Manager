@@ -138,7 +138,7 @@ export function MapEditor({ locationId }) {
               <button type="button" onClick={() => editStall(selected.id, { height: Math.max(1, selected.height - 1) })} style={btn}>H-</button>
               <button type="button" onClick={() => editStall(selected.id, { height: selected.height + 1 })} style={btn}>H+</button>
             </div>
-            <button type="button" onClick={() => { deleteStall(selected.id); setSelected(null); }} style={{ marginLeft: "auto", border: "none", background: "transparent", color: C.coral, cursor: "pointer", padding: 8 }}><Trash2 size={18} /></button>
+            <button type="button" onClick={() => { if(window.confirm("Weet je zeker dat je dit wilt verwijderen? / Are you sure?")) { deleteStall(selected.id); setSelected(null); } }} style={{ marginLeft: "auto", border: "none", background: "transparent", color: C.coral, cursor: "pointer", padding: 8 }}><Trash2 size={18} /></button>
           </div>
         </div>
       )}

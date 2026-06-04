@@ -28,7 +28,7 @@ function Field({ label, required, children }) {
   );
 }
 
-export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon = Camera, accept = "image/*,video/*,application/pdf", label = "Upload" }) {
+export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon = Camera, accept = "*/*", label = "Upload" }) {
   const [error, setError] = React.useState(null);
   const [progress, setProgress] = React.useState(0);
 

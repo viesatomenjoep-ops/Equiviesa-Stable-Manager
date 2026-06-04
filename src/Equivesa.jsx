@@ -1,6 +1,6 @@
 import React, { useState, useMemo, createContext, useContext } from "react";
 import {
-  Menu, X, Bell, Plus, Search, ChevronRight, ChevronLeft, Check,
+  Menu, X, Bell, Plus, Search, ChevronRight, ChevronLeft, Check, LayoutDashboard,
   Home, Calendar, CheckSquare, Heart, Carrot, MapPin, Contact,
   FileText, Users, Settings, HelpCircle, Receipt, BookOpen,
   Package, Baby, ShoppingCart, Sparkles, Trash2, Camera, MoreHorizontal, Globe, Wallet, ArrowUpRight, ArrowDownRight, Paperclip, ChevronDown, LogOut, Edit2, AlertTriangle, AlertOctagon
@@ -67,6 +67,7 @@ const I18N = {
     weekdays: ["ma","di","wo","do","vr","za","zo"],
     fmtDay: (wd, d) => `${wd} ${d}`,
     fmtTodayDate: (d, mon) => `Vandaag, ${d} ${mon}`,
+    calWeek: "Week", calMonth: "Maand",
     // finance
     finOverview: "Overzicht", income: "Inkomsten", expenses: "Uitgaven", balance: "Saldo",
     newIncome: "Nieuwe inkomst", newExpense: "Nieuwe uitgave", addTransaction: "Transactie toevoegen",
@@ -122,8 +123,8 @@ const I18N = {
     selectHorse: "Selecteer paard", allCats: "Alle categorieën",
     taskCommon: ["Stal uitmesten", "Paddock", "Longeren", "Poetsen", "Hooi vullen", "Watercheck", "Weide maaien"],
     timeStart: "Starttijd", timeEnd: "Eindtijd",
-    myDay: "Dashboard", myDaySub: "Jouw dagelijkse taken. Tik om af te vinken.",
-    reportIssue: "Snel Melden", whatIsWrong: "Wat wil je doorgeven?", issueSupply: "Voorraad nodig", issueDefect: "Kapot / Defect", takePhoto: "Maak een foto (optioneel)", noTasksToday: "Geen taken voor jou vandaag!",
+    myday: "Dashboard", mydaySub: "Jouw dagelijkse taken. Tik om af te vinken.",
+    reportIssue: "Snel Melden", whatIsWrong: "Wat wil je doorgeven?", issueSupply: "Voorraad nodig", issueDefect: "Kapot / Defect", takePhoto: "Maak een foto (optioneel)", confirmDelete: "Weet je zeker dat je dit wilt verwijderen?", noTasksToday: "Geen taken voor jou vandaag!",
     // Dashboard
     greetingMorning: "🌅 Goedemorgen", greetingAfternoon: "☀️ Goedemiddag", greetingEvening: "🌙 Goedenavond",
     dashboardTitle: "Jouw dag vandaag", tasksDoneToday: "Taken voltooid", allDone: "🎉 Alles gedaan voor vandaag!",
@@ -231,7 +232,7 @@ const I18N = {
     selectHorse: "Select horse", allCats: "All categories",
     taskCommon: ["Muck out", "Paddock", "Lunging", "Grooming", "Fill hay", "Water check", "Mow pasture"],
     timeStart: "Start time", timeEnd: "End time",
-    myDay: "Dashboard", myDaySub: "Your daily tasks. Tap to complete.",
+    myday: "Dashboard", mydaySub: "Your daily tasks. Tap to complete.",
     reportIssue: "Quick Report", whatIsWrong: "What do you want to report?", issueSupply: "Supply needed", issueDefect: "Broken item / Defect", takePhoto: "Take a photo (optional)", noTasksToday: "No tasks for you today!",
     // Dashboard
     greetingMorning: "🌅 Good morning", greetingAfternoon: "☀️ Good afternoon", greetingEvening: "🌙 Good evening",
@@ -288,7 +289,7 @@ const I18N = {
     months: ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"],
     weekdays: ["lun","mar","mié","jue","vie","sáb","dom"],
     fmtDay: (wd, d) => `${wd} ${d}`,
-    fmtTodayDate: (d, mon) => `Hoy, ${d} ${mon}`,
+    fmtTodayDate: (d, mon) => `Hoy, ${d} ${mon}`, calWeek: "Semana", calMonth: "Mes",
     finOverview: "Resumen", income: "Ingresos", expenses: "Gastos", balance: "Saldo",
     newIncome: "Nuevo ingreso", newExpense: "Nuevo gasto", addTransaction: "Añadir transacción",
     noTxns: "Aún no hay transacciones", noTxnsSub: "Añade tu primer ingreso o gasto para controlar tus finanzas.",
@@ -340,7 +341,7 @@ const I18N = {
     selectHorse: "Seleccionar caballo", allCats: "Todas las categorías",
     taskCommon: ["Limpiar cuadra", "Paddock", "Cuerda", "Cepillar", "Llenar heno", "Revisar agua", "Cortar pasto"],
     timeStart: "Hora inicio", timeEnd: "Hora fin",
-    myDay: "Dashboard", myDaySub: "Tus tareas diarias. Toca para completar.",
+    myday: "Dashboard", mydaySub: "Tus tareas diarias. Toca para completar.",
     reportIssue: "Reportar", whatIsWrong: "¿Qué quieres reportar?", issueSupply: "Suministro necesario", issueDefect: "Artículo roto / Defecto", takePhoto: "Hacer una foto (opcional)", noTasksToday: "¡No hay tareas para ti hoy!",
     // Dashboard
     greetingMorning: "🌅 Buenos días", greetingAfternoon: "☀️ Buenas tardes", greetingEvening: "🌙 Buenas noches",
@@ -379,7 +380,7 @@ const C = {
 };
 
 const SECTIONS = {
-  general: ["horses", "calendar", "tasks", "health", "feeding", "supplies", "locations", "contacts", "documents"],
+  general: ["myday", "horses", "calendar", "tasks", "health", "feeding", "supplies", "locations", "contacts", "documents"],
   finance: ["finance", "clients", "bookings", "invoices", "catalog"],
   breeding: ["mares", "embryos", "foals"],
   team: ["staff"],
@@ -433,7 +434,7 @@ function AuthScreen({ t, lang, setLang }) {
   );
 }
 const ICONS = {
-  myday: CheckSquare, horses: Home, calendar: Calendar, tasks: CheckSquare, health: Heart,
+  myday: LayoutDashboard, horses: Home, calendar: Calendar, tasks: CheckSquare, health: Heart,
   feeding: Carrot, supplies: ShoppingCart, locations: MapPin, contacts: Contact, documents: FileText,
   finance: Wallet, clients: Users, bookings: BookOpen, invoices: Receipt, catalog: Package,
   mares: Heart, embryos: Sparkles, foals: Baby, sales: ShoppingCart,
@@ -482,6 +483,11 @@ function StoreProvider({ children }) {
   const [foals, setFoals] = useState([]);
   const [stalls, setStalls] = useState([]);
   const [staffMembers, setStaffMembers] = useState([]);
+
+  // ... (dummy implementation of addStall, editStall, deleteStall)
+  const addStall = (s) => setStalls(p => [...p, { id: Date.now(), ...s }]);
+  const editStall = (id, upd) => setStalls(p => p.map(x => x.id === id ? { ...x, ...upd } : x));
+  const deleteStall = (id) => setStalls(p => p.filter(x => x.id !== id));
 
   React.useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -700,6 +706,7 @@ function StoreProvider({ children }) {
       users, addUser, deleteUser, feed, addFeedItem, addDefaultSchedule, deleteFeedItem,
       supplies, addSupply, toggleSupplyStatus, deleteSupply,
       tasks, addTask, editTask, toggleTask, deleteTask,
+      stalls, addStall, editStall, deleteStall,
       healthRecords, addHealthRecord, editHealthRecord, toggleHealthRecord, deleteHealthRecord }}>{children}</Store.Provider>
   );
 }
@@ -895,7 +902,6 @@ function DesktopNav({ t, active, go, lang, setLang, mode, setMode }) {
         padding: "22px 14px", display: "flex", flexDirection: "column", gap: 4,
         height: "100vh", position: "sticky", top: 0, overflowY: "auto",
       }}>
-        <Brand />
         <ModeBadge t={t} mode={mode} setMode={setMode} />
         <div style={{ height: 6 }} />
         {groom ? (
@@ -973,11 +979,11 @@ function PinModal({ t, target, onClose, onOk }) {
 }
 function Brand() {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 6px" }}>
-      <img src="/logo.png" alt="Equiviesa Logo" style={{ width: 71, height: 71, objectFit: "contain", flexShrink: 0 }} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        <div className="ev-display" style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.3, lineHeight: 1.1 }}>Equiviesa</div>
-        <div style={{ fontSize: 10.5, fontWeight: 600, color: C.sub, letterSpacing: 0.8, textTransform: "uppercase" }}>Stable Manager</div>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0" }}>
+      <img src="/logo.png" alt="Equiviesa Logo" style={{ width: 38, height: 38, objectFit: "contain", flexShrink: 0 }} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        <div className="ev-display" style={{ fontSize: 16, fontWeight: 800, letterSpacing: -0.3, lineHeight: 1.1 }}>Equiviesa</div>
+        <div style={{ fontSize: 9, fontWeight: 600, color: C.sub, letterSpacing: 0.8, textTransform: "uppercase" }}>Stable Manager</div>
       </div>
     </div>
   );
@@ -1024,11 +1030,15 @@ function TopBar({ t, active, route, setRoute, onMenu, lang, setLang }) {
           <ChevronLeft size={22} />
         </button>
       ) : (
-        <button onClick={onMenu} className="ev-tap ev-burger" style={{ ...iconBtn, display: "none" }}>
-          <Menu size={22} />
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Brand />
+          <button onClick={onMenu} className="ev-tap ev-burger" style={{ ...iconBtn, display: "none" }}>
+            <Menu size={22} />
+          </button>
+        </div>
       )}
       <style>{`@media (max-width: 860px){ .ev-burger{ display:grid !important; } }`}</style>
+      <div style={{ width: 1, height: 24, background: C.line, margin: "0 4px" }} />
       <h1 className="ev-display" style={{ margin: 0, fontSize: 24, fontWeight: 700, flex: 1, letterSpacing: -0.4 }}>
         {inSub ? (route.name === "add" ? t.add : t.profile) : title}
       </h1>
@@ -1513,7 +1523,7 @@ function HorseDetail({ t, id, setRoute }) {
     [t.feiid, h.feiid], [t.location, h.location],
   ].filter(([, v]) => v);
 
-  const del = () => { deleteHorse(id); setRoute({ name: "list" }); };
+  const del = () => { if (window.confirm(t.confirmDelete || "Delete?")) { deleteHorse(id); setRoute({ name: "list" }); } };
 
   return (
     <div className="ev-card" style={{ width: "100%", margin: "0 auto" }}>
@@ -1775,8 +1785,8 @@ function CalendarScreen({ t, go }) {
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <div style={{ display: 'flex', background: C.surface, borderRadius: 10, border: `1px solid ${C.line}`, padding: 2 }}>
-            <button onClick={() => setView('week')} className="ev-tap" style={{ background: view === 'week' ? '#fff' : 'transparent', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 700, color: view === 'week' ? C.ink : C.sub, cursor: 'pointer', boxShadow: view === 'week' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}>Week</button>
-            <button onClick={() => setView('month')} className="ev-tap" style={{ background: view === 'month' ? '#fff' : 'transparent', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 700, color: view === 'month' ? C.ink : C.sub, cursor: 'pointer', boxShadow: view === 'month' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}>Maand</button>
+            <button onClick={() => setView('week')} className="ev-tap" style={{ background: view === 'week' ? '#fff' : 'transparent', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 700, color: view === 'week' ? C.ink : C.sub, cursor: 'pointer', boxShadow: view === 'week' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}>{t.calWeek || 'Week'}</button>
+            <button onClick={() => setView('month')} className="ev-tap" style={{ background: view === 'month' ? '#fff' : 'transparent', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 700, color: view === 'month' ? C.ink : C.sub, cursor: 'pointer', boxShadow: view === 'month' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}>{t.calMonth || 'Month'}</button>
           </div>
           <button onClick={goToday} className="ev-tap" style={{ padding: '8px 16px', borderRadius: 10, border: `1px solid ${C.line}`, background: 'transparent', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: C.mint, fontFamily: 'inherit' }}>
             {t.today || 'Today'}
@@ -2101,7 +2111,7 @@ function TasksScreen({ t }) {
                     border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
                     <Edit2 size={17} />
                   </button>
-                  <button onClick={() => deleteTask(tk.id)} className="ev-tap" style={{
+                  <button onClick={() => { if(window.confirm(t.confirmDelete || "Delete?")) deleteTask(tk.id); }} className="ev-tap" style={{
                     border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
                     <Trash2 size={17} />
                   </button>
@@ -2119,7 +2129,7 @@ function TasksScreen({ t }) {
       {editObj && (
         <TaskEditor t={t} horses={horses} staffMembers={staffMembers} initialData={editObj} onClose={() => setEditObj(null)}
           onSave={(task) => { editTask(editObj.id, task); setEditObj(null); }}
-          onDelete={() => { deleteTask(editObj.id); setEditObj(null); }} />
+          onDelete={() => { if (window.confirm(t.confirmDelete || "Delete?")) { deleteTask(editObj.id); setEditObj(null); } }} />
       )}
     </div>
   );
@@ -2145,7 +2155,7 @@ function HealthScreenRouter({ t, route, setRoute }) {
         <HealthEditor t={t} horses={horses} staffMembers={staffMembers} initialData={route.data}
           onClose={() => setRoute({ name: "list" })}
           onSave={async (rec) => { await editHealthRecord(route.data.id, rec); setRoute({ name: "list" }); }}
-          onDelete={async () => { await deleteHealthRecord(route.data.id); setRoute({ name: "list" }); }} />
+          onDelete={async () => { if (window.confirm(t.confirmDelete || "Delete?")) { await deleteHealthRecord(route.data.id); setRoute({ name: "list" }); } }} />
       </div>
     );
   }
@@ -2251,7 +2261,7 @@ function HealthScreen({ t, setRoute }) {
                       border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
                       <Edit2 size={17} />
                     </button>
-                    <button onClick={() => deleteHealthRecord(hr.id)} className="ev-tap" style={{
+                    <button onClick={() => { if(window.confirm(t.confirmDelete || "Delete?")) deleteHealthRecord(hr.id); }} className="ev-tap" style={{
                       border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6 }}>
                       <Trash2 size={17} />
                     </button>
@@ -2301,7 +2311,7 @@ function HealthScreen({ t, setRoute }) {
       {editRecord && (
         <HealthEditor t={t} horses={horses} staffMembers={staffMembers} initialData={editRecord} onClose={() => setEditRecord(null)}
           onSave={(rec) => { editHealthRecord(editRecord.id, rec); setEditRecord(null); }}
-          onDelete={() => { deleteHealthRecord(editRecord.id); setEditRecord(null); }} />
+          onDelete={() => { if (window.confirm(t.confirmDelete || "Delete?")) { deleteHealthRecord(editRecord.id); setEditRecord(null); } }} />
       )}
     </div>
   );
@@ -2341,7 +2351,7 @@ function FinanceScreen({ t }) {
           title={t.noTxns} sub={t.noTxnsSub} cta={t.addTransaction} onClick={() => setModal("income")} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {txns.map((x) => <TxnRow key={x.id} x={x} t={t} onDelete={() => deleteTxn(x.id)} />)}
+          {txns.map((x) => <TxnRow key={x.id} x={x} t={t} onDelete={() => { if(window.confirm(t.confirmDelete || "Delete?")) deleteTxn(x.id); }} />)}
         </div>
       )}
 
@@ -2425,7 +2435,7 @@ function UsersScreen({ t }) {
           title={t.noUsers} sub={t.noUsersSub} cta={t.addUser} onClick={() => setModal(true)} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {users.map((u) => <UserRow key={u.id} u={u} t={t} onDelete={() => deleteUser(u.id)} />)}
+          {users.map((u) => <UserRow key={u.id} u={u} t={t} onDelete={() => { if(window.confirm(t.confirmDelete || "Delete?")) deleteUser(u.id); }} />)}
         </div>
       )}
 
@@ -2583,7 +2593,7 @@ function FeedingScreen({ t, go, setRoute }) {
                                   <Carrot size={16} color={C.amber} />
                                   <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{trFeed(it.product, t)}</span>
                                   <span style={{ fontSize: 13, color: C.sub, fontWeight: 600 }}>{it.qty}</span>
-                                  <button onClick={() => deleteFeedItem(h.id, sl, it.id)} className="ev-tap"
+                                  <button onClick={() => { if(window.confirm(t.confirmDelete || "Delete?")) deleteFeedItem(h.id, sl, it.id); }} className="ev-tap"
                                     style={{ border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 4 }}>
                                     <Trash2 size={16} />
                                   </button>
@@ -2926,8 +2936,12 @@ function GenericModuleScreen({ t, active, setRoute }) {
             <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 14, background: C.surface,
               border: `1px solid ${C.line}`, borderRadius: 16, padding: "16px", cursor: "pointer" }}
               onClick={() => setRoute({ name: "edit", data: x })}>
-              <span style={{ width: 44, height: 44, borderRadius: 12, display: "grid", placeItems: "center",
-                background: `${color}1c`, color: color, flexShrink: 0 }}><Icon size={20} /></span>
+              {x.photo_url ? (
+                <img src={x.photo_url} alt="" style={{ width: 44, height: 44, borderRadius: 12, objectFit: "cover", flexShrink: 0 }} />
+              ) : (
+                <span style={{ width: 44, height: 44, borderRadius: 12, display: "grid", placeItems: "center",
+                  background: `${color}1c`, color: color, flexShrink: 0 }}><Icon size={20} /></span>
+              )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 17, fontWeight: 600, color: C.ink }}>{displayName(x)}</div>
                 {x.status && <div style={{ fontSize: 13, color: C.sub, marginTop: 2 }}>{x.status}</div>}
@@ -3046,7 +3060,7 @@ function SuppliesScreen({ t }) {
                 )}
               </div>
 
-              <button onClick={() => deleteSupply(s.id)} className="ev-tap" style={{
+              <button onClick={() => { if(window.confirm(t.confirmDelete || "Delete?")) deleteSupply(s.id); }} className="ev-tap" style={{
                 border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 6
               }}>
                 <Trash2 size={18} />
