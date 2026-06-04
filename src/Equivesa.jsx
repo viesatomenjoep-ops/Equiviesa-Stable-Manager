@@ -20,6 +20,18 @@ import {
    ============================================================ */
 
 /* ---------- i18n ---------- */
+const globalStyle = `
+@media (max-width: 768px) {
+  .ev-cal-body { flex-direction: column !important; }
+  .ev-cal-detail { width: 100% !important; border-left: none !important; border-top: 1px solid #E3E8EE !important; }
+}
+`;
+if (typeof document !== 'undefined') {
+  const s = document.createElement('style');
+  s.innerHTML = globalStyle;
+  document.head.appendChild(s);
+}
+
 const I18N = {
   nl: {
     code: "NL",
@@ -110,9 +122,10 @@ const I18N = {
     selectHorse: "Selecteer paard", allCats: "Alle categorieën",
     taskCommon: ["Stal uitmesten", "Paddock", "Longeren", "Poetsen", "Hooi vullen", "Watercheck", "Weide maaien"],
     timeStart: "Starttijd", timeEnd: "Eindtijd",
-    myDay: "Mijn Dag", myDaySub: "Jouw dagelijkse taken. Tik om af te vinken.",
+    myDay: "Dashboard", myDaySub: "Jouw dagelijkse taken. Tik om af te vinken.",
     reportIssue: "Snel Melden", whatIsWrong: "Wat wil je doorgeven?", issueSupply: "Voorraad nodig", issueDefect: "Kapot / Defect", takePhoto: "Maak een foto (optioneel)", noTasksToday: "Geen taken voor jou vandaag!",
     // Dashboard
+    greetingMorning: "🌅 Goedemorgen", greetingAfternoon: "☀️ Goedemiddag", greetingEvening: "🌙 Goedenavond",
     dashboardTitle: "Jouw dag vandaag", tasksDoneToday: "Taken voltooid", allDone: "🎉 Alles gedaan voor vandaag!",
     remaining: (n) => `Nog ${n} te gaan`,
     morningFeed: "🌅 Ochtendvoeding", todayTasks: "✅ Taken vandaag", allTasks: "Alle taken →",
@@ -218,9 +231,10 @@ const I18N = {
     selectHorse: "Select horse", allCats: "All categories",
     taskCommon: ["Muck out", "Paddock", "Lunging", "Grooming", "Fill hay", "Water check", "Mow pasture"],
     timeStart: "Start time", timeEnd: "End time",
-    myDay: "My Day", myDaySub: "Your daily tasks. Tap to complete.",
+    myDay: "Dashboard", myDaySub: "Your daily tasks. Tap to complete.",
     reportIssue: "Quick Report", whatIsWrong: "What do you want to report?", issueSupply: "Supply needed", issueDefect: "Broken item / Defect", takePhoto: "Take a photo (optional)", noTasksToday: "No tasks for you today!",
     // Dashboard
+    greetingMorning: "🌅 Good morning", greetingAfternoon: "☀️ Good afternoon", greetingEvening: "🌙 Good evening",
     dashboardTitle: "Your day today", tasksDoneToday: "Tasks completed", allDone: "🎉 Everything done for today!",
     remaining: (n) => `${n} more to go`,
     morningFeed: "🌅 Morning feeding", todayTasks: "✅ Today's tasks", allTasks: "All tasks →",
@@ -326,9 +340,10 @@ const I18N = {
     selectHorse: "Seleccionar caballo", allCats: "Todas las categorías",
     taskCommon: ["Limpiar cuadra", "Paddock", "Cuerda", "Cepillar", "Llenar heno", "Revisar agua", "Cortar pasto"],
     timeStart: "Hora inicio", timeEnd: "Hora fin",
-    myDay: "Mi día", myDaySub: "Tus tareas diarias. Toca para completar.",
+    myDay: "Dashboard", myDaySub: "Tus tareas diarias. Toca para completar.",
     reportIssue: "Reportar", whatIsWrong: "¿Qué quieres reportar?", issueSupply: "Suministro necesario", issueDefect: "Artículo roto / Defecto", takePhoto: "Hacer una foto (opcional)", noTasksToday: "¡No hay tareas para ti hoy!",
     // Dashboard
+    greetingMorning: "🌅 Buenos días", greetingAfternoon: "☀️ Buenas tardes", greetingEvening: "🌙 Buenas noches",
     dashboardTitle: "Tu día hoy", tasksDoneToday: "Tareas completadas", allDone: "🎉 ¡Todo listo por hoy!",
     remaining: (n) => `${n} más por hacer`,
     morningFeed: "🌅 Alimentación matutina", todayTasks: "✅ Tareas de hoy", allTasks: "Todas las tareas →",
@@ -822,12 +837,12 @@ const MODE_PIN = { manager: "1111", groom: "2222" };
 function ModeGate({ t, onPick, lang, setLang }) {
   const [pending, setPending] = useState(null); // 'groom' | 'manager' awaiting PIN
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: C.surface }}>
+    <div style={{ height: "100dvh", minHeight: "100vh", overflow: "hidden", display: "flex", flexDirection: "column", background: C.surface }}>
       <div style={{ display: "flex", justifyContent: "flex-end", padding: "20px 22px" }}>
         <LangMenu lang={lang} setLang={setLang} t={t} />
       </div>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 18px 80px" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 40, transform: "scale(1.2)" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 18px 40px" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 32, transform: "scale(1.2)" }}>
           <Brand />
         </div>
         <div style={{ width: "100%", maxWidth: 400, textAlign: "center" }}>
@@ -1179,18 +1194,15 @@ function Drawer({ t, active, go, close, mode, setMode }) {
       <div onClick={close} style={{ position: "absolute", inset: 0, background: "rgba(31,45,58,.4)" }} />
       <div className="ev-scroll" style={{
         position: "absolute", top: 0, left: 0, bottom: 0, width: "84%", maxWidth: 340,
-        background: C.surface, padding: 18, overflowY: "auto",
+        background: C.surface, padding: 18, overflowY: "auto", overflowX: "hidden",
         animation: "evSlide .26s cubic-bezier(.2,.8,.2,1)", boxShadow: "12px 0 40px rgba(0,0,0,.18)",
       }}>
         <style>{`@keyframes evSlide{from{transform:translateX(-100%)}to{transform:none}}`}</style>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Brand />
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: C.sub }}>Dashboard</span>
-            <button onClick={close} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
-              <X size={22} />
-            </button>
-          </div>
+          <button onClick={close} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
+            <X size={22} />
+          </button>
         </div>
         <ModeBadge t={t} mode={mode} setMode={setMode} inDrawer />
         <div style={{ height: 6 }} />
@@ -1798,7 +1810,7 @@ function CalendarScreen({ t, go }) {
       </div>
 
       {/* ---- Main Body: Grid + Detail ---- */}
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      <div className="ev-cal-body" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
 
         {/* ---- Calendar Grid (Scrollable horizontally on mobile) ---- */}
         <div className="ev-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowX: 'auto' }}>
@@ -1885,7 +1897,7 @@ function CalendarScreen({ t, go }) {
 
         {/* ---- Day Detail Panel ---- */}
         {selDay && (
-          <div style={{
+          <div className="ev-cal-detail" style={{
             width: 300, flexShrink: 0, borderLeft: `1px solid ${C.line}`,
             display: 'flex', flexDirection: 'column', background: '#fff',
             animation: 'evFade .2s ease',
@@ -2482,7 +2494,7 @@ function FeedingScreen({ t, go, setRoute }) {
     );
   }
 
-  const shown = horseFilter ? horses.filter((h) => h.id === Number(horseFilter)) : horses;
+  const shown = horseFilter ? horses.filter((h) => String(h.id) === horseFilter) : horses;
 
   return (
     <div className="ev-card">
@@ -3128,7 +3140,7 @@ function GroomDashboard({ t, go }) {
   const pad = (n) => String(n).padStart(2, '0');
   const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
   const hour = now.getHours();
-  const greeting = hour < 12 ? '🌅 Goedemorgen' : hour < 18 ? '☀️ Goedemiddag' : '🌙 Goedenavond';
+  const greeting = hour < 12 ? t.greetingMorning : hour < 18 ? t.greetingAfternoon : t.greetingEvening;
   const [reportModal, setReportModal] = useState(false);
 
   const todayTasks = tasks
@@ -3358,7 +3370,7 @@ function ManagerDashboard({ t, go }) {
   const pad = (n) => String(n).padStart(2, '0');
   const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
   const hour = now.getHours();
-  const greeting = hour < 12 ? '🌅 Goedemorgen' : hour < 18 ? '☀️ Goedemiddag' : '🌙 Goedenavond';
+  const greeting = hour < 12 ? t.greetingMorning : hour < 18 ? t.greetingAfternoon : t.greetingEvening;
 
   // KPIs
   const openTasks = tasks.filter(t => !t.is_completed);

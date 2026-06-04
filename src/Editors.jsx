@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Camera, Check, Plus, Trash2, ArrowLeft, Link as LinkIcon, FileText, ShoppingCart, MapPin, Contact as ContactIcon, BookOpen, Receipt, Package, Wallet, Activity, Users, Carrot, AlertTriangle, AlertOctagon, Heart, Sparkles } from "lucide-react";
+import { Camera, Check, Plus, Trash2, ArrowLeft, Link as LinkIcon, FileText, ShoppingCart, MapPin, Contact as ContactIcon, BookOpen, Receipt, Package, Wallet, Activity, Users, Carrot, AlertTriangle, AlertOctagon, Heart, Sparkles, Printer } from "lucide-react";
 import { useStore } from "./Equivesa";
 import { MapEditor } from "./MapEditor";
 
