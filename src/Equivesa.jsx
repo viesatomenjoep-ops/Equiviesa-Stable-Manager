@@ -640,6 +640,16 @@ function StoreProvider({ children }) {
       return { ...prev, [horseId]: { ...h, [slot]: h[slot].filter((i) => i.id !== itemId) } };
     });
   };
+  const editFeedItem = async (horseId, slot, itemId, item) => {
+    const { data, error } = await supabase.from('feed_schedules').update({ product: item.product, qty: item.qty }).eq('id', itemId).select();
+    if (error) { console.error("Error editing feed:", error); alert("Database Error: " + error.message); }
+    if (data) {
+      setFeed(prev => {
+        const h = prev[horseId]; if (!h) return prev;
+        return { ...prev, [horseId]: { ...h, [slot]: h[slot].map(i => i.id === itemId ? data[0] : i) } };
+      });
+    }
+  };
 
   /* --- Tasks CRUD --- */
   const fetchTasks = async () => {
@@ -703,7 +713,7 @@ function StoreProvider({ children }) {
 
   return (
     <Store.Provider value={{ horses, addHorse, editHorse, deleteHorse, txns, addTxn, deleteTxn,
-      users, addUser, deleteUser, feed, addFeedItem, addDefaultSchedule, deleteFeedItem,
+      users, addUser, deleteUser, feed, addFeedItem, editFeedItem, addDefaultSchedule, deleteFeedItem,
       supplies, addSupply, toggleSupplyStatus, deleteSupply,
       tasks, addTask, editTask, toggleTask, deleteTask,
       stalls, addStall, editStall, deleteStall,
@@ -1251,6 +1261,7 @@ function Screen({ active, route, setRoute, t, go, mode }) {
     if (route.name === "detail") return <div style={wrap}><HorseDetail t={t} id={route.id} setRoute={setRoute} /></div>;
     return <div style={wrap}><HorsesList t={t} setRoute={setRoute} /></div>;
   }
+  if (active === "feeding") return <div style={wrap}><FeedingScreen t={t} route={route} setRoute={setRoute} /></div>;
   if (active === "calendar") return <div style={wrap}><CalendarScreen t={t} go={go} /></div>;
   if (active === "tasks") return <div style={wrap}><TasksScreen t={t} /></div>;
   if (active === "health") return <HealthScreenRouter t={t} route={route} setRoute={setRoute} />;
@@ -2487,13 +2498,29 @@ const DEFAULT_SCHEDULE = [
   { slot: "evening", product: "Water",   qty: "Ad lib" },
 ];
 
-function FeedingScreen({ t, go, setRoute }) {
-  const { horses, feed, addFeedItem, addDefaultSchedule, deleteFeedItem } = useStore();
+function FeedingScreen({ t, route, setRoute }) {
+  const { horses, feed, addFeedItem, editFeedItem, addDefaultSchedule, deleteFeedItem } = useStore();
   const [tab, setTab] = useState(0); // 0 feeding 1 order
-  const [slot, setSlot] = useState("morning");
   const [horseFilter, setHorseFilter] = useState("");
-  const [addFor, setAddFor] = useState(null);
   const [settingUp, setSettingUp] = useState(null); // horseId being quick-setup
+
+  if (route?.name === "feed_edit") {
+    const { horseId, slot, item } = route;
+    return <FeedingEditor t={t} slot={slot} initialData={item}
+      onClose={() => setRoute({ name: "list" })}
+      onSave={(newItem) => {
+        if (item) editFeedItem(horseId, slot, item.id, newItem);
+        else addFeedItem(horseId, slot, newItem);
+        setRoute({ name: "list" });
+      }}
+      onDelete={item ? () => {
+        if(window.confirm(t.confirmDelete || "Delete?")) {
+          deleteFeedItem(horseId, slot, item.id);
+          setRoute({ name: "list" });
+        }
+      } : null}
+    />;
+  }
 
   if (horses.length === 0) {
     return (
@@ -2575,7 +2602,7 @@ function FeedingScreen({ t, go, setRoute }) {
                             <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>
                               {SLOT_EMOJIS[sl]} {t[sl] || sl}
                             </div>
-                            <button onClick={() => { setSlot(sl); setAddFor(h.id); }} className="ev-tap" style={{
+                            <button onClick={() => setRoute({ name: 'feed_edit', horseId: h.id, slot: sl })} className="ev-tap" style={{
                               background: `${C.amber}1f`, color: C.amber, border: "none", borderRadius: 10, padding: "6px 12px",
                               fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4
                             }}>
@@ -2588,12 +2615,13 @@ function FeedingScreen({ t, go, setRoute }) {
                           ) : (
                             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                               {items.map((it) => (
-                                <div key={it.id} style={{ display: "flex", alignItems: "center", gap: 10,
-                                  background: C.field, borderRadius: 12, padding: "10px 14px" }}>
+                                <div key={it.id} onClick={() => setRoute({ name: 'feed_edit', horseId: h.id, slot: sl, item: it })} className="ev-tap"
+                                  style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
+                                  background: C.field, borderRadius: 12, padding: "10px 14px", border: `1px solid transparent` }}>
                                   <Carrot size={16} color={C.amber} />
                                   <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{trFeed(it.product, t)}</span>
                                   <span style={{ fontSize: 13, color: C.sub, fontWeight: 600 }}>{it.qty}</span>
-                                  <button onClick={() => { if(window.confirm(t.confirmDelete || "Delete?")) deleteFeedItem(h.id, sl, it.id); }} className="ev-tap"
+                                  <button onClick={(e) => { e.stopPropagation(); if(window.confirm(t.confirmDelete || "Delete?")) deleteFeedItem(h.id, sl, it.id); }} className="ev-tap"
                                     style={{ border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 4 }}>
                                     <Trash2 size={16} />
                                   </button>
@@ -2612,12 +2640,6 @@ function FeedingScreen({ t, go, setRoute }) {
         </>
       ) : (
         <OrderTab t={t} setTab={setTab} />
-      )}
-
-      {addFor != null && (
-        <FeedingEditor t={t} slot={slot}
-          onClose={() => setAddFor(null)}
-          onSave={(item) => { addFeedItem(addFor, slot, item); setAddFor(null); }} />
       )}
     </div>
   );
