@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { Camera, Check, Plus, Trash2, ArrowLeft, Link as LinkIcon, FileText, ShoppingCart, MapPin, Contact as ContactIcon, BookOpen, Receipt, Package, Wallet, Activity, Users, Carrot, AlertTriangle, AlertOctagon } from "lucide-react";
+import { Camera, Check, Plus, Trash2, ArrowLeft, Link as LinkIcon, FileText, ShoppingCart, MapPin, Contact as ContactIcon, BookOpen, Receipt, Package, Wallet, Activity, Users, Carrot, AlertTriangle, AlertOctagon, Heart, Sparkles } from "lucide-react";
 import { useStore } from "./Equivesa";
 import { MapEditor } from "./MapEditor";
 
 const C = {
   bg: "#F2F5F8", surface: "#FFFFFF", line: "#E3E8EE",
   ink: "#0E151E", sub: "#64748B", field: "#F8FAFC",
-  mint: "#2FB6A0", mintSoft: "#E0F5F2", coral: "#FF8C70", sky: "#5AB2FF", amber: "#FFB03A"
+  mint: "#2FB6A0", mintSoft: "#E0F5F2", coral: "#FF8C70", sky: "#5AB2FF", amber: "#FFB03A",
+  pink: "#E879A0", lilac: "#9B7FD4"
 };
 
 const inputStyle = (err) => ({
@@ -556,28 +557,55 @@ export function HealthEditor({ t, initialData, horses, onClose, onSave, onDelete
 }
 
 export function BookingEditor({ t, initialData, onClose, onSave, onDelete }) {
-  const [f, setF] = useState(initialData || { date: "", status: "pending", notes: "", photo_url: "" });
+  const today = new Date().toISOString().slice(0, 10);
+  // DB columns: title (required), booking_type (required), booking_date (required), status, notes
+  const [f, setF] = useState(initialData || { title: "", booking_type: "other", booking_date: today, start_time: "09:00", end_time: "10:00", status: "pending", location: "", notes: "", photo_url: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const TYPES = [
+    { id: "arena",        emoji: "🏟️",  label: "Arena" },
+    { id: "lesson",       emoji: "🎓",  label: "Lesson" },
+    { id: "training",     emoji: "🏇",  label: "Training" },
+    { id: "vet_visit",    emoji: "🩺",  label: "Vet" },
+    { id: "farrier_visit",emoji: "🔨",  label: "Farrier" },
+    { id: "competition",  emoji: "🏆",  label: "Competition" },
+    { id: "transport",    emoji: "🚛",  label: "Transport" },
+    { id: "other",        emoji: "📅",  label: "Other" },
+  ];
   const STATUSES = [
-    { id: "pending", emoji: "⏳" },
-    { id: "confirmed", emoji: "✅" },
-    { id: "cancelled", emoji: "❌" }
+    { id: "pending",   emoji: "⏳", label: "Pending" },
+    { id: "confirmed", emoji: "✅", label: "Confirmed" },
+    { id: "cancelled", emoji: "❌", label: "Cancelled" },
+    { id: "completed", emoji: "🏁", label: "Completed" },
   ];
 
   return (
-    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Booking"} icon={BookOpen} color={C.sky} onClose={onClose} onSave={() => f.date ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
+    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Booking"} icon={BookOpen} color={C.sky} onClose={onClose} onSave={() => f.title.trim() && f.booking_date ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
       <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
-      
-      <Field label="Status">
-        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-          {STATUSES.map(cat => {
-            const isSel = f.status === cat.id;
+
+      <Field label="Booking Type">
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, marginBottom: 16 }}>
+          {TYPES.map(cat => {
+            const isSel = f.booking_type === cat.id;
             return (
-              <button key={cat.id} type="button" onClick={() => setF({...f, status: cat.id})} className="ev-tap"
-                style={{ flex: 1, padding: "14px 10px", borderRadius: 16, border: `1.5px solid ${isSel ? C.sky : C.line}`, background: isSel ? C.sky : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", transition: "all .2s" }}>
-                <span style={{ fontSize: 24 }}>{cat.emoji}</span>
-                <span style={{ fontSize: 14, fontWeight: 700 }}>{cat.id.charAt(0).toUpperCase() + cat.id.slice(1)}</span>
+              <button key={cat.id} type="button" onClick={() => setF({...f, booking_type: cat.id})} className="ev-tap"
+                style={{ flexShrink: 0, padding: "12px 18px", borderRadius: 14, border: `1.5px solid ${isSel ? C.sky : C.line}`, background: isSel ? C.sky : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+                <span style={{ fontSize: 20 }}>{cat.emoji}</span>
+                <span style={{ fontSize: 14, fontWeight: 700 }}>{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </Field>
+
+      <Field label="Status">
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+          {STATUSES.map(s => {
+            const isSel = f.status === s.id;
+            return (
+              <button key={s.id} type="button" onClick={() => setF({...f, status: s.id})} className="ev-tap"
+                style={{ padding: "10px 18px", borderRadius: 12, border: `1.5px solid ${isSel ? C.sky : C.line}`, background: isSel ? C.sky : C.surface, color: isSel ? "#fff" : C.sub, fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                <span>{s.emoji}</span><span>{s.label}</span>
               </button>
             );
           })}
@@ -585,42 +613,66 @@ export function BookingEditor({ t, initialData, onClose, onSave, onDelete }) {
       </Field>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <Field label="Title" required>
+          <input value={f.title} onChange={(e) => { setF({...f, title: e.target.value}); setErr(false); }} placeholder="e.g. Arena session..." style={{...inputStyle(err && !f.title.trim())}} />
+        </Field>
         <Field label="Date" required>
-          <input type="date" value={f.date || ""} onChange={(e) => { setF({...f, date: e.target.value}); setErr(false); }} style={{...inputStyle(err && !f.date), background: C.surface}} />
+          <input type="date" value={f.booking_date || ""} onChange={(e) => { setF({...f, booking_date: e.target.value}); setErr(false); }} style={{...inputStyle(err && !f.booking_date), background: C.surface}} />
+        </Field>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label="Start">
+            <input type="time" value={f.start_time || ""} onChange={(e) => setF({...f, start_time: e.target.value})} style={{...inputStyle(), background: C.surface}} />
+          </Field>
+          <Field label="End">
+            <input type="time" value={f.end_time || ""} onChange={(e) => setF({...f, end_time: e.target.value})} style={{...inputStyle(), background: C.surface}} />
+          </Field>
+        </div>
+        <Field label="Location">
+          <input value={f.location || ""} onChange={(e) => setF({...f, location: e.target.value})} placeholder="e.g. Main Arena..." style={{...inputStyle(), background: C.surface}} />
         </Field>
       </div>
 
       <Field label={t.notes || "Notes"}>
-        <textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical", background: C.field }} placeholder="Booking details..." />
+        <textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 100, resize: "vertical", background: C.field }} placeholder="Booking details..." />
       </Field>
     </EditorLayout>
   );
 }
 
 export function InvoiceEditor({ t, initialData, onClose, onSave, onDelete }) {
-  const [f, setF] = useState(initialData || { invoice_number: "", amount: "", due_date: "", status: "draft", file_url: "", notes: "" });
+  const today = new Date().toISOString().slice(0, 10);
+  const due30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+  // DB columns: invoice_number, client_name (required), invoice_date, due_date (required), total, status, notes
+  const [f, setF] = useState(initialData || { invoice_number: "", client_name: "", invoice_date: today, due_date: due30, total: "", subtotal: "", tax_rate: 21, status: "draft", notes: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
   const STATUSES = [
-    { id: "draft", emoji: "📝" },
-    { id: "sent", emoji: "📨" },
-    { id: "paid", emoji: "💳" },
-    { id: "overdue", emoji: "⚠️" }
+    { id: "draft",   emoji: "📝", label: "Draft" },
+    { id: "sent",    emoji: "📨", label: "Sent" },
+    { id: "paid",    emoji: "💳", label: "Paid" },
+    { id: "overdue", emoji: "⚠️", label: "Overdue" },
+    { id: "partial", emoji: "🔄", label: "Partial" },
   ];
 
+  // Auto-calc total incl. BTW
+  const subtotalNum = parseFloat(f.subtotal) || 0;
+  const taxAmt = parseFloat(((subtotalNum * (parseFloat(f.tax_rate) || 21)) / 100).toFixed(2));
+  const totalNum = parseFloat((subtotalNum + taxAmt).toFixed(2));
+
   return (
-    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Invoice"} icon={Receipt} color={C.sky} onClose={onClose} onSave={() => f.amount ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
-      <PhotoUpload url={f.file_url} onChange={(url) => setF({...f, file_url: url})} uploading={uploading} setUploading={setUploading} icon={FileText} />
-      
+    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Invoice"} icon={Receipt} color={C.sky} onClose={onClose}
+      onSave={() => f.client_name.trim() && f.due_date ? onSave({ ...f, total: totalNum || parseFloat(f.total) || 0, tax_amount: taxAmt, invoice_date: f.invoice_date || today }) : setErr(true)}
+      onDelete={initialData ? onDelete : null}>
+
       <Field label="Status">
-        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
-          {STATUSES.map(cat => {
-            const isSel = f.status === cat.id;
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, marginBottom: 16 }}>
+          {STATUSES.map(s => {
+            const isSel = f.status === s.id;
             return (
-              <button key={cat.id} type="button" onClick={() => setF({...f, status: cat.id})} className="ev-tap"
-                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${isSel ? C.sky : C.line}`, background: isSel ? C.sky : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
-                <span style={{ fontSize: 20 }}>{cat.emoji}</span>
-                <span style={{ fontSize: 15, fontWeight: 700 }}>{cat.id.charAt(0).toUpperCase() + cat.id.slice(1)}</span>
+              <button key={s.id} type="button" onClick={() => setF({...f, status: s.id})} className="ev-tap"
+                style={{ flexShrink: 0, padding: "12px 20px", borderRadius: 14, border: `1.5px solid ${isSel ? C.sky : C.line}`, background: isSel ? C.sky : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+                <span style={{ fontSize: 18 }}>{s.emoji}</span>
+                <span style={{ fontSize: 14, fontWeight: 700 }}>{s.label}</span>
               </button>
             );
           })}
@@ -628,21 +680,39 @@ export function InvoiceEditor({ t, initialData, onClose, onSave, onDelete }) {
       </Field>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
-        <Field label="Invoice Number">
-          <input value={f.invoice_number || ""} onChange={(e) => setF({...f, invoice_number: e.target.value})} placeholder="INV-2026-..." style={{...inputStyle(), background: C.surface}} />
-        </Field>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <Field label="Amount (€)" required>
-            <input type="number" step="0.01" value={f.amount || ""} onChange={(e) => { setF({...f, amount: e.target.value}); setErr(false); }} placeholder="0.00" style={{...inputStyle(err && !f.amount), background: C.surface, fontSize: 18, fontWeight: 700, color: C.sky}} />
+          <Field label="Invoice Number">
+            <input value={f.invoice_number || ""} onChange={(e) => setF({...f, invoice_number: e.target.value})} placeholder="INV-2026-001" style={{...inputStyle(), background: C.surface}} />
           </Field>
-          <Field label="Due Date">
-            <input type="date" value={f.due_date || ""} onChange={(e) => setF({...f, due_date: e.target.value})} style={{...inputStyle(), background: C.surface}} />
+          <Field label="Client Name" required>
+            <input value={f.client_name || ""} onChange={(e) => { setF({...f, client_name: e.target.value}); setErr(false); }} placeholder="Client..." style={{...inputStyle(err && !f.client_name.trim()), background: C.surface}} />
           </Field>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label="Invoice Date">
+            <input type="date" value={f.invoice_date || ""} onChange={(e) => setF({...f, invoice_date: e.target.value})} style={{...inputStyle(), background: C.surface}} />
+          </Field>
+          <Field label="Due Date" required>
+            <input type="date" value={f.due_date || ""} onChange={(e) => { setF({...f, due_date: e.target.value}); setErr(false); }} style={{...inputStyle(err && !f.due_date), background: C.surface}} />
+          </Field>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label="Subtotal (€)">
+            <input type="number" step="0.01" value={f.subtotal || ""} onChange={(e) => setF({...f, subtotal: e.target.value})} placeholder="0.00" style={{...inputStyle(), background: C.surface}} />
+          </Field>
+          <Field label="BTW %">
+            <input type="number" value={f.tax_rate ?? 21} onChange={(e) => setF({...f, tax_rate: e.target.value})} placeholder="21" style={{...inputStyle(), background: C.surface}} />
+          </Field>
+        </div>
+        {/* Total preview */}
+        <div style={{ background: C.sky, borderRadius: 14, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Totaal incl. BTW</span>
+          <span style={{ color: "#fff", fontWeight: 800, fontSize: 22 }}>€ {totalNum.toFixed(2)}</span>
         </div>
       </div>
 
       <Field label={t.notes || "Notes"}>
-        <textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical", background: C.field }} placeholder="Notes..." />
+        <textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 100, resize: "vertical", background: C.field }} placeholder="Notes..." />
       </Field>
     </EditorLayout>
   );

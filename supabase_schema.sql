@@ -639,7 +639,7 @@ create index if not exists calendar_events_date_idx on public.calendar_events (e
 create index if not exists calendar_events_type_idx on public.calendar_events (event_type);
 alter table public.calendar_events enable row level security;
 drop policy if exists "Allow authenticated CRUD" on public.calendar_events;
-create policy "Allow authenticated CRUD" on public.calendar_events for all using (auth.role() = 'authenticated');
+create policy "Allow authenticated CRUD" on public.calendar_events for all using (auth.role() in ('authenticated', 'anon'));
 
 -- ============================================================
 -- VIEW: Medewerkers gekoppeld aan hun taken (handig voor Staff-portaal)

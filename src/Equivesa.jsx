@@ -513,6 +513,27 @@ function StoreProvider({ children }) {
       });
     }
   };
+  const addDefaultSchedule = async (horseId) => {
+    // Standaard voedingsschema: ochtend, middag, avond
+    const defaults = [
+      { slot: 'morning', product: 'Hay',     qty: '3 kg' },
+      { slot: 'morning', product: 'Pellets', qty: '1 kg' },
+      { slot: 'noon',    product: 'Hay',     qty: '3 kg' },
+      { slot: 'evening', product: 'Hay',     qty: '3 kg' },
+      { slot: 'evening', product: 'Muesli',  qty: '500 g' },
+      { slot: 'evening', product: 'Water',   qty: 'Ad lib' },
+    ];
+    const rows = defaults.map(d => ({ horse_id: horseId, slot: d.slot, product: d.product, qty: d.qty }));
+    const { data, error } = await supabase.from('feed_schedules').insert(rows).select();
+    if (error) { alert("Database Error: " + error.message); return; }
+    if (data) {
+      setFeed(prev => {
+        const h = { morning: [], noon: [], evening: [], night: [] };
+        data.forEach(item => { if (h[item.slot]) h[item.slot].push(item); });
+        return { ...prev, [horseId]: h };
+      });
+    }
+  };
   const deleteFeedItem = async (horseId, slot, itemId) => {
     const { error } = await supabase.from('feed_schedules').delete().eq('id', itemId);
     if (error) { console.error("Error deleting feed:", error); alert("Database Error: " + error.message); }
@@ -584,7 +605,7 @@ function StoreProvider({ children }) {
 
   return (
     <Store.Provider value={{ horses, addHorse, editHorse, deleteHorse, txns, addTxn, deleteTxn,
-      users, addUser, deleteUser, feed, addFeedItem, deleteFeedItem,
+      users, addUser, deleteUser, feed, addFeedItem, addDefaultSchedule, deleteFeedItem,
       supplies, addSupply, toggleSupplyStatus, deleteSupply,
       tasks, addTask, editTask, toggleTask, deleteTask,
       healthRecords, addHealthRecord, editHealthRecord, toggleHealthRecord, deleteHealthRecord }}>{children}</Store.Provider>
@@ -2162,12 +2183,24 @@ function UserRow({ u, t, onDelete }) {
 
 /* ---------- FEEDING ---------- */
 const SLOTS = ["morning", "noon", "evening", "night"];
+const SLOT_EMOJIS = { morning: "🌅", noon: "☀️", evening: "🌆", night: "🌙" };
+const SLOT_TIMES  = { morning: "07:00", noon: "12:00", evening: "18:00", night: "21:00" };
+const DEFAULT_SCHEDULE = [
+  { slot: "morning", product: "Hooi",    qty: "3 kg" },
+  { slot: "morning", product: "Biks",    qty: "1 kg" },
+  { slot: "noon",    product: "Hooi",    qty: "3 kg" },
+  { slot: "evening", product: "Hooi",    qty: "3 kg" },
+  { slot: "evening", product: "Muesli",  qty: "500 g" },
+  { slot: "evening", product: "Water",   qty: "Ad lib" },
+];
+
 function FeedingScreen({ t, go, setRoute }) {
-  const { horses, feed, addFeedItem, deleteFeedItem } = useStore();
+  const { horses, feed, addFeedItem, addDefaultSchedule, deleteFeedItem } = useStore();
   const [tab, setTab] = useState(0); // 0 feeding 1 order
   const [slot, setSlot] = useState("morning");
   const [horseFilter, setHorseFilter] = useState("");
-  const [addFor, setAddFor] = useState(null); // horseId to add product for
+  const [addFor, setAddFor] = useState(null);
+  const [settingUp, setSettingUp] = useState(null); // horseId being quick-setup
 
   if (horses.length === 0) {
     return (
@@ -2215,44 +2248,91 @@ function FeedingScreen({ t, go, setRoute }) {
           </div>
 
           {/* per-horse feed rows for selected slot */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {shown.map((h) => {
+              const horseHasFeed = feed[h.id] && (SLOTS.some(s => (feed[h.id][s] || []).length > 0));
               const items = (feed[h.id] && feed[h.id][slot]) || [];
               return (
-                <div key={h.id} style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: items.length ? 12 : 0 }}>
-                    <HorseAvatar h={h} size={40} />
-                    <span style={{ flex: 1, fontSize: 16, fontWeight: 600 }}>{h.name}</span>
+                <div key={h.id} style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 20, overflow: "hidden" }}>
+                  {/* Horse header */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 18px", borderBottom: `1px solid ${C.line}`, background: "#fff" }}>
+                    <HorseAvatar h={h} size={42} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: C.ink }}>{h.name}</div>
+                      <div style={{ fontSize: 12, color: C.sub }}>
+                        {horseHasFeed
+                          ? SLOTS.filter(s => (feed[h.id]?.[s] || []).length > 0)
+                              .map(s => `${SLOT_EMOJIS[s]} ${t[s] || s}`).join("  ")
+                          : "⚠️ Geen schema"}
+                      </div>
+                    </div>
                     <button onClick={() => setAddFor(h.id)} className="ev-tap" style={{
                       width: 34, height: 34, borderRadius: 10, border: "none", cursor: "pointer",
                       background: `${C.amber}1f`, color: C.amber, display: "grid", placeItems: "center" }}>
                       <Plus size={19} />
                     </button>
                   </div>
-                  {items.length === 0 ? (
-                    <button onClick={() => setAddFor(h.id)} className="ev-tap" style={{ 
-                      display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: 14,
-                      border: `1.5px dashed ${C.amber}`, background: `${C.amber}11`, color: C.amber,
-                      fontSize: 14.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit"
-                    }}>
-                      <Plus size={18} strokeWidth={2.5} /> {t.add} {t.feedingTab}
-                    </button>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                      {items.map((it) => (
-                        <div key={it.id} style={{ display: "flex", alignItems: "center", gap: 10,
-                          background: C.field, borderRadius: 11, padding: "10px 14px" }}>
-                          <Carrot size={17} color={C.amber} />
-                          <span style={{ flex: 1, fontSize: 14.5, fontWeight: 500 }}>{it.product}</span>
-                          <span style={{ fontSize: 14, color: C.sub, fontWeight: 600 }}>{it.qty}</span>
-                          <button onClick={() => deleteFeedItem(h.id, slot, it.id)} className="ev-tap"
-                            style={{ border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 2 }}>
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      ))}
+
+                  {/* Quick-setup banner wanneer helemaal geen schema */}
+                  {!horseHasFeed && (
+                    <div style={{ padding: "16px 18px", background: `${C.amber}08`, borderBottom: `1px solid ${C.amber}22` }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.amber, marginBottom: 10 }}>
+                        🥕 Geen voedingsschema — zet er snel één op!
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+                        {["morning", "noon", "evening"].map(sl => (
+                          <div key={sl} style={{ background: C.surface, borderRadius: 12, padding: "10px 12px", border: `1px solid ${C.line}` }}>
+                            <div style={{ fontSize: 16, marginBottom: 4 }}>{SLOT_EMOJIS[sl]}</div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: C.sub, textTransform: "uppercase", marginBottom: 6 }}>{t[sl] || sl}</div>
+                            {DEFAULT_SCHEDULE.filter(d => d.slot === sl).map((d, i) => (
+                              <div key={i} style={{ fontSize: 12, color: C.ink, display: "flex", justifyContent: "space-between" }}>
+                                <span>{d.product}</span>
+                                <span style={{ color: C.sub }}>{d.qty}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        disabled={settingUp === h.id}
+                        onClick={async () => { setSettingUp(h.id); await addDefaultSchedule(h.id); setSettingUp(null); }}
+                        className="ev-tap"
+                        style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none",
+                          background: settingUp === h.id ? C.sub : C.amber, color: "#fff",
+                          fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                        {settingUp === h.id ? "Bezig..." : `⚡ Schema instellen voor ${h.name}`}
+                      </button>
                     </div>
                   )}
+
+                  {/* Items voor geselecteerde slot */}
+                  <div style={{ padding: "12px 18px" }}>
+                    {items.length === 0 ? (
+                      <button onClick={() => setAddFor(h.id)} className="ev-tap" style={{
+                        display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: 14,
+                        border: `1.5px dashed ${C.amber}`, background: `${C.amber}11`, color: C.amber,
+                        fontSize: 14.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", width: "100%"
+                      }}>
+                        <Plus size={18} strokeWidth={2.5} /> {t.add} {SLOT_EMOJIS[slot]} {t[slot] || slot}
+                      </button>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                        {items.map((it) => (
+                          <div key={it.id} style={{ display: "flex", alignItems: "center", gap: 10,
+                            background: C.field, borderRadius: 11, padding: "10px 14px" }}>
+                            <Carrot size={17} color={C.amber} />
+                            <span style={{ flex: 1, fontSize: 14.5, fontWeight: 500 }}>{it.product}</span>
+                            <span style={{ fontSize: 14, color: C.sub, fontWeight: 600 }}>{it.qty}</span>
+                            <button onClick={() => deleteFeedItem(h.id, slot, it.id)} className="ev-tap"
+                              style={{ border: "none", background: "transparent", cursor: "pointer", color: C.sub, padding: 2 }}>
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
