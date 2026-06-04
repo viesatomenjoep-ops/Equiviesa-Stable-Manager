@@ -2426,7 +2426,7 @@ const PERM_KEYS = ["permContacts", "permHorses", "permCalendar", "permTasks", "p
   "permTeams", "permFinance", "permFeeding", "permLinks", "permStaff"];
 
 function UsersScreen({ t }) {
-  const { users, deleteUser } = useStore();
+  const { users, addUser, deleteUser } = useStore();
   const [modal, setModal] = useState(false);
 
   return (
@@ -2451,7 +2451,7 @@ function UsersScreen({ t }) {
       )}
 
       {modal && (
-        <UserEditor t={t} onClose={() => setModal(false)} />
+        <UserEditor t={t} onClose={() => setModal(false)} onSave={(u) => { addUser(u); setModal(false); }} />
       )}
     </div>
   );
