@@ -14,7 +14,7 @@ export function MapEditor({ locationId }) {
   const [selectedId, setSelectedId] = useState(null);
   const [dragging, setDragging] = useState(null);
   
-  const selected = stalls.find(s => s.id === selectedId);
+  const selectedStall = locationStalls.find(s => s.id === selectedId);
 
   const handleAdd = () => {
     addStall({
@@ -78,7 +78,7 @@ export function MapEditor({ locationId }) {
       <div style={{ position: "relative", width: "100%", height: 500, background: C.field, border: `2px dashed ${C.line}`, borderRadius: 24, overflow: "hidden" }}>
         {/* Basic CSS Grid system for drag/drop feel. For simplicity in this demo, we'll render absolutely positioned blocks that act like grid items */}
         {locationStalls.map(stall => {
-          const isSel = selected?.id === stall.id;
+          const isSel = selectedId === stall.id;
           const isDrag = dragging?.id === stall.id;
           const gx = isDrag ? dragging.currentX : stall.grid_x;
           const gy = isDrag ? dragging.currentY : stall.grid_y;
@@ -101,26 +101,25 @@ export function MapEditor({ locationId }) {
                 borderRadius: 12,
                 boxShadow: isDrag ? `0 12px 30px ${C.amber}80` : isSel ? `0 8px 20px ${C.amber}66` : "0 2px 8px rgba(0,0,0,0.05)",
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                cursor: isDrag ? "grabbing" : "grab", transition: isDrag ? "none" : "all .2s", zIndex: isSel ? 10 : 1, padding: 8, color: isSel ? "#fff" : C.ink,
-                touchAction: "none"
+                cursor: isDrag ? "grabbing" : "grab", touchAction: "none", zIndex: isSel ? 10 : 1, transition: isDrag ? "none" : "all .15s"
               }}>
-              <div style={{ fontWeight: 700, fontSize: 14, pointerEvents: "none" }}>{stall.name}</div>
-              {horse && <div style={{ fontSize: 11, background: "rgba(0,0,0,0.1)", padding: "2px 6px", borderRadius: 6, marginTop: 4, pointerEvents: "none" }}>{horse.name}</div>}
+              <span style={{ fontSize: 14, fontWeight: 700, color: isSel ? "#fff" : C.ink }}>{stall.name}</span>
+              {horse && <span style={{ fontSize: 11, fontWeight: 600, color: isSel ? "#fff" : C.sub, background: isSel ? "rgba(255,255,255,0.2)" : `${C.sky}1a`, padding: "2px 6px", borderRadius: 6, marginTop: 4 }}>{horse.name}</span>}
             </div>
           );
         })}
       </div>
 
-      {selected && (
+      {selectedStall && (
         <div style={{ marginTop: 16, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <h4 style={{ margin: 0 }}>Edit {selected.name}</h4>
+            <h4 style={{ margin: 0 }}>Edit {selectedStall.name}</h4>
             <button type="button" onClick={() => setSelectedId(null)} style={{ border: "none", background: "transparent", cursor: "pointer" }}><X size={18} color={C.sub} /></button>
           </div>
           
           <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-            <input value={selected.name} onChange={e => editStall(selected.id, { name: e.target.value })} style={{ flex: 1, padding: "12px", borderRadius: 12, border: `1px solid ${C.line}`, outline: "none" }} />
-            <select value={selected.horse_id || ""} onChange={e => editStall(selected.id, { horse_id: e.target.value || null })} style={{ flex: 1, padding: "12px", borderRadius: 12, border: `1px solid ${C.line}`, outline: "none", background: "#fff" }}>
+            <input value={selectedStall.name} onChange={e => editStall(selectedStall.id, { name: e.target.value })} style={{ flex: 1, padding: "12px", borderRadius: 12, border: `1px solid ${C.line}`, outline: "none" }} />
+            <select value={selectedStall.horse_id || ""} onChange={e => editStall(selectedStall.id, { horse_id: e.target.value || null })} style={{ flex: 1, padding: "12px", borderRadius: 12, border: `1px solid ${C.line}`, outline: "none", background: "#fff" }}>
               <option value="">-- No Horse --</option>
               {horses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
             </select>
@@ -128,19 +127,19 @@ export function MapEditor({ locationId }) {
 
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <div style={{ display: "flex", gap: 6 }}>
-              <button type="button" onClick={() => editStall(selected.id, { grid_x: Math.max(0, selected.grid_x - 1) })} style={btn}>←</button>
-              <button type="button" onClick={() => editStall(selected.id, { grid_x: selected.grid_x + 1 })} style={btn}>→</button>
-              <button type="button" onClick={() => editStall(selected.id, { grid_y: Math.max(0, selected.grid_y - 1) })} style={btn}>↑</button>
-              <button type="button" onClick={() => editStall(selected.id, { grid_y: selected.grid_y + 1 })} style={btn}>↓</button>
+              <button type="button" onClick={() => editStall(selectedStall.id, { grid_x: Math.max(0, selectedStall.grid_x - 1) })} style={btn}>←</button>
+              <button type="button" onClick={() => editStall(selectedStall.id, { grid_x: selectedStall.grid_x + 1 })} style={btn}>→</button>
+              <button type="button" onClick={() => editStall(selectedStall.id, { grid_y: Math.max(0, selectedStall.grid_y - 1) })} style={btn}>↑</button>
+              <button type="button" onClick={() => editStall(selectedStall.id, { grid_y: selectedStall.grid_y + 1 })} style={btn}>↓</button>
             </div>
             <div style={{ width: 1, height: 24, background: C.line }} />
             <div style={{ display: "flex", gap: 6 }}>
-              <button type="button" onClick={() => editStall(selected.id, { width: Math.max(1, selected.width - 1) })} style={btn}>W-</button>
-              <button type="button" onClick={() => editStall(selected.id, { width: selected.width + 1 })} style={btn}>W+</button>
-              <button type="button" onClick={() => editStall(selected.id, { height: Math.max(1, selected.height - 1) })} style={btn}>H-</button>
-              <button type="button" onClick={() => editStall(selected.id, { height: selected.height + 1 })} style={btn}>H+</button>
+              <button type="button" onClick={() => editStall(selectedStall.id, { width: Math.max(1, selectedStall.width - 1) })} style={btn}>W-</button>
+              <button type="button" onClick={() => editStall(selectedStall.id, { width: selectedStall.width + 1 })} style={btn}>W+</button>
+              <button type="button" onClick={() => editStall(selectedStall.id, { height: Math.max(1, selectedStall.height - 1) })} style={btn}>H-</button>
+              <button type="button" onClick={() => editStall(selectedStall.id, { height: selectedStall.height + 1 })} style={btn}>H+</button>
             </div>
-            <button type="button" onClick={() => { if(window.confirm("Weet je zeker dat je dit wilt verwijderen? / Are you sure?")) { deleteStall(selected.id); setSelectedId(null); } }} style={{ marginLeft: "auto", border: "none", background: "transparent", color: C.coral, cursor: "pointer", padding: 8 }}><Trash2 size={18} /></button>
+            <button type="button" onClick={() => { if(window.confirm("Weet je zeker dat je dit wilt verwijderen? / Are you sure?")) { deleteStall(selectedStall.id); setSelectedId(null); } }} style={{ marginLeft: "auto", border: "none", background: "transparent", color: C.coral, cursor: "pointer", padding: 8 }}><Trash2 size={18} /></button>
           </div>
         </div>
       )}
