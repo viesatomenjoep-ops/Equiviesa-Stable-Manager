@@ -3401,7 +3401,7 @@ function GroomDashboard({ t, go }) {
 
 /* ---- MANAGER DASHBOARD ---- */
 function ManagerDashboard({ t, go }) {
-  const { tasks, horses, healthRecords, transactions, supplies } = useStore();
+  const { tasks, horses, healthRecords, txns, supplies } = useStore();
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
@@ -3412,8 +3412,8 @@ function ManagerDashboard({ t, go }) {
   const openTasks = tasks.filter(t => !t.is_completed);
   const todayTasks = tasks.filter(tk => tk.due_date === todayStr);
   const activeHorses = horses.filter(h => !h.archived);
-  const monthIncome = transactions.filter(tx => tx.type === 'income' && tx.date?.startsWith(todayStr.slice(0,7))).reduce((s,tx) => s + Number(tx.amount||0), 0);
-  const monthExpense = transactions.filter(tx => tx.type === 'expense' && tx.date?.startsWith(todayStr.slice(0,7))).reduce((s,tx) => s + Number(tx.amount||0), 0);
+  const monthIncome = txns.filter(tx => tx.type === 'income' && tx.date?.startsWith(todayStr.slice(0,7))).reduce((s,tx) => s + Number(tx.amount||0), 0);
+  const monthExpense = txns.filter(tx => tx.type === 'expense' && tx.date?.startsWith(todayStr.slice(0,7))).reduce((s,tx) => s + Number(tx.amount||0), 0);
   const pendingSupplies = supplies.filter(s => s.status === 'needed').length;
 
   // Health upcoming 7 days
