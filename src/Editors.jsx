@@ -352,15 +352,73 @@ export function HealthEditor({ t, initialData, horses, onClose, onSave, onDelete
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  // Health Categories
+  const HEALTH_CATS = [
+    { id: "generalCare", label: t?.generalCare || "General Care", emoji: "🩺" },
+    { id: "vaccination", label: t?.vaccination || "Vaccine", emoji: "💉" },
+    { id: "deworming", label: t?.deworming || "Deworming", emoji: "🐛" },
+    { id: "farrier", label: t?.farrier || "Farrier", emoji: "🔨" },
+    { id: "dentist", label: t?.dentist || "Dentist", emoji: "🦷" },
+    { id: "injury", label: t?.injury || "Injury", emoji: "🩹" }
+  ];
+
   return (
-    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.addRecord || "Add Health Record"} icon={Activity} color={C.coral} onClose={onClose} onSave={() => f.scheduled_date ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
+    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.addRecord || "Add Health Record"} icon={Activity} color={C.coral} onClose={onClose} onSave={() => f.scheduled_date && f.horse_id ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
+      
       <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label={t.recordDate || "Date"} required><input type="date" value={f.scheduled_date || ""} onChange={(e) => { setF({...f, scheduled_date: e.target.value}); setErr(false); }} style={inputStyle(err && !f.scheduled_date)} /></Field>
-        <Field label={t.cost || "Cost (€)"}><input type="number" step="0.01" value={f.cost || ""} onChange={(e) => setF({...f, cost: e.target.value})} placeholder="0.00" style={inputStyle()} /></Field>
+      
+      {horses && horses.length > 0 && (
+        <div style={{ marginBottom: 24, background: C.bg, padding: 16, borderRadius: 20 }}>
+          <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: err && !f.horse_id ? C.coral : C.sub, marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>
+            Select Horse {err && !f.horse_id && "*"}
+          </label>
+          <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8 }}>
+            {horses.map(h => {
+              const isSel = f.horse_id === h.id;
+              return (
+                <button key={h.id} type="button" onClick={() => { setF({...f, horse_id: h.id}); setErr(false); }} className="ev-tap"
+                  style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: 100, border: `1.5px solid ${isSel ? C.coral : C.line}`, background: isSel ? `${C.coral}1f` : C.surface, color: isSel ? C.ink : C.sub, cursor: "pointer", fontWeight: 700, fontSize: 15 }}>
+                  <div style={{ width: 24, height: 24, borderRadius: 12, background: h.color_hex || C.sub, border: `2px solid #fff`, boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }} />
+                  {h.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <Field label={t.category || "Record Category"}>
+        <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
+          {HEALTH_CATS.map(cat => {
+            const isSel = f.category === cat.id;
+            return (
+              <button key={cat.id} type="button" onClick={() => setF({...f, category: cat.id})} className="ev-tap"
+                style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${isSel ? C.coral : C.line}`, background: isSel ? C.coral : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
+                <span style={{ fontSize: 20 }}>{cat.emoji}</span>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label={t.recordDate || "Date"} required>
+            <input type="date" value={f.scheduled_date || ""} onChange={(e) => { setF({...f, scheduled_date: e.target.value}); setErr(false); }} style={{...inputStyle(err && !f.scheduled_date), background: C.surface}} />
+          </Field>
+          <Field label={t.cost || "Cost (€)"}>
+            <input type="number" step="0.01" value={f.cost || ""} onChange={(e) => setF({...f, cost: e.target.value})} placeholder="0.00" style={{...inputStyle(), background: C.surface}} />
+          </Field>
+        </div>
+        <Field label={t.performedBy || "Performed By"}>
+          <input value={f.performed_by || ""} onChange={(e) => setF({...f, performed_by: e.target.value})} placeholder="e.g. Dr. Smith, Farrier Joe..." style={{...inputStyle(), background: C.surface}} />
+        </Field>
       </div>
-      <Field label={t.performedBy || "Performed By"}><input value={f.performed_by || ""} onChange={(e) => setF({...f, performed_by: e.target.value})} placeholder="e.g. Dr. Smith" style={inputStyle()} /></Field>
-      <Field label={t.notes || "Notes"}><textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical" }} placeholder="Treatment details..." /></Field>
+
+      <Field label={t.notes || "Diagnosis / Treatment Details"}>
+        <textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 140, resize: "vertical", background: C.field }} placeholder="Extra details..." />
+      </Field>
     </EditorLayout>
   );
 }
