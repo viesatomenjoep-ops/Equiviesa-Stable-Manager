@@ -1650,7 +1650,7 @@ function TaskModal({ t, initialData, horses, onClose, onSave }) {
             style={inputStyle()} />
         </Field>
         <Field label={t.taskHorse}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+          <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, marginBottom: 4 }}>
             <button type="button" onClick={() => setF({...f, horse_id: null, category: "general"})} className="ev-tap"
               style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${!f.horse_id ? C.amber : C.line}`, background: !f.horse_id ? C.amber : C.surface, color: !f.horse_id ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
               {t.general}
@@ -2311,7 +2311,7 @@ function FeedingScreen({ t, go, setRoute }) {
             </div>
             
             {/* Horse filter pill row */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8 }}>
               <button type="button" onClick={() => setHorseFilter("")} className="ev-tap"
                 style={{ flexShrink: 0, padding: "14px 22px", borderRadius: 16, border: `1.5px solid ${!horseFilter ? C.sky : C.line}`, background: !horseFilter ? C.sky : C.surface, color: !horseFilter ? "#fff" : C.sub, fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
                 {t.allHorsesShort}

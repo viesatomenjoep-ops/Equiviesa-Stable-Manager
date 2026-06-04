@@ -299,7 +299,9 @@ create table if not exists public.supplies_needed (
     item_name text not null,
     quantity text, -- e.g. "5 bags", "2 bottles"
     requested_by text, -- name of the groom (e.g. Kyara, Christina)
-    status text not null default 'pending' check (status in ('pending', 'purchased')),
+    status text not null default 'pending' check (status in ('pending', 'purchased', 'resolved')),
+    report_type text not null default 'supply' check (report_type in ('supply', 'defect')),
+    photo_url text, -- Cloudinary photo link for defects/supplies
     notes text,
     completed_at timestamptz,
     completed_by uuid references public.profiles(id) on delete set null
