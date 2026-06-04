@@ -691,7 +691,7 @@ function AppRoot() {
         }
         .ev-modal-content {
           position: absolute; inset: 0;
-          background: #f8fafc; display: flex; flex-direction: column;
+          background: #FFFFFF; display: flex; flex-direction: column;
         }
       `}</style>
 
@@ -703,7 +703,7 @@ function AppRoot() {
           <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
             <TopBar t={t} active={active} route={route} setRoute={setRoute}
               onMenu={() => setDrawer(true)} lang={lang} setLang={setLang} mode={mode} />
-            <main className="ev-scroll" style={{ flex: 1, overflowY: "auto", paddingBottom: 96 }}>
+            <main className="ev-scroll" style={{ flex: 1, overflowY: "auto", paddingBottom: 96, background: "#FFFFFF" }}>
               <Screen active={active} route={route} setRoute={setRoute} t={t} mode={mode} go={go} />
             </main>
           </div>
@@ -937,16 +937,23 @@ const iconBtn = {
 };
 
 function LangPicker({ lang, setLang, block }) {
+  const FLAGS = { en: "🇬🇧", nl: "🇳🇱", es: "🇪🇸" };
   return (
-    <div style={{ display: "flex", gap: 2, background: C.bg, borderRadius: 11, padding: 3,
+    <div style={{ display: "flex", gap: 4, background: C.bg, borderRadius: 14, padding: 4,
       width: block ? "100%" : "auto", justifyContent: "center" }}>
       {["en", "nl", "es"].map((l) => (
         <button key={l} onClick={() => setLang(l)} className="ev-tap" style={{
-          border: "none", cursor: "pointer", borderRadius: 9, padding: "6px 12px",
-          fontSize: 13, fontWeight: 600, fontFamily: "inherit", flex: block ? 1 : "none",
-          background: lang === l ? C.surface : "transparent", color: lang === l ? C.mint : C.sub,
-          boxShadow: lang === l ? "0 1px 4px rgba(0,0,0,.08)" : "none",
-        }}>{I18N[l].code}</button>
+          border: "none", cursor: "pointer", borderRadius: 10, padding: "8px 12px",
+          fontSize: 14, fontWeight: 600, fontFamily: "inherit", flex: block ? 1 : "none",
+          background: lang === l ? C.surface : "transparent",
+          color: lang === l ? C.mint : C.sub,
+          boxShadow: lang === l ? "0 2px 8px rgba(0,0,0,.10)" : "none",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+          transition: "all .15s",
+        }}>
+          <span style={{ fontSize: 16 }}>{FLAGS[l]}</span>
+          <span style={{ fontSize: 12 }}>{I18N[l].code}</span>
+        </button>
       ))}
     </div>
   );
@@ -954,32 +961,45 @@ function LangPicker({ lang, setLang, block }) {
 
 function LangMenu({ lang, setLang, t }) {
   const [open, setOpen] = useState(false);
-  const langs = [["en","English"],["nl","Nederlands"],["es","Español"]];
+  const LANGS = [
+    { code: "en", label: "English", flag: "🇬🇧" },
+    { code: "nl", label: "Nederlands", flag: "🇳🇱" },
+    { code: "es", label: "Español", flag: "🇪🇸" },
+  ];
+  const current = LANGS.find(l => l.code === lang);
   return (
     <div style={{ position: "relative" }}>
       <button onClick={() => setOpen((o) => !o)} className="ev-tap" aria-label={t.language}
-        style={{ ...iconBtn, gap: 5, width: "auto", padding: "0 12px",
-          background: open ? C.mintSoft : C.surface, color: open ? C.mint : C.ink }}>
-        <Globe size={19} />
-        <span style={{ fontSize: 13, fontWeight: 700 }}>{I18N[lang].code}</span>
+        style={{
+          display: "flex", alignItems: "center", gap: 7, padding: "8px 14px",
+          borderRadius: 12, border: `1px solid ${open ? C.mint : C.line}`,
+          background: open ? `${C.mint}12` : C.surface,
+          color: open ? C.mint : C.ink, cursor: "pointer",
+          fontFamily: "inherit", transition: "all .15s",
+          boxShadow: open ? `0 0 0 3px ${C.mint}22` : "none",
+        }}>
+        <span style={{ fontSize: 18 }}>{current?.flag}</span>
+        <span style={{ fontSize: 13, fontWeight: 700 }}>{current?.code.toUpperCase()}</span>
+        <ChevronDown size={14} color={C.sub} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
       </button>
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
-          <div style={{ position: "absolute", top: 50, right: 0, zIndex: 41, background: C.surface,
-            borderRadius: 14, border: `1px solid ${C.line}`, boxShadow: "0 12px 34px rgba(31,45,58,.18)",
-            padding: 6, minWidth: 168, animation: "evUp .18s ease both" }}>
-            {langs.map(([l, label]) => (
+          <div style={{ position: "absolute", top: 48, right: 0, zIndex: 41, background: C.surface,
+            borderRadius: 16, border: `1px solid ${C.line}`, boxShadow: "0 16px 40px rgba(31,45,58,.16)",
+            padding: 6, minWidth: 180, animation: "evUp .18s ease both" }}>
+            {LANGS.map(({ code: l, label, flag }) => (
               <button key={l} onClick={() => { setLang(l); setOpen(false); }} className="ev-tap" style={{
                 display: "flex", alignItems: "center", gap: 10, width: "100%", border: "none",
-                background: lang === l ? C.mintSoft : "transparent", cursor: "pointer", borderRadius: 10,
-                padding: "11px 12px", fontFamily: "inherit", fontSize: 15,
-                fontWeight: lang === l ? 600 : 500, color: C.ink, textAlign: "left",
+                background: lang === l ? `${C.mint}12` : "transparent",
+                cursor: "pointer", borderRadius: 10,
+                padding: "11px 14px", fontFamily: "inherit", fontSize: 15,
+                fontWeight: lang === l ? 700 : 500, color: C.ink, textAlign: "left",
+                transition: "background .1s",
               }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: lang === l ? C.mint : C.sub,
-                  width: 26 }}>{I18N[l].code}</span>
-                {label}
-                {lang === l && <Check size={17} color={C.mint} style={{ marginLeft: "auto" }} />}
+                <span style={{ fontSize: 20 }}>{flag}</span>
+                <span style={{ flex: 1 }}>{label}</span>
+                {lang === l && <Check size={16} color={C.mint} />}
               </button>
             ))}
           </div>
@@ -1415,124 +1435,323 @@ function HorseDetail({ t, id, setRoute }) {
   );
 }
 
-/* ---------- Calendar ---------- */
+/* ---------- Premium Calendar ---------- */
+const CAL_EVENT_TYPES = {
+  task:    { label: "Task",        emoji: "✅", color: "#F2B441" },
+  health:  { label: "Health",      emoji: "🩺", color: "#FF8A6B" },
+  feeding: { label: "Feeding",     emoji: "🥕", color: "#2FB6A0" },
+  booking: { label: "Booking",     emoji: "📅", color: "#5B9BD5" },
+  finance: { label: "Finance",     emoji: "💰", color: "#8E7CE0" },
+};
+
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function sendNotification(title, body, icon) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, { body, icon: '/logo.png' });
+  }
+}
+
 function CalendarScreen({ t }) {
-  const { tasks, healthRecords, horses } = useStore();
+  const { tasks, healthRecords, horses, supplies } = useStore();
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
-  const [selDay, setSelDay] = useState(null);
+  const [year, setYear] = React.useState(now.getFullYear());
+  const [month, setMonth] = React.useState(now.getMonth());
+  const [selDay, setSelDay] = React.useState(null);
+  const [view, setView] = React.useState('month'); // 'month' | 'week'
+  const [addModal, setAddModal] = React.useState(false);
+  const [notifEnabled, setNotifEnabled] = React.useState(
+    typeof Notification !== 'undefined' && Notification.permission === 'granted'
+  );
 
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Monday = 0
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const pad = (n) => String(n).padStart(2, '0');
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const dayStr = (d) => `${year}-${pad(month+1)}-${pad(d)}`;
 
-  const pad = (n) => String(n).padStart(2, "0");
-  const dayStr = (d) => `${year}-${pad(month + 1)}-${pad(d)}`;
-
-  // Build events map: "YYYY-MM-DD" -> [{...}]
+  // ---- Build unified events map from ALL data sources ----
   const events = useMemo(() => {
     const map = {};
+    const add = (key, ev) => { if (!map[key]) map[key] = []; map[key].push(ev); };
+
+    // Tasks
     tasks.forEach(tk => {
       if (!tk.due_date) return;
       const key = tk.due_date.slice(0, 10);
-      if (!map[key]) map[key] = [];
-      map[key].push({ type: "task", title: tk.title, color: C.amber, done: tk.is_completed });
+      const horse = horses.find(h => h.id === tk.horse_id);
+      add(key, {
+        id: tk.id, type: 'task', done: tk.is_completed,
+        title: tk.title || 'Task',
+        subtitle: horse ? horse.name : (tk.category || ''),
+        color: CAL_EVENT_TYPES.task.color,
+        emoji: CAL_EVENT_TYPES.task.emoji,
+        time: tk.start_time || null,
+        location: tk.location || null,
+        assignedTo: tk.assigned_to || null,
+      });
     });
+
+    // Health records
     healthRecords.forEach(hr => {
       if (!hr.scheduled_date) return;
       const key = hr.scheduled_date.slice(0, 10);
-      if (!map[key]) map[key] = [];
       const horse = horses.find(h => h.id === hr.horse_id);
-      map[key].push({ type: "health", title: `${t[hr.category] || hr.category}${horse ? " · " + horse.name : ""}`, color: C.coral, done: hr.completed });
+      add(key, {
+        id: hr.id, type: 'health', done: hr.completed,
+        title: t[hr.category] || hr.category,
+        subtitle: horse ? horse.name : '',
+        color: CAL_EVENT_TYPES.health.color,
+        emoji: CAL_EVENT_TYPES.health.emoji,
+        time: null,
+        location: null,
+        performedBy: hr.performed_by || null,
+      });
     });
+
     return map;
   }, [tasks, healthRecords, horses, t]);
 
-  const prev = () => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); setSelDay(null); };
-  const next = () => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); setSelDay(null); };
+  // ---- Check upcoming events & notify ----
+  React.useEffect(() => {
+    requestNotificationPermission();
+    if (Notification.permission !== 'granted') return;
+
+    const todayEvents = events[todayStr] || [];
+    const upcoming = todayEvents.filter(ev => !ev.done);
+    if (upcoming.length > 0) {
+      const titles = upcoming.slice(0, 3).map(ev => `${ev.emoji} ${ev.title}${ev.subtitle ? ' · ' + ev.subtitle : ''}`).join('\n');
+      sendNotification(
+        `📅 ${upcoming.length} item${upcoming.length > 1 ? 's' : ''} vandaag`,
+        titles
+      );
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayStr]);
+
+  const enableNotifications = async () => {
+    const perm = await Notification.requestPermission();
+    setNotifEnabled(perm === 'granted');
+    if (perm === 'granted') sendNotification('✅ Notificaties ingeschakeld', 'Je krijgt meldingen voor geplande activiteiten.');
+  };
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Mon=0
+
+  const prev = () => { if (month === 0) { setMonth(11); setYear(y => y-1); } else setMonth(m => m-1); setSelDay(null); };
+  const next = () => { if (month === 11) { setMonth(0); setYear(y => y+1); } else setMonth(m => m+1); setSelDay(null); };
+  const goToday = () => { setYear(now.getFullYear()); setMonth(now.getMonth()); setSelDay(now.getDate()); };
 
   const cells = [];
   for (let i = 0; i < firstDow; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
   const selEvents = selDay ? (events[dayStr(selDay)] || []) : [];
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const monthName = (t.months && t.months[month]) ? cap(t.months[month]) : MONTH_NAMES[month];
+  const wdays = t.weekdays || WEEKDAYS;
 
   return (
-    <div className="ev-card">
-      {/* Month Navigator */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-        <button onClick={prev} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
-          <ChevronLeft size={22} />
-        </button>
-        <h2 className="ev-display" style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>
-          {cap(t.months[month])} <span style={{ color: C.sub }}>{year}</span>
-        </h2>
-        <button onClick={next} className="ev-tap" style={{ ...iconBtn, boxShadow: "none", background: C.bg }}>
-          <ChevronRight size={22} />
-        </button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, background: '#fff', borderRadius: 24, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', minHeight: 'calc(100vh - 160px)' }}>
+
+      {/* ---- Top Bar ---- */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 22px 14px', background: '#fff', borderBottom: `1px solid ${C.line}`, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+          <button onClick={prev} className="ev-tap" style={{ width: 38, height: 38, borderRadius: 10, border: `1px solid ${C.line}`, background: 'transparent', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+            <ChevronLeft size={18} color={C.ink} />
+          </button>
+          <h2 className="ev-display" style={{ margin: 0, fontSize: 22, fontWeight: 800, color: C.ink }}>
+            {monthName} <span style={{ color: C.sub, fontWeight: 500 }}>{year}</span>
+          </h2>
+          <button onClick={next} className="ev-tap" style={{ width: 38, height: 38, borderRadius: 10, border: `1px solid ${C.line}`, background: 'transparent', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+            <ChevronRight size={18} color={C.ink} />
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button onClick={goToday} className="ev-tap" style={{ padding: '8px 16px', borderRadius: 10, border: `1px solid ${C.line}`, background: 'transparent', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: C.mint, fontFamily: 'inherit' }}>
+            {t.today || 'Today'}
+          </button>
+          {!notifEnabled && 'Notification' in window && (
+            <button onClick={enableNotifications} className="ev-tap" style={{ padding: '8px 14px', borderRadius: 10, border: `1px solid ${C.amber}`, background: `${C.amber}18`, cursor: 'pointer', fontSize: 13, fontWeight: 700, color: C.amber, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Bell size={14} /> {t.enableNotifications || 'Notify me'}
+            </button>
+          )}
+          {notifEnabled && (
+            <span style={{ fontSize: 12, color: C.mint, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Bell size={13} /> On
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Weekday Headers */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2, textAlign: "center", marginBottom: 4 }}>
-        {t.weekdays.map(d => (
-          <div key={d} style={{ fontSize: 12, color: C.sub, fontWeight: 700, padding: "6px 0", textTransform: "uppercase" }}>{d}</div>
+      {/* ---- Legend ---- */}
+      <div className="ev-scroll" style={{ display: 'flex', gap: 12, padding: '10px 22px', borderBottom: `1px solid ${C.line}`, overflowX: 'auto', background: '#fafbfc' }}>
+        {Object.values(CAL_EVENT_TYPES).map(et => (
+          <div key={et.label} style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: et.color }} />
+            <span style={{ fontSize: 11.5, fontWeight: 600, color: C.sub }}>{et.emoji} {et.label}</span>
+          </div>
         ))}
       </div>
 
-      {/* Day Cells */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3 }}>
-        {cells.map((d, i) => {
-          if (d === null) return <div key={`e${i}`} />;
-          const ds = dayStr(d);
-          const isToday = ds === todayStr;
-          const isSel = selDay === d;
-          const evs = events[ds] || [];
-          return (
-            <button key={d} onClick={() => setSelDay(d === selDay ? null : d)} className="ev-tap" style={{
-              border: isSel ? `2px solid ${C.mint}` : "1px solid transparent", borderRadius: 16, padding: "16px 4px",
-              background: isToday ? C.mintSoft : isSel ? `${C.mint}0d` : "transparent",
-              cursor: "pointer", textAlign: "center", fontFamily: "inherit", minHeight: 80,
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-            }}>
-              <span style={{ fontSize: 15, fontWeight: isToday ? 800 : 500,
-                width: 30, height: 30, lineHeight: "30px", borderRadius: "50%",
-                background: isToday ? C.mint : "transparent", color: isToday ? "#fff" : C.ink,
-                display: "inline-block" }}>{d}</span>
-              {evs.length > 0 && (
-                <div style={{ display: "flex", gap: 3, justifyContent: "center" }}>
-                  {evs.slice(0, 3).map((ev, j) => (
-                    <span key={j} style={{ width: 6, height: 6, borderRadius: "50%", background: ev.color }} />
-                  ))}
+      {/* ---- Main Body: Grid + Detail ---- */}
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+
+        {/* ---- Month Grid ---- */}
+        <div style={{ flex: 1, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+
+          {/* Weekday headers */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', marginBottom: 4 }}>
+            {wdays.map((d, i) => (
+              <div key={i} style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, color: (i >= 5 ? C.coral : C.sub), textTransform: 'uppercase', letterSpacing: 0.6, padding: '4px 0' }}>{d}</div>
+            ))}
+          </div>
+
+          {/* Day cells */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 3, flex: 1 }}>
+            {cells.map((d, i) => {
+              if (d === null) return <div key={`e${i}`} />;
+              const ds = dayStr(d);
+              const isToday = ds === todayStr;
+              const isSel = selDay === d;
+              const evs = events[ds] || [];
+              const isDone = evs.length > 0 && evs.every(ev => ev.done);
+              // Unique event type colors for density dots
+              const uniqueColors = [...new Set(evs.map(ev => ev.color))].slice(0, 4);
+              const isWeekend = (firstDow + d - 1) % 7 >= 5;
+              return (
+                <button key={d} onClick={() => setSelDay(d === selDay ? null : d)} className="ev-tap" style={{
+                  border: isSel ? `2px solid ${C.mint}` : isToday ? `2px solid ${C.mint}55` : '1px solid transparent',
+                  borderRadius: 14,
+                  padding: '8px 4px 10px',
+                  background: isSel ? `${C.mint}0f` : isToday ? `${C.mint}08` : 'transparent',
+                  cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                  minHeight: 72, position: 'relative',
+                  transition: 'all .15s',
+                }}>
+                  {/* Date number */}
+                  <span style={{
+                    fontSize: 14, fontWeight: isToday ? 800 : 500,
+                    width: 28, height: 28, lineHeight: '28px', borderRadius: '50%', display: 'inline-block',
+                    background: isToday ? C.mint : 'transparent',
+                    color: isToday ? '#fff' : isWeekend ? C.coral : C.ink,
+                  }}>{d}</span>
+
+                  {/* Event density bars */}
+                  {evs.length > 0 && (
+                    <div style={{ width: '100%', padding: '0 3px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {evs.slice(0, 3).map((ev, j) => (
+                        <div key={j} style={{
+                          height: 3, borderRadius: 2,
+                          background: ev.done ? `${ev.color}55` : ev.color,
+                          width: '100%'
+                        }} />
+                      ))}
+                      {evs.length > 3 && (
+                        <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, textAlign: 'center' }}>+{evs.length - 3}</div>
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ---- Day Detail Panel ---- */}
+        {selDay && (
+          <div style={{
+            width: 300, flexShrink: 0, borderLeft: `1px solid ${C.line}`,
+            display: 'flex', flexDirection: 'column', background: '#fff',
+            animation: 'evFade .2s ease',
+          }}>
+            {/* Panel header */}
+            <div style={{ padding: '18px 20px 14px', borderBottom: `1px solid ${C.line}` }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>{monthName}</div>
+              <div style={{ fontSize: 32, fontWeight: 800, color: C.ink, lineHeight: 1 }}>{selDay}</div>
+              <div style={{ fontSize: 13, color: C.sub, marginTop: 4 }}>
+                {selEvents.length === 0 ? (t.nothingPlanned || 'Nothing planned') : `${selEvents.length} event${selEvents.length > 1 ? 's' : ''}`}
+              </div>
+            </div>
+
+            {/* Event list */}
+            <div className="ev-scroll" style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {selEvents.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                  <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
+                  <div style={{ color: C.sub, fontSize: 14 }}>{t.nothingPlanned || 'Nothing planned'}</div>
                 </div>
+              ) : (
+                selEvents.map((ev, i) => (
+                  <div key={i} style={{
+                    borderRadius: 14, padding: '12px 14px',
+                    background: `${ev.color}12`,
+                    border: `1.5px solid ${ev.color}33`,
+                    opacity: ev.done ? 0.65 : 1,
+                    position: 'relative',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                      <span style={{
+                        width: 32, height: 32, borderRadius: 10, flexShrink: 0,
+                        background: `${ev.color}22`, display: 'grid', placeItems: 'center',
+                        fontSize: 16,
+                      }}>{ev.emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, textDecoration: ev.done ? 'line-through' : 'none' }}>
+                          {ev.title}
+                        </div>
+                        {ev.subtitle && <div style={{ fontSize: 12, color: C.sub, marginTop: 1 }}>🐴 {ev.subtitle}</div>}
+                        {ev.time && <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>🕐 {ev.time}</div>}
+                        {ev.performedBy && <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>👤 {ev.performedBy}</div>}
+                        {ev.assignedTo && <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>👤 {ev.assignedTo}</div>}
+                        {ev.location && (
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}`}
+                            target="_blank" rel="noreferrer"
+                            style={{ fontSize: 12, color: ev.color, fontWeight: 700, textDecoration: 'none', marginTop: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <MapPin size={11} /> {ev.location}
+                          </a>
+                        )}
+                      </div>
+                      {ev.done && <span style={{ fontSize: 11, fontWeight: 700, color: ev.color, background: `${ev.color}20`, padding: '3px 8px', borderRadius: 8 }}>Done</span>}
+                    </div>
+                  </div>
+                ))
               )}
-            </button>
-          );
-        })}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Selected Day Detail */}
-      {selDay && (
-        <div style={{ marginTop: 18, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 18, padding: 18 }}>
-          <h3 className="ev-display" style={{ fontSize: 17, fontWeight: 700, margin: "0 0 12px" }}>
-            {selDay} {cap(t.months[month])} {year}
-          </h3>
-          {selEvents.length === 0 ? (
-            <div style={{ color: C.sub, fontStyle: "italic", fontSize: 14 }}>{t.nothingPlanned}</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {selEvents.map((ev, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
-                  background: `${ev.color}12`, borderRadius: 12, border: `1px solid ${ev.color}33` }}>
-                  <span style={{ width: 10, height: 10, borderRadius: "50%", background: ev.color, flexShrink: 0 }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: C.ink,
-                    textDecoration: ev.done ? "line-through" : "none", opacity: ev.done ? 0.6 : 1 }}>{ev.title}</span>
-                </div>
-              ))}
-            </div>
-          )}
+      {/* ---- Upcoming strip at bottom ---- */}
+      <div style={{ borderTop: `1px solid ${C.line}`, padding: '14px 20px', background: '#fafbfc' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: C.sub, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Upcoming</div>
+        <div className="ev-scroll" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
+          {(() => {
+            const upcoming = [];
+            for (let offset = 0; offset < 14; offset++) {
+              const d = new Date(now);
+              d.setDate(d.getDate() + offset);
+              const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+              const dayEvs = (events[key] || []).filter(ev => !ev.done);
+              dayEvs.forEach(ev => upcoming.push({ ...ev, dateKey: key, dateLabel: offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : `${d.getDate()} ${MONTH_NAMES[d.getMonth()].slice(0,3)}` }));
+            }
+            if (upcoming.length === 0) return <div style={{ fontSize: 13, color: C.sub }}>No upcoming events in the next 14 days 🎉</div>;
+            return upcoming.slice(0, 8).map((ev, i) => (
+              <div key={i} style={{ flexShrink: 0, background: `${ev.color}15`, border: `1.5px solid ${ev.color}40`, borderRadius: 14, padding: '10px 14px', minWidth: 160, maxWidth: 200 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: ev.color, marginBottom: 4 }}>{ev.emoji} {ev.dateLabel}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.title}</div>
+                {ev.subtitle && <div style={{ fontSize: 11, color: C.sub, marginTop: 2 }}>{ev.subtitle}</div>}
+              </div>
+            ));
+          })()}
         </div>
-      )}
+      </div>
     </div>
   );
 }

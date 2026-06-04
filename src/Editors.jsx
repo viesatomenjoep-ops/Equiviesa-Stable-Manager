@@ -216,7 +216,6 @@ export function LocationEditor({ t, initialData, onClose, onSave, onDelete }) {
           <textarea value={f.notes || ""} onChange={(e) => setF({...f, notes: e.target.value})} style={{ ...inputStyle(), minHeight: 120, resize: "vertical", background: C.surface }} placeholder="Additional information..." />
         </Field>
       </div>
-      
       {initialData && initialData.id && (
         <MapEditor locationId={initialData.id} />
       )}
@@ -225,7 +224,8 @@ export function LocationEditor({ t, initialData, onClose, onSave, onDelete }) {
 }
 
 export function DocumentEditor({ t, initialData, horses, onClose, onSave, onDelete }) {
-  const [f, setF] = useState(initialData || { title: "", document_type: "passport", horse_id: "", file_url: "", notes: "" });
+  // DB columns: name, url, category, notes, horse_id, file_type
+  const [f, setF] = useState(initialData || { name: "", category: "passport", horse_id: "", url: "", notes: "" });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
   const TYPES = [
@@ -233,19 +233,21 @@ export function DocumentEditor({ t, initialData, horses, onClose, onSave, onDele
     { id: "contract", label: "Contract", emoji: "📝" },
     { id: "vet_report", label: "Vet Report", emoji: "🩺" },
     { id: "invoice", label: "Invoice", emoji: "🧾" },
+    { id: "registration", label: "Registration", emoji: "🎖️" },
+    { id: "pedigree", label: "Pedigree", emoji: "🧬" },
     { id: "other", label: "Other", emoji: "📁" }
   ];
 
   return (
-    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Document"} icon={FileText} color={C.mint} onClose={onClose} onSave={() => f.title.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
-      <PhotoUpload url={f.file_url} onChange={(url) => setF({...f, file_url: url})} uploading={uploading} setUploading={setUploading} icon={FileText} />
+    <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Document"} icon={FileText} color={C.mint} onClose={onClose} onSave={() => f.name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
+      <PhotoUpload url={f.url} onChange={(url) => setF({...f, url})} uploading={uploading} setUploading={setUploading} icon={FileText} />
       
       <Field label="Document Type">
         <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
           {TYPES.map(cat => {
-            const isSel = f.document_type === cat.id;
+            const isSel = f.category === cat.id;
             return (
-              <button key={cat.id} type="button" onClick={() => setF({...f, document_type: cat.id})} className="ev-tap"
+              <button key={cat.id} type="button" onClick={() => setF({...f, category: cat.id})} className="ev-tap"
                 style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 16, border: `1.5px solid ${isSel ? C.mint : C.line}`, background: isSel ? C.mint : C.surface, color: isSel ? "#fff" : C.sub, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", transition: "all .2s" }}>
                 <span style={{ fontSize: 20 }}>{cat.emoji}</span>
                 <span style={{ fontSize: 15, fontWeight: 700 }}>{cat.label}</span>
@@ -256,8 +258,8 @@ export function DocumentEditor({ t, initialData, horses, onClose, onSave, onDele
       </Field>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
-        <Field label="Document Title" required>
-          <input value={f.title} onChange={(e) => { setF({...f, title: e.target.value}); setErr(false); }} placeholder="e.g. Purchase Contract" style={{...inputStyle(err), background: C.surface}} />
+        <Field label="Document Name" required>
+          <input value={f.name} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }} placeholder="e.g. Purchase Contract" style={{...inputStyle(err), background: C.surface}} />
         </Field>
       </div>
 
@@ -267,6 +269,7 @@ export function DocumentEditor({ t, initialData, horses, onClose, onSave, onDele
     </EditorLayout>
   );
 }
+
 
 export function SupplyEditor({ t, initialData, lang, onClose, onSave, onDelete }) {
   const [f, setF] = useState(initialData || { item_name: "", quantity: "", requested_by: "", notes: "", photo_url: "", amazon_link: "", report_type: "supply" });
