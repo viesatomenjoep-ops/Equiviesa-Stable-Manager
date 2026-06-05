@@ -1956,8 +1956,8 @@ function CalendarScreen({ t, go }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, background: '#fff', borderRadius: 24, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', minHeight: 'calc(100vh - 160px)' }}>
 
       {/* ---- Top Bar ---- */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 22px 14px', background: '#fff', borderBottom: `1px solid ${C.line}`, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '18px 22px 14px', background: '#fff', borderBottom: `1px solid ${C.line}`, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
           <button onClick={prev} className="ev-tap" style={{ width: 38, height: 38, borderRadius: 10, border: `1px solid ${C.line}`, background: 'transparent', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
             <ChevronLeft size={18} color={C.ink} />
           </button>
@@ -1969,7 +1969,7 @@ function CalendarScreen({ t, go }) {
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', background: C.surface, borderRadius: 10, border: `1px solid ${C.line}`, padding: 2 }}>
             <button onClick={() => setView('week')} className="ev-tap" style={{ background: view === 'week' ? '#fff' : 'transparent', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 700, color: view === 'week' ? C.ink : C.sub, cursor: 'pointer', boxShadow: view === 'week' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}>{t.calWeek || 'Week'}</button>
             <button onClick={() => setView('month')} className="ev-tap" style={{ background: view === 'month' ? '#fff' : 'transparent', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 700, color: view === 'month' ? C.ink : C.sub, cursor: 'pointer', boxShadow: view === 'month' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}>{t.calMonth || 'Month'}</button>
