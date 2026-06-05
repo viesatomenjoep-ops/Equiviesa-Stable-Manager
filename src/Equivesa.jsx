@@ -2323,13 +2323,13 @@ function TasksScreen({ t }) {
 
 /* ---------- Health Router (full-page editor routing) ---------- */
 function HealthScreenRouter({ t, route, setRoute }) {
-  const { addHealthRecord, editHealthRecord, deleteHealthRecord, horses } = useStore();
+  const { addHealthRecord, editHealthRecord, deleteHealthRecord, horses, users } = useStore();
   const wrap = { width: "100%", margin: "0 auto", padding: "22px 18px" };
 
   if (route.name === "add") {
     return (
       <div style={wrap}>
-        <HealthEditor t={t} horses={horses} staffMembers={staffMembers}
+        <HealthEditor t={t} horses={horses} staffMembers={users}
           onClose={() => setRoute({ name: "list" })}
           onSave={async (rec) => { await addHealthRecord(rec); setRoute({ name: "list" }); }} />
       </div>
@@ -2338,7 +2338,7 @@ function HealthScreenRouter({ t, route, setRoute }) {
   if (route.name === "edit") {
     return (
       <div style={wrap}>
-        <HealthEditor t={t} horses={horses} staffMembers={staffMembers} initialData={route.data}
+        <HealthEditor t={t} horses={horses} staffMembers={users} initialData={route.data}
           onClose={() => setRoute({ name: "list" })}
           onSave={async (rec) => { await editHealthRecord(route.data.id, rec); setRoute({ name: "list" }); }}
           onDelete={async () => { if (window.confirm(t.confirmDelete || "Delete?")) { await deleteHealthRecord(route.data.id); setRoute({ name: "list" }); } }} />
@@ -2350,7 +2350,7 @@ function HealthScreenRouter({ t, route, setRoute }) {
 
 /* ---------- Health ---------- */
 function HealthScreen({ t, setRoute }) {
-  const { healthRecords, addHealthRecord, editHealthRecord, toggleHealthRecord, deleteHealthRecord, horses } = useStore();
+  const { healthRecords, addHealthRecord, editHealthRecord, toggleHealthRecord, deleteHealthRecord, horses, users } = useStore();
   const [activeCat, setActiveCat] = useState(null); // null = overview, string = category subpage
   const [modal, setModal] = useState(null); // keep for backward compat, but route takes priority
   const [editRecord, setEditRecord] = useState(null);
@@ -2491,11 +2491,11 @@ function HealthScreen({ t, setRoute }) {
       </div>
 
       {modal && (
-        <HealthEditor t={t} category={modal} horses={horses} staffMembers={staffMembers} onClose={() => setModal(null)}
+        <HealthEditor t={t} category={modal} horses={horses} staffMembers={users} onClose={() => setModal(null)}
           onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />
       )}
       {editRecord && (
-        <HealthEditor t={t} horses={horses} staffMembers={staffMembers} initialData={editRecord} onClose={() => setEditRecord(null)}
+        <HealthEditor t={t} horses={horses} staffMembers={users} initialData={editRecord} onClose={() => setEditRecord(null)}
           onSave={(rec) => { editHealthRecord(editRecord.id, rec); setEditRecord(null); }}
           onDelete={() => { if (window.confirm(t.confirmDelete || "Delete?")) { deleteHealthRecord(editRecord.id); setEditRecord(null); } }} />
       )}
