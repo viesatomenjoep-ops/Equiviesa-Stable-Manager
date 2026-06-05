@@ -2945,8 +2945,11 @@ function GenericEditorScreen({ active, route, setRoute, t }) {
         if (missing) { setErr(true); return; }
       }
       o = { ...data };
-      Object.keys(o).forEach(k => { if (o[k] === "") o[k] = null; });
     }
+    Object.keys(o).forEach(k => { 
+      if (typeof o[k] === 'string') o[k] = o[k].trim();
+      if (o[k] === "") o[k] = null; 
+    });
     const table = conf?.table;
     if (!table) { goBack(); return; }
     delete o.id;
