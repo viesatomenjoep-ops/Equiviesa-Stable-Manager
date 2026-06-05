@@ -113,7 +113,7 @@ const I18N = {
     authCheckEmail: "Check je e-mail voor de bevestigingslink!",
     qtyHint: "bijv. 5 zakken, 2 balen", reqByHint: "bijv. je eigen naam",
     notes: "Opmerkingen", notesHint: "Optionele details...",
-    addTask: "Taak toevoegen", taskTitle: "Titel", taskDesc: "Beschrijving", taskDue: "Deadline",
+    addTask: "Taak toevoegen", taskTitle: "Titel", taskDesc: "Beschrijving", taskDue: "Deadline (dd/mm/jjjj)",
     taskHorse: "Paard (optioneel)", noTasks: "Nog geen taken", noTasksSub: "Voeg taken toe om je werk te organiseren.",
     done: "Voltooid", open: "Open", completedTasks: "Voltooid",
     addRecord: "Afspraak toevoegen", recordDate: "Datum", recordNotes: "Notities",
@@ -147,6 +147,8 @@ const I18N = {
     feedHay: "Hooi", feedConcentrate: "Biks", feedMuesli: "Muesli", feedWater: "Water",
     feedStraw: "Stro", feedBran: "Zemelen", feedCarrots: "Wortels", feedApples: "Appels",
     feedSalt: "Zoutblok", feedOil: "Olie",
+    recNone: "Geen herhaling", recDaily: "Dagelijks", recWeekly: "Wekelijks", recMonthly: "Maandelijks", recYearly: "Jaarlijks",
+    dueFormat: "dd/mm/jjjj", createdAt: "Aangemaakt op",
   },
   en: {
     code: "EN",
@@ -222,7 +224,7 @@ const I18N = {
     authCheckEmail: "Check your email for the confirmation link!",
     qtyHint: "e.g. 5 bags, 2 bales", reqByHint: "e.g. your name",
     notes: "Notes", notesHint: "Optional details...",
-    addTask: "Add task", taskTitle: "Title", taskDesc: "Description", taskDue: "Due date",
+    addTask: "Add task", taskTitle: "Title", taskDesc: "Description", taskDue: "Due date (dd/mm/yyyy)",
     taskHorse: "Horse (optional)", noTasks: "No tasks yet", noTasksSub: "Add tasks to organize your work.",
     done: "Done", open: "Open", completedTasks: "Completed",
     addRecord: "Add record", recordDate: "Date", recordNotes: "Notes",
@@ -256,6 +258,8 @@ const I18N = {
     feedHay: "Hay", feedConcentrate: "Concentrates", feedMuesli: "Muesli", feedWater: "Water",
     feedStraw: "Straw", feedBran: "Bran", feedCarrots: "Carrots", feedApples: "Apples",
     feedSalt: "Salt lick", feedOil: "Oil",
+    recNone: "No repeat", recDaily: "Daily", recWeekly: "Weekly", recMonthly: "Monthly", recYearly: "Yearly",
+    dueFormat: "dd/mm/yyyy", createdAt: "Created at",
   },
   es: {
     code: "ES",
@@ -331,7 +335,7 @@ const I18N = {
     authCheckEmail: "¡Revisa tu correo para el enlace de confirmación!",
     qtyHint: "ej. 5 sacos, 2 pacas", reqByHint: "ej. tu nombre",
     notes: "Notas", notesHint: "Detalles opcionales...",
-    addTask: "Añadir tarea", taskTitle: "Título", taskDesc: "Descripción", taskDue: "Fecha límite",
+    addTask: "Añadir tarea", taskTitle: "Título", taskDesc: "Descripción", taskDue: "Fecha límite (dd/mm/aaaa)",
     taskHorse: "Caballo (opcional)", noTasks: "Aún no hay tareas", noTasksSub: "Añade tareas para organizar tu trabajo.",
     done: "Hecho", open: "Pendiente", completedTasks: "Completadas",
     addRecord: "Añadir registro", recordDate: "Fecha", recordNotes: "Notas",
@@ -365,6 +369,8 @@ const I18N = {
     feedHay: "Heno", feedConcentrate: "Concentrado", feedMuesli: "Muesli", feedWater: "Agua",
     feedStraw: "Paja", feedBran: "Salvado", feedCarrots: "Zanahorias", feedApples: "Manzanas",
     feedSalt: "Bloque de sal", feedOil: "Aceite",
+    recNone: "Sin repetición", recDaily: "Diariamente", recWeekly: "Semanalmente", recMonthly: "Mensualmente", recYearly: "Anualmente",
+    dueFormat: "dd/mm/aaaa", createdAt: "Creado el",
   },
 };
 
@@ -537,7 +543,9 @@ function StoreProvider({ children }) {
 
   const cleanObj = (obj) => {
     const o = { ...obj };
-    Object.keys(o).forEach(k => { if (o[k] === "") o[k] = null; });
+    Object.keys(o).forEach(k => { 
+      if (typeof o[k] === 'string' && o[k].trim() === "") o[k] = null; 
+    });
     delete o.id;
     delete o.created_at;
     return o;
@@ -2003,7 +2011,7 @@ function CalendarScreen({ t, go }) {
         {/* ---- Day Detail Panel ---- */}
         {selDay && (
           <div className="ev-cal-detail" style={{
-            width: 300, flexShrink: 0, borderRight: `1px solid ${C.line}`,
+            width: "35%", minWidth: 300, maxWidth: 450, flexShrink: 0, borderRight: `1px solid ${C.line}`,
             display: 'flex', flexDirection: 'column', background: '#fff',
             animation: 'evFade .2s ease',
           }}>
@@ -2979,6 +2987,7 @@ function GenericEditorScreen({ active, route, setRoute, t }) {
         <PremiumEditor
           t={t}
           initialData={editObj}
+          horses={horses}
           onSave={save}
           onClose={goBack}
           onDelete={editObj ? del : null}
@@ -3071,6 +3080,7 @@ function GenericField({ field, value, color, err, t, onChange }) {
 }
 
 function GenericModuleScreen({ t, active, setRoute }) {
+  const { horses } = useStore();
   const conf = GENERIC_CONFIG[active];
   const color = ACCENT[active] || C.mint;
   const Icon = ICONS[active] || Sparkles;
@@ -3128,24 +3138,39 @@ function GenericModuleScreen({ t, active, setRoute }) {
         <EmptyHero accent={color} icon={<Icon size={46} strokeWidth={1.6} />} title={t.empty} cta={t.add} onClick={() => setRoute({ name: "add" })} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {data.map((x) => (
-            <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 14, background: C.surface,
-              border: `1px solid ${C.line}`, borderRadius: 16, padding: "16px", cursor: "pointer" }}
-              onClick={() => setRoute({ name: "edit", data: x })}>
-              {x.photo_url ? (
-                <img src={x.photo_url} alt="" style={{ width: 44, height: 44, borderRadius: 12, objectFit: "cover", flexShrink: 0 }} />
-              ) : (
-                <span style={{ width: 44, height: 44, borderRadius: 12, display: "grid", placeItems: "center",
-                  background: `${color}1c`, color: color, flexShrink: 0 }}><Icon size={20} /></span>
-              )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 17, fontWeight: 600, color: C.ink }}>{displayName(x)}</div>
-                {x.status && <div style={{ fontSize: 13, color: C.sub, marginTop: 2 }}>{x.status}</div>}
-                {x.category && !x.status && <div style={{ fontSize: 13, color: C.sub, marginTop: 2, textTransform: "capitalize" }}>{x.category.replace("_", " ")}</div>}
+          {(() => {
+            let listData = [...data];
+            if (active === 'invoices') {
+              listData.sort((a, b) => {
+                const refA = (a.reference || a.name || "").toLowerCase();
+                const refB = (b.reference || b.name || "").toLowerCase();
+                if (refA < refB) return -1;
+                if (refA > refB) return 1;
+                return new Date(b.date || b.created_at) - new Date(a.date || a.created_at);
+              });
+            }
+            return listData.map((x) => (
+              <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 14, background: C.surface,
+                border: `1px solid ${C.line}`, borderRadius: 16, padding: "16px", cursor: "pointer" }}
+                onClick={() => setRoute({ name: "edit", data: x })}>
+                {x.photo_url ? (
+                  <img src={x.photo_url} alt="" style={{ width: 44, height: 44, borderRadius: 12, objectFit: "cover", flexShrink: 0 }} />
+                ) : (
+                  <span style={{ width: 44, height: 44, borderRadius: 12, display: "grid", placeItems: "center",
+                    background: `${color}1c`, color: color, flexShrink: 0 }}><Icon size={20} /></span>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 17, fontWeight: 600, color: C.ink }}>{displayName(x)}</div>
+                  {x.status && <div style={{ fontSize: 13, color: C.sub, marginTop: 2 }}>{x.status}</div>}
+                  {x.category && !x.status && <div style={{ fontSize: 13, color: C.sub, marginTop: 2, textTransform: "capitalize" }}>{x.category.replace("_", " ")}</div>}
+                  {active === 'invoices' && x.created_at && (
+                    <div style={{ fontSize: 13, color: C.sub, marginTop: 2 }}>{t.createdAt || "Created at"}: {new Date(x.created_at).toLocaleDateString()}</div>
+                  )}
+                </div>
+                <ChevronRight size={20} color={C.sub} />
               </div>
-              <ChevronRight size={20} color={C.sub} />
-            </div>
-          ))}
+            ));
+          })()}
         </div>
       )}
     </div>
@@ -3274,6 +3299,7 @@ function SuppliesScreen({ t }) {
 }
 
 function SupplyModal({ t, lang, onClose, onSave }) {
+  const { users } = useStore();
   const [f, setF] = useState({ item_name: "", quantity: "", requested_by: "", notes: "" });
   const [err, setErr] = useState(false);
 
@@ -3318,8 +3344,12 @@ function SupplyModal({ t, lang, onClose, onSave }) {
             placeholder={t.qtyHint} style={inputStyle()} />
         </Field>
         <Field label={t.requestedBy}>
-          <input value={f.requested_by} onChange={(e) => setF({ ...f, requested_by: e.target.value })}
-            placeholder={t.reqByHint} style={inputStyle()} />
+          <select value={f.requested_by} onChange={(e) => setF({ ...f, requested_by: e.target.value })} style={inputStyle()}>
+            <option value="">{t.select || "Select"}</option>
+            {users?.map(u => (
+              <option key={u.id} value={u.name || u.email}>{u.name || u.email}</option>
+            ))}
+          </select>
         </Field>
       </div>
 

@@ -377,7 +377,7 @@ export function SupplyEditor({ t, initialData, lang, staffMembers, onClose, onSa
           </Field>
           <Field label={t.requestedBy || "Requested By"}>
             <select value={f.requested_by || ""} onChange={(e) => setF({...f, requested_by: e.target.value})} style={{...inputStyle(), background: C.surface}}>
-              <option value="">Selecteer...</option>
+              <option value="">{t.select || "Selecteer"}</option>
               {staffMembers && staffMembers.map(st => (
                 <option key={st.id} value={st.id}>{st.name}</option>
               ))}
@@ -557,11 +557,11 @@ export function TaskEditor({ t, initialData, horses, staffMembers, onClose, onSa
           <Field label={t.taskDue || "Date"}><input type="date" value={f.due_date || ""} onChange={(e) => setF({...f, due_date: e.target.value})} style={{...inputStyle(), background: C.surface}} /></Field>
           <Field label={t.repeat || "Repeat"}>
             <select value={f.recurrence_rule || "none"} onChange={(e) => setF({...f, recurrence_rule: e.target.value})} style={{...inputStyle(), background: C.surface}}>
-              <option value="none">Geen herhaling</option>
-              <option value="daily">Dagelijks</option>
-              <option value="weekly">Wekelijks</option>
-              <option value="monthly">Maandelijks</option>
-              <option value="yearly">Jaarlijks</option>
+              <option value="none">{t.recNone || "Geen herhaling"}</option>
+              <option value="daily">{t.recDaily || "Dagelijks"}</option>
+              <option value="weekly">{t.recWeekly || "Wekelijks"}</option>
+              <option value="monthly">{t.recMonthly || "Maandelijks"}</option>
+              <option value="yearly">{t.recYearly || "Jaarlijks"}</option>
             </select>
           </Field>
         </div>
@@ -643,18 +643,18 @@ export function HealthEditor({ t, initialData, horses, staffMembers, onClose, on
           </Field>
           <Field label={t.repeat || "Repeat"}>
             <select value={f.recurrence_rule || "none"} onChange={(e) => setF({...f, recurrence_rule: e.target.value})} style={{...inputStyle(), background: C.surface}}>
-              <option value="none">Geen herhaling</option>
-              <option value="daily">Dagelijks</option>
-              <option value="weekly">Wekelijks</option>
-              <option value="monthly">Maandelijks</option>
-              <option value="yearly">Jaarlijks</option>
+              <option value="none">{t.recNone || "Geen herhaling"}</option>
+              <option value="daily">{t.recDaily || "Dagelijks"}</option>
+              <option value="weekly">{t.recWeekly || "Wekelijks"}</option>
+              <option value="monthly">{t.recMonthly || "Maandelijks"}</option>
+              <option value="yearly">{t.recYearly || "Jaarlijks"}</option>
             </select>
           </Field>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <Field label={t.performedBy || "Performed By"}>
             <select value={f.performed_by || ""} onChange={(e) => setF({...f, performed_by: e.target.value})} style={{...inputStyle(), background: C.surface}}>
-              <option value="">Selecteer...</option>
+              <option value="">{t.select || "Selecteer"}</option>
               <option value="Dierenarts (Vet)">Dierenarts (Vet)</option>
               <option value="Smid (Farrier)">Smid (Farrier)</option>
               {staffMembers && staffMembers.map(st => (
@@ -1092,8 +1092,8 @@ export function QuickReportEditor({ t, onClose, onSave }) {
   );
 }
 
-export function MareEditor({ t, initialData, onClose, onSave, onDelete }) {
-  const [f, setF] = useState(initialData || { stallion_name: "", service_date: "", expected_foal_date: "", status: "inseminated" });
+export function MareEditor({ t, horses, initialData, onClose, onSave, onDelete }) {
+  const [f, setF] = useState(initialData || { mare_id: "", stallion_name: "", service_date: "", expected_foal_date: "", status: "inseminated" });
   const [err, setErr] = useState(false);
   const STATUSES = [
     { id: "inseminated", emoji: "💉", label: "Inseminated" },
@@ -1105,8 +1105,15 @@ export function MareEditor({ t, initialData, onClose, onSave, onDelete }) {
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Mare Record"} icon={Heart} color={C.pink} onClose={onClose} onSave={() => f.stallion_name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
+      <Field label="Mare" required>
+        <select value={f.mare_id || ""} onChange={(e) => { setF({...f, mare_id: e.target.value}); setErr(false); }} style={inputStyle(err && !f.mare_id)}>
+          <option value="" disabled>{t.selectHorse || "Select horse"}</option>
+          {horses?.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+        </select>
+      </Field>
+
       <Field label="Stallion Name" required>
-        <input value={f.stallion_name || ""} onChange={(e) => { setF({...f, stallion_name: e.target.value}); setErr(false); }} placeholder="e.g. Chacco-Blue" style={inputStyle(err)} />
+        <input value={f.stallion_name || ""} onChange={(e) => { setF({...f, stallion_name: e.target.value}); setErr(false); }} placeholder="e.g. Chacco-Blue" style={inputStyle(err && !f.stallion_name)} />
       </Field>
 
       <Field label="Status">
@@ -1138,8 +1145,8 @@ export function MareEditor({ t, initialData, onClose, onSave, onDelete }) {
   );
 }
 
-export function EmbryoEditor({ t, initialData, onClose, onSave, onDelete }) {
-  const [f, setF] = useState(initialData || { stallion_name: "", flush_date: "", status: "frozen" });
+export function EmbryoEditor({ t, horses, initialData, onClose, onSave, onDelete }) {
+  const [f, setF] = useState(initialData || { mare_id: "", stallion_name: "", flush_date: "", status: "frozen" });
   const [err, setErr] = useState(false);
   const STATUSES = [
     { id: "frozen", emoji: "❄️", label: "Frozen" },
@@ -1150,8 +1157,15 @@ export function EmbryoEditor({ t, initialData, onClose, onSave, onDelete }) {
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Embryo"} icon={Sparkles} color={C.pink} onClose={onClose} onSave={() => f.stallion_name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
+      <Field label="Mare (Donor)" required>
+        <select value={f.mare_id || ""} onChange={(e) => { setF({...f, mare_id: e.target.value}); setErr(false); }} style={inputStyle(err && !f.mare_id)}>
+          <option value="" disabled>{t.selectHorse || "Select horse"}</option>
+          {horses?.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+        </select>
+      </Field>
+
       <Field label="Stallion Name" required>
-        <input value={f.stallion_name || ""} onChange={(e) => { setF({...f, stallion_name: e.target.value}); setErr(false); }} placeholder="e.g. Cornet Obolensky" style={inputStyle(err)} />
+        <input value={f.stallion_name || ""} onChange={(e) => { setF({...f, stallion_name: e.target.value}); setErr(false); }} placeholder="e.g. Cornet Obolensky" style={inputStyle(err && !f.stallion_name)} />
       </Field>
 
       <Field label="Status">
@@ -1178,14 +1192,21 @@ export function EmbryoEditor({ t, initialData, onClose, onSave, onDelete }) {
   );
 }
 
-export function FoalEditor({ t, initialData, onClose, onSave, onDelete }) {
-  const [f, setF] = useState(initialData || { name: "", birthdate: "" });
+export function FoalEditor({ t, horses, initialData, onClose, onSave, onDelete }) {
+  const [f, setF] = useState(initialData || { mare_id: "", name: "", birthdate: "" });
   const [err, setErr] = useState(false);
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Foal"} icon={Heart} color={C.pink} onClose={onClose} onSave={() => f.name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
+      <Field label="Mare (Dam)" required>
+        <select value={f.mare_id || ""} onChange={(e) => { setF({...f, mare_id: e.target.value}); setErr(false); }} style={inputStyle(err && !f.mare_id)}>
+          <option value="" disabled>{t.selectHorse || "Select horse"}</option>
+          {horses?.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+        </select>
+      </Field>
+
       <Field label="Foal Name" required>
-        <input value={f.name || ""} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }} placeholder="e.g. Thunder" style={inputStyle(err)} />
+        <input value={f.name || ""} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }} placeholder="e.g. Thunder" style={inputStyle(err && !f.name)} />
       </Field>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
