@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Camera, Check, Plus, Trash2, ArrowLeft, Link as LinkIcon, FileText, ShoppingCart, MapPin, Contact as ContactIcon, BookOpen, Receipt, Package, Wallet, Activity, Users, Carrot, AlertTriangle, AlertOctagon, Heart, Sparkles, Printer } from "lucide-react";
+import { Camera, Check, Plus, Trash2, ArrowLeft, Link as LinkIcon, FileText, ShoppingCart, MapPin, Contact as ContactIcon, BookOpen, Receipt, Package, Wallet, Activity, Users, User, Carrot, AlertTriangle, AlertOctagon, Heart, Sparkles, Printer, Download } from "lucide-react";
 import { useStore } from "./Equivesa";
 import { MapEditor } from "./MapEditor";
 
@@ -28,7 +28,7 @@ function Field({ label, required, children }) {
   );
 }
 
-export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon = Camera, accept = "*/*", label = "Upload" }) {
+export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon = Camera, accept = "*/*", label = "Upload", t }) {
   const [error, setError] = React.useState(null);
   const [progress, setProgress] = React.useState(0);
 
@@ -121,13 +121,17 @@ export function PhotoUpload({ url, onChange, uploading, setUploading, icon: Icon
         </div>
       )}
 
-      {/* Clear button when image is uploaded */}
+      {/* Clear/Download buttons when image is uploaded */}
       {url && !uploading && (
-        <button type="button" onClick={() => { onChange(""); setError(null); }}
-          style={{ fontSize: 12, color: C.sub, background: "none", border: "none", cursor: "pointer",
-            textDecoration: "underline", fontFamily: "inherit" }}>
-          🗑️ Verwijder foto
-        </button>
+        <div style={{ display: "flex", gap: 16, alignItems: "center", marginTop: 8 }}>
+          <a href={url} download target="_blank" rel="noopener noreferrer" className="ev-tap" style={{ fontSize: 13, color: C.mint, fontWeight: 700, textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
+            <Download size={14} /> {t?.download || "Download"}
+          </a>
+          <button type="button" onClick={() => { onChange(""); setError(null); }} className="ev-tap"
+            style={{ fontSize: 13, color: C.coral, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, textDecoration: "none", fontWeight: 700, fontFamily: "inherit" }}>
+            <Trash2 size={14} /> {t?.removeFile || "Remove file"}
+          </button>
+        </div>
       )}
     </div>
   );
@@ -189,7 +193,7 @@ export function ContactEditor({ t, initialData, onClose, onSave, onDelete }) {
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Contact"} icon={ContactIcon} color={C.sky} onClose={onClose} onSave={() => f.name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
-      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={ContactIcon} />
+      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={ContactIcon} t={t} />
       
       <Field label={t.role || "Role"}>
         <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
@@ -250,7 +254,7 @@ export function LocationEditor({ t, initialData, onClose, onSave, onDelete }) {
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Location"} icon={MapPin} color={C.amber} onClose={onClose} onSave={() => f.name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
-      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={MapPin} />
+      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={MapPin} t={t} />
       
       <Field label="Location Type">
         <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
@@ -303,7 +307,7 @@ export function DocumentEditor({ t, initialData, horses, onClose, onSave, onDele
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Document"} icon={FileText} color={C.mint} onClose={onClose} onSave={() => f.name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
-      <PhotoUpload url={f.url} onChange={(url) => setF({...f, url})} uploading={uploading} setUploading={setUploading} icon={FileText} />
+      <PhotoUpload url={f.url} onChange={(url) => setF({...f, url})} uploading={uploading} setUploading={setUploading} icon={FileText} t={t} />
       
       <Field label="Document Type">
         <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 8, marginBottom: 16 }}>
@@ -347,7 +351,7 @@ export function SupplyEditor({ t, initialData, lang, staffMembers, onClose, onSa
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.addSupply || "Add Supply Request"} icon={ShoppingCart} color={C.coral} onClose={onClose} onSave={() => f.item_name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
-      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
+      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} t={t} />
       
       <Field label={t.supplyItem || "Item"} required>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
@@ -414,7 +418,7 @@ export function FinanceEditor({ t, initialData, horses, onClose, onSave, onDelet
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.addTransaction || "Add Transaction"} icon={Wallet} color={C.mint} onClose={onClose} onSave={() => f.amount && f.description.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
-      <PhotoUpload url={f.receipt_url} onChange={(url) => setF({...f, receipt_url: url})} uploading={uploading} setUploading={setUploading} icon={FileText} />
+      <PhotoUpload url={f.receipt_url} onChange={(url) => setF({...f, receipt_url: url})} uploading={uploading} setUploading={setUploading} icon={FileText} t={t} />
       
       <Field label="Transaction Type">
         <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
@@ -482,7 +486,7 @@ export function TaskEditor({ t, initialData, horses, staffMembers, onClose, onSa
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.addTask || "Add Task"} icon={Check} color={C.amber} onClose={onClose} onSave={() => f.title.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
-      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
+      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} t={t} />
       
       <Field label={t.category || "Task Type"}>
         <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
@@ -580,7 +584,8 @@ export function TaskEditor({ t, initialData, horses, staffMembers, onClose, onSa
 
 export function HealthEditor({ t, initialData, horses, staffMembers, onClose, onSave, onDelete }) {
   const today = new Date().toISOString().slice(0, 10);
-  const [f, setF] = useState(initialData || { horse_id: "", scheduled_date: today, notes: "", performed_by: "", cost: "", category: "generalCare", photo_url: "", recurrence_rule: "none" });
+  const nowTime = new Date().toTimeString().slice(0, 5);
+  const [f, setF] = useState(initialData || { horse_id: "", scheduled_date: today, notes: "", performed_by: "", cost: "", category: "generalCare", photo_url: "", recurrence_rule: "none", temperature: "", time: nowTime });
   const [err, setErr] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -599,7 +604,7 @@ export function HealthEditor({ t, initialData, horses, staffMembers, onClose, on
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.addRecord || "Add Health Record"} icon={Activity} color={C.coral} onClose={onClose} onSave={() => f.scheduled_date && f.horse_id ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
       
-      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
+      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} t={t} />
       
       {horses && horses.length > 0 && (
         <div style={{ marginBottom: 24, background: C.bg, padding: 16, borderRadius: 20 }}>
@@ -635,6 +640,18 @@ export function HealthEditor({ t, initialData, horses, staffMembers, onClose, on
           })}
         </div>
       </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
+        <h4 style={{ margin: "0 0 4px", fontSize: 16, color: C.ink, fontWeight: 700 }}>Vitals (Optional)</h4>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label={t.time || "Time"}>
+            <input type="time" value={f.time || ""} onChange={(e) => setF({...f, time: e.target.value})} style={{...inputStyle(), background: C.surface}} />
+          </Field>
+          <Field label={t.temperature || "Temperature (°C)"}>
+            <input type="number" step="0.1" value={f.temperature || ""} onChange={(e) => setF({...f, temperature: e.target.value})} placeholder="37.5" style={{...inputStyle(), background: C.surface}} />
+          </Field>
+        </div>
+      </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, background: C.bg, padding: 20, borderRadius: 20, marginBottom: 24 }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
@@ -699,7 +716,7 @@ export function BookingEditor({ t, initialData, onClose, onSave, onDelete }) {
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Booking"} icon={BookOpen} color={C.sky} onClose={onClose} onSave={() => f.title.trim() && f.booking_date ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
-      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
+      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} t={t} />
 
       <Field label="Booking Type">
         <div className="ev-scroll" style={{ display: "flex", overflowX: "auto", gap: 8, paddingBottom: 8, marginBottom: 16 }}>
@@ -958,7 +975,7 @@ export function CatalogEditor({ t, initialData, onClose, onSave, onDelete }) {
 
   return (
     <EditorLayout t={t} title={initialData ? t.edit || "Edit" : t.add || "Add Catalog Item"} icon={Package} color={C.sky} onClose={onClose} onSave={() => f.name.trim() ? onSave(f) : setErr(true)} onDelete={initialData ? onDelete : null}>
-      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
+      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} t={t} />
       
       <Field label="Product Name" required>
         <input value={f.name || ""} onChange={(e) => { setF({...f, name: e.target.value}); setErr(false); }} placeholder="e.g. Leather Halter" style={inputStyle(err)} />
@@ -1078,7 +1095,7 @@ export function QuickReportEditor({ t, onClose, onSave }) {
         </div>
       </Field>
       
-      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} />
+      <PhotoUpload url={f.photo_url} onChange={(url) => setF({...f, photo_url: url})} uploading={uploading} setUploading={setUploading} icon={Camera} t={t} />
 
       <Field label={t.taskTitle || "Title"} required>
         <input value={f.item_name || ""} onChange={(e) => { setF({...f, item_name: e.target.value}); setErr(false); }} placeholder={f.report_type === "supply" ? "e.g. Dish soap, Tape" : "e.g. Broken halter horse X"} style={inputStyle(err)} />

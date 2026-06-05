@@ -77,6 +77,7 @@ const I18N = {
     fDescription: "Omschrijving", fAttachments: "Bijlagen", fHorse: "Paard", upload: "Uploaden",
     fAmountLabel: "Bedrag (€)", chooseType: "Wat wil je toevoegen?",
     chooseFile: "Bestand kiezen", noFileChosen: "Geen bestand gekozen", viewFile: "Bekijken", downloadFile: "Downloaden",
+    removeFile: "Verwijder file", download: "Download",
     catConcours: "Concours", catSold: "Verkocht", catBoard: "Pension", catVet: "Dierenarts",
     catFarrier: "Hoefsmid", catFeed: "Voer", catOther: "Overig",
     noContact: "Geen contact", allHorses: "Algemeen (geen paard)", thisMonth: "Deze maand",
@@ -191,6 +192,7 @@ const I18N = {
     fDescription: "Description", fAttachments: "Attachments", fHorse: "Horse", upload: "Upload",
     fAmountLabel: "Amount (€)", chooseType: "What do you want to add?",
     chooseFile: "Choose file", noFileChosen: "No file chosen", viewFile: "View", downloadFile: "Download",
+    removeFile: "Remove file", download: "Download",
     catConcours: "Competition", catSold: "Sold", catBoard: "Boarding", catVet: "Vet",
     catFarrier: "Farrier", catFeed: "Feed", catOther: "Other",
     noContact: "No contact", allHorses: "General (no horse)", thisMonth: "This month",
@@ -302,6 +304,7 @@ const I18N = {
     fDescription: "Descripción", fAttachments: "Adjuntos", fHorse: "Caballo", upload: "Subir",
     fAmountLabel: "Importe (€)", chooseType: "¿Qué quieres añadir?",
     chooseFile: "Elegir archivo", noFileChosen: "Ningún archivo elegido", viewFile: "Ver", downloadFile: "Descargar",
+    removeFile: "Eliminar archivo", download: "Descargar",
     catConcours: "Concurso", catSold: "Vendido", catBoard: "Pensión", catVet: "Veterinario",
     catFarrier: "Herrador", catFeed: "Pienso", catOther: "Otro",
     noContact: "Sin contacto", allHorses: "General (sin caballo)", thisMonth: "Este mes",
@@ -2323,7 +2326,7 @@ function TasksScreen({ t }) {
 
 /* ---------- Health Router (full-page editor routing) ---------- */
 function HealthScreenRouter({ t, route, setRoute }) {
-  const { addHealthRecord, editHealthRecord, deleteHealthRecord, horses, users } = useStore();
+  const { addHealthRecord, editHealthRecord, deleteHealthRecord, horses, users, addTemperature } = useStore();
   const wrap = { width: "100%", margin: "0 auto", padding: "22px 18px" };
 
   if (route.name === "add") {
@@ -2331,7 +2334,13 @@ function HealthScreenRouter({ t, route, setRoute }) {
       <div style={wrap}>
         <HealthEditor t={t} horses={horses} staffMembers={users}
           onClose={() => setRoute({ name: "list" })}
-          onSave={async (rec) => { await addHealthRecord(rec); setRoute({ name: "list" }); }} />
+          onSave={async (rec) => { 
+            await addHealthRecord(rec); 
+            if (rec.temperature) {
+              await addTemperature({ horse_id: rec.horse_id, temperature: parseFloat(rec.temperature), measured_at: `${rec.scheduled_date}T${rec.time || '12:00'}:00Z`, notes: rec.notes });
+            }
+            setRoute({ name: "list" }); 
+          }} />
       </div>
     );
   }
@@ -2350,7 +2359,7 @@ function HealthScreenRouter({ t, route, setRoute }) {
 
 /* ---------- Health ---------- */
 function HealthScreen({ t, setRoute }) {
-  const { healthRecords, addHealthRecord, editHealthRecord, toggleHealthRecord, deleteHealthRecord, horses, users } = useStore();
+  const { healthRecords, addHealthRecord, editHealthRecord, toggleHealthRecord, deleteHealthRecord, horses, users, addTemperature } = useStore();
   const [activeCat, setActiveCat] = useState(null); // null = overview, string = category subpage
   const [modal, setModal] = useState(null); // keep for backward compat, but route takes priority
   const [editRecord, setEditRecord] = useState(null);
@@ -2492,7 +2501,13 @@ function HealthScreen({ t, setRoute }) {
 
       {modal && (
         <HealthEditor t={t} category={modal} horses={horses} staffMembers={users} onClose={() => setModal(null)}
-          onSave={(rec) => { addHealthRecord(rec); setModal(null); }} />
+          onSave={(rec) => { 
+            addHealthRecord(rec); 
+            if (rec.temperature) {
+              addTemperature({ horse_id: rec.horse_id, temperature: parseFloat(rec.temperature), measured_at: `${rec.scheduled_date}T${rec.time || '12:00'}:00Z`, notes: rec.notes });
+            }
+            setModal(null); 
+          }} />
       )}
       {editRecord && (
         <HealthEditor t={t} horses={horses} staffMembers={users} initialData={editRecord} onClose={() => setEditRecord(null)}
