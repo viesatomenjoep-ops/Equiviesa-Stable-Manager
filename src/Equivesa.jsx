@@ -887,7 +887,7 @@ function AppRoot() {
 
   const pickMode = (m) => {
     setMode(m);
-    setActive(m === "groom" ? "myday" : "horses");
+    setActive("myday");
     setRoute({ name: "list" });
     setDrawer(false);
   };
