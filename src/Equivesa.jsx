@@ -2230,7 +2230,7 @@ function CalendarScreen({ t, go }) {
 
 /* ---------- Tasks ---------- */
 function TasksScreen({ t }) {
-  const { tasks, addTask, editTask, toggleTask, deleteTask, horses, staffMembers } = useStore();
+  const { tasks, addTask, editTask, toggleTask, deleteTask, horses, staffMembers, users } = useStore();
   const [tab, setTab] = useState(0); // 0 = open, 1 = completed
   const [modal, setModal] = useState(false);
   const [editObj, setEditObj] = useState(null);
@@ -2309,11 +2309,11 @@ function TasksScreen({ t }) {
       )}
 
       {modal && (
-        <TaskEditor t={t} horses={horses} staffMembers={staffMembers} onClose={() => setModal(false)}
+        <TaskEditor t={t} horses={horses} staffMembers={users} onClose={() => setModal(false)}
           onSave={(task) => { addTask(task); setModal(false); }} />
       )}
       {editObj && (
-        <TaskEditor t={t} horses={horses} staffMembers={staffMembers} initialData={editObj} onClose={() => setEditObj(null)}
+        <TaskEditor t={t} horses={horses} staffMembers={users} initialData={editObj} onClose={() => setEditObj(null)}
           onSave={(task) => { editTask(editObj.id, task); setEditObj(null); }}
           onDelete={() => { if (window.confirm(t.confirmDelete || "Delete?")) { deleteTask(editObj.id); setEditObj(null); } }} />
       )}
@@ -2927,6 +2927,7 @@ function GenericEditorScreen({ active, route, setRoute, t }) {
   const color = ACCENT[active] || C.mint;
   const Icon = ICONS[active] || Sparkles;
   const editObj = route.data || null;
+  const { horses } = useStore();
 
   const [data, setData] = React.useState(editObj || (conf ? (conf.defaultVals || {}) : {}));
   const [err, setErr] = React.useState(false);
