@@ -3299,7 +3299,7 @@ function SuppliesScreen({ t }) {
 }
 
 function SupplyModal({ t, lang, onClose, onSave }) {
-  const { users } = useStore();
+  const { users, staffMembers } = useStore();
   const [f, setF] = useState({ item_name: "", quantity: "", requested_by: "", notes: "" });
   const [err, setErr] = useState(false);
 
@@ -3344,12 +3344,12 @@ function SupplyModal({ t, lang, onClose, onSave }) {
             placeholder={t.qtyHint} style={inputStyle()} />
         </Field>
         <Field label={t.requestedBy}>
-          <select value={f.requested_by} onChange={(e) => setF({ ...f, requested_by: e.target.value })} style={inputStyle()}>
-            <option value="">{t.select || "Select"}</option>
-            {users?.map(u => (
-              <option key={u.id} value={u.name || u.email}>{u.name || u.email}</option>
-            ))}
-          </select>
+          <input list="supply-users-list" value={f.requested_by} onChange={(e) => setF({ ...f, requested_by: e.target.value })}
+            placeholder={t.reqByHint} style={inputStyle()} />
+          <datalist id="supply-users-list">
+            {users?.map(u => <option key={`u-${u.id}`} value={u.name || u.email} />)}
+            {staffMembers?.map(st => <option key={`st-${st.id}`} value={st.name} />)}
+          </datalist>
         </Field>
       </div>
 
