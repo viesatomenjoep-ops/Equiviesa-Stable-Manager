@@ -3506,7 +3506,7 @@ function GroomDashboard({ t, go }) {
           todayTasks.map(tk => {
             const horse = horses.find(h => h.id === tk.horse_id);
             return (
-              <button key={tk.id} onClick={() => go('tasks')} className="ev-tap" style={{
+              <button key={tk.id} onClick={() => toggleTask(tk.id)} className="ev-tap" style={{
                 display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
                 padding: '13px 18px', borderTop: `1px solid ${C.line}`,
                 background: tk.is_completed ? C.bg : '#fff', cursor: 'pointer',
